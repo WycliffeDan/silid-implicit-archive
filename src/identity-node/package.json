@@ -1,16 +1,54 @@
 {
-  "name": "identity-node",
+  "name": "transcriber-auth",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "description": "handles identity for transcriber and other applications",
+  "main": "app.js",
   "dependencies": {
-    "express": "^4.17.1"
+    "aws-sdk": "^2.525.0",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.4",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-jwt": "^5.3.1",
+    "file-type": "^12.3.0",
+    "helmet": "^3.18.0",
+    "jwks-rsa": "^1.5.1",
+    "morgan": "^1.9.1",
+    "multiparty": "^4.2.1",
+    "nodemailer": "^6.3.0",
+    "pg": "^7.11.0",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^5.8.9",
+    "serverless-http": "^2.0.2",
+    "serverless-offline": "^5.3.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^6.2.0",
+    "nodemon": "^1.19.1",
+    "prettier": "1.18.2"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node app.js",
+    "deploy": "serverless deploy -v",
+    "createOrg": "sequelize model:create --name organization --attributes guid:integer,uniquekey:string,code:integer,name:string,description:string,logo:string,verified:boolean,verifiedby:string,verifieddate:time,active:boolean,userId:integer,websiteurl:string  --force",
+    "createApp": "sequelize model:create --name app --attributes guid:integer,uniquekey:string,name:string,orgsMustVerify:string,usersMustVerify:string,orgVerificationEmail:string,userVerificationEmail:string,orgCreationEndpoint:string,userCreationEndpoint:string,active:boolean  --force",
+    "createUser": "sequelize model:create --name user --attributes name:string,givenname:string,familyname:string,nickname:string,email:string,emailverified:boolean,phone:string,timezone:string,locale:string,isLocked:boolean,externalid:string,profilevisibility:integer,emailnotification:boolean,identitytoken:string,uilanguagebcp47:string,avatarurl:string,archived:boolean,authid:string  --force",
+    "createGoal": "sequelize model:create --name goal --attributes userId:integer,name:string --force",
+    "createMembership": "sequelize model:create --name membership --attributes userId:integer,orgId:integer --force",
+    "createInvite": "sequelize model:create --name invite --attributes email:string,orgId:integer,userId:integer --force",
+    "syncData": "sequelize db:migrate",
+    "test": "mocha test/**.js --recursive",
+    "pretty": "prettier --check 'src/**/*.js'"
   },
-  "author": "",
-  "license": "MIT"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/transcriber-auth.git"
+  },
+  "author": "SIL International",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sillsdev/transcriber-auth/issues"
+  },
+  "homepage": "https://github.com/sillsdev/transcriber-auth#readme"
 }
