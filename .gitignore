@@ -27,3 +27,8 @@ yarn-error.log*
 
 src/identity-react/amplify
 src/identity-react/src/aws-exports.js
+
+src/identity-node/.sequelizerc
+src/identity-node/.serverless/
+src/identity-node/config.json
+src/identity-node/serverless.env.yaml
