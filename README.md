@@ -1,6 +1,18 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+silid
+=====
 
-## Available Scripts
+This client app was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+The server app uses `express` and was scrounged from ruined heap of a now forgotten app with the exact same purpose.
+
+## Server
+
+```
+npm install
+```
+
+
+## Client
 
 In the project directory, you can run:
 
