@@ -10,6 +10,12 @@ silid-server
 npm install
 ```
 
+Start a PostgreSQL development server:
+
+```
+docker run --name dev-postgres -p 5432:5432 -d postgres
+```
+
 ## Dev server
 
 ```
