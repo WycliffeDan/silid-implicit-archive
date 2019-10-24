@@ -7,10 +7,9 @@
     "dialect": "postgres"
   },
   "test": {
-    "username": "user",
-    "password": "pass",
-    "database": "silid_test",
-    "host": "postgres",
+    "username": "postgres",
+    "database": "postgres",
+    "host": "localhost",
     "dialect": "postgres"
   },
   "production": {
