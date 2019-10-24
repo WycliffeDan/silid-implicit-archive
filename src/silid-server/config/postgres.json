@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "user",
+    "password": "pass",
+    "database": "silid_development",
+    "host": "postgres",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "user",
+    "password": "pass",
+    "database": "silid_test",
+    "host": "postgres",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "organizationuser",
+    "password": "y#o9FK52&8yl#$h",
+    "database": "transcriberauthdb",
+    "host": "ttc10v98xz64xd.c3ruqs5ucpmi.us-east-1.rds.amazonaws.com",
+    "dialect": "postgres"
+  }
+}
