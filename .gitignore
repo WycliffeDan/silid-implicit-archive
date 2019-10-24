@@ -32,3 +32,6 @@ src/identity-node/.sequelizerc
 src/identity-node/.serverless/
 src/identity-node/config.json
 src/identity-node/serverless.env.yaml
+
+# vim clutter
+*.sw*
