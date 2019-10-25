@@ -1,6 +1,8 @@
 'use strict';
+
 module.exports = (sequelize, DataTypes) => {
-  const agent = sequelize.define('Agent', {
+
+  const Agent = sequelize.define('Agent', {
     name: {
       type: DataTypes.STRING,
     },
@@ -23,5 +25,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {});
 
-  return agent;
+  Agent.associate = function(models) {
+    Agent.belongsToMany(models.Organization, {
+      through: 'agent_organization'
+    });
+  };
+
+  return Agent;
 };

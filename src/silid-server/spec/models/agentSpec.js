@@ -1,4 +1,5 @@
 'use strict';
+const fixtures = require('sequelize-fixtures');
 
 describe('Agent', () => {
   const db = require('../../models');
@@ -73,6 +74,41 @@ describe('Agent', () => {
         agent.save().then(obj => {
           expect(obj.socialProfile).toEqual(_valid.socialProfile);
           done();
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+    });
+  });
+
+  describe('relationships', () => {
+    describe('organizations', () => {
+      let org;
+      beforeEach(done => {
+        agent.save().then(obj => {
+          agent = obj;
+          fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
+            db.Organization.findAll().then(results => {
+              org = results[0];
+              done();
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+      it('has many', done => {
+        agent.addOrganization(org.id).then(result => {
+          agent.getOrganizations().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(org.name);
+            done();
+          }).catch(err => {
+            done.fail(err);
+          });
         }).catch(err => {
           done.fail(err);
         });

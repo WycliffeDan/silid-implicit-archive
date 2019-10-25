@@ -1,4 +1,5 @@
 'use strict';
+const fixtures = require('sequelize-fixtures');
 
 describe('Organization', () => {
   const db = require('../../models');
@@ -10,8 +11,7 @@ describe('Organization', () => {
   beforeEach(done => {
     db.sequelize.sync({force: true}).then(() => {
       _valid.name = 'Chill Bill International';
-//      _valid.email = 'someguy@example.com';
-  
+
       organization = new Organization(_valid);
 
       done();
@@ -56,6 +56,41 @@ describe('Organization', () => {
             expect(err.errors.length).toEqual(1);
             expect(err.errors[0].message).toEqual('That organization is already registered');
             done();
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+    });
+  });
+
+  describe('relationships', () => {
+    describe('agents', () => {
+      let agent, org;
+      beforeEach(done => {
+        organization.save().then(obj => {
+          org = obj;
+          fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, db).then(() => {
+            db.Agent.findAll().then(results => {
+              agent = results[0];
+              done();
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+      it('has many', done => {
+        org.addAgent(agent.id).then(result => {
+          org.getAgents().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(agent.name);
+            done();
+          }).catch(err => {
+            done.fail(err);
           });
         }).catch(err => {
           done.fail(err);
