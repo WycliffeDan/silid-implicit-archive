@@ -96,6 +96,29 @@ describe('Organization', () => {
           done.fail(err);
         });
       });
+
+      it('removes agent if deleted', done => {
+        org.addAgent(agent.id).then(result => {
+          org.getAgents().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(agent.name);
+            agent.destroy().then(result => {
+              org.getAgents().then(result => {
+                expect(result.length).toEqual(0);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
     });
   });
 });
