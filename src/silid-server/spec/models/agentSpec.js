@@ -47,6 +47,30 @@ describe('Agent', () => {
         });
       });
 
+      it('does not allow blanks', done => {
+        _valid.email = '   ';
+        agent = new Agent(_valid);
+        agent.save().then(obj => {
+          done.fail('This shouldn\'t save');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Agent requires a valid email');
+          done();
+        });
+      });
+
+      it('does not allow invalid emails', done => {
+        _valid.email = 'This is obviously not an email';
+        agent = new Agent(_valid);
+        agent.save().then(obj => {
+          done.fail('This shouldn\'t save');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Agent requires a valid email');
+          done();
+        });
+      });
+
       it('does not allow duplicate emails', done => {
         agent.save().then(obj => {
           expect(obj.email).toEqual(_valid.email);

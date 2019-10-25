@@ -12,6 +12,9 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         notNull: {
           msg: 'Agent requires an email'
+        },
+        isEmail: {
+          msg: 'Agent requires a valid email'
         }
       },
       unique: {
