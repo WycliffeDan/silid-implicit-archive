@@ -1,18 +1,18 @@
 'use strict';
 const fixtures = require('sequelize-fixtures');
 
-describe('Organization', () => {
+describe('Project', () => {
   const db = require('../../models');
-  const Organization = db.Organization;
+  const Project = db.Project;
 
-  let organization;
+  let project;
 
   const _valid = {};
   beforeEach(done => {
     db.sequelize.sync({force: true}).then(() => {
-      _valid.name = 'Chill Bill International';
+      _valid.name = 'Codename: Mario';
 
-      organization = new Organization(_valid);
+      project = new Project(_valid);
 
       done();
     }).catch(err => {
@@ -22,11 +22,11 @@ describe('Organization', () => {
 
   describe('basic validation', () => {
     it('sets the createdAt and updatedAt fields', done => {
-      expect(organization.createdAt).toBe(undefined);
-      expect(organization.updatedAt).toBe(undefined);
-      organization.save().then(obj => {
-        expect(organization.createdAt instanceof Date).toBe(true);
-        expect(organization.updatedAt instanceof Date).toBe(true);
+      expect(project.createdAt).toBe(undefined);
+      expect(project.updatedAt).toBe(undefined);
+      project.save().then(obj => {
+        expect(project.createdAt instanceof Date).toBe(true);
+        expect(project.updatedAt instanceof Date).toBe(true);
         done();
       }).catch(err => {
         done.fail(err);
@@ -36,25 +36,25 @@ describe('Organization', () => {
     describe('name', () => {
       it('requires a name', done => {
         delete _valid.name;
-        organization = new Organization(_valid);
-        organization.save().then(obj => {
+        project = new Project(_valid);
+        project.save().then(obj => {
           done.fail('This shouldn\'t haved saved');
         }).catch(err => {
           expect(err.errors.length).toEqual(1);
-          expect(err.errors[0].message).toEqual('Organization requires a name');
+          expect(err.errors[0].message).toEqual('Project requires a name');
           done();
         });
       });
 
       it('does not allow duplicate names', done => {
-        organization.save().then(obj => {
+        project.save().then(obj => {
           expect(obj.name).toEqual(_valid.name);
-          let newOrganization = new Organization(_valid);
-          newOrganization.save().then(obj => {
+          let newProject = new Project(_valid);
+          newProject.save().then(obj => {
             done.fail('This shouldn\'t have saved');
           }).catch(err => {
             expect(err.errors.length).toEqual(1);
-            expect(err.errors[0].message).toEqual('That organization is already registered');
+            expect(err.errors[0].message).toEqual('That project is already registered');
             done();
           });
         }).catch(err => {
@@ -65,11 +65,11 @@ describe('Organization', () => {
   });
 
   describe('relationships', () => {
+
     describe('agents', () => {
-      let agent, org;
+      let agent;
       beforeEach(done => {
-        organization.save().then(obj => {
-          org = obj;
+        project.save().then(result => {
           fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, db).then(() => {
             db.Agent.findAll().then(results => {
               agent = results[0];
@@ -84,8 +84,8 @@ describe('Organization', () => {
       });
 
       it('has many', done => {
-        org.addAgent(agent.id).then(result => {
-          org.getAgents().then(result => {
+        project.addAgent(agent.id).then(result => {
+          project.getAgents().then(result => {
             expect(result.length).toEqual(1);
             expect(result[0].name).toEqual(agent.name);
             done();
@@ -98,12 +98,12 @@ describe('Organization', () => {
       });
 
       it('removes agent if deleted', done => {
-        org.addAgent(agent.id).then(result => {
-          org.getAgents().then(result => {
+        project.addAgent(agent.id).then(result => {
+          project.getAgents().then(result => {
             expect(result.length).toEqual(1);
             expect(result[0].name).toEqual(agent.name);
             agent.destroy().then(result => {
-              org.getAgents().then(result => {
+              project.getAgents().then(result => {
                 expect(result.length).toEqual(0);
                 done();
               }).catch(err => {
@@ -121,14 +121,13 @@ describe('Organization', () => {
       });
     });
 
-    describe('projects', () => {
-      let project, org;
+    describe('organizations', () => {
+      let org;
       beforeEach(done => {
-        organization.save().then(result => {
-          org = result;
-          fixtures.loadFile(`${__dirname}/../fixtures/projects.json`, db).then(() => {
-            db.Project.findAll().then(results => {
-              project = results[0];
+        project.save().then(obj => {
+          fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
+            db.Organization.findAll().then(results => {
+              org = results[0];
               done();
             });
           }).catch(err => {
@@ -140,10 +139,10 @@ describe('Organization', () => {
       });
 
       it('has many', done => {
-        org.addProject(project.id).then(result => {
-          org.getProjects().then(result => {
+        project.addOrganization(org.id).then(result => {
+          project.getOrganizations().then(result => {
             expect(result.length).toEqual(1);
-            expect(result[0].name).toEqual(project.name);
+            expect(result[0].name).toEqual(org.name);
             done();
           }).catch(err => {
             done.fail(err);
@@ -153,13 +152,13 @@ describe('Organization', () => {
         });
       });
 
-      it('removes project if deleted', done => {
-        org.addProject(project.id).then(result => {
-          org.getProjects().then(result => {
+      it('removes organization if deleted', done => {
+        project.addOrganization(org.id).then(result => {
+          project.getOrganizations().then(result => {
             expect(result.length).toEqual(1);
-            expect(result[0].name).toEqual(project.name);
-            project.destroy().then(result => {
-              org.getProjects().then(result => {
+            expect(result[0].name).toEqual(org.name);
+            org.destroy().then(result => {
+              project.getOrganizations().then(result => {
                 expect(result.length).toEqual(0);
                 done();
               }).catch(err => {

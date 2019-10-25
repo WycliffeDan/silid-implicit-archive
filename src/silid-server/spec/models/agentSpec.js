@@ -137,5 +137,60 @@ describe('Agent', () => {
         });
       });
     });
+
+    describe('projects', () => {
+      let project;
+      beforeEach(done => {
+        agent.save().then(result => {
+          fixtures.loadFile(`${__dirname}/../fixtures/projects.json`, db).then(() => {
+            db.Project.findAll().then(results => {
+              project = results[0];
+              done();
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+      it('has many', done => {
+        agent.addProject(project.id).then(result => {
+          agent.getProjects().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(project.name);
+            done();
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+      it('removes project if deleted', done => {
+        agent.addProject(project.id).then(result => {
+          agent.getProjects().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(project.name);
+            project.destroy().then(result => {
+              agent.getProjects().then(result => {
+                expect(result.length).toEqual(0);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+    });
   });
 });
