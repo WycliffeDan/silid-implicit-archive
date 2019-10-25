@@ -21,11 +21,6 @@ describe('Agent', () => {
   });
 
   describe('basic validation', () => {
-    const valid = {};
-    beforeEach(done => {
-       done();
-    });
-
     it('sets the createdAt and updatedAt fields', done => {
       expect(agent.createdAt).toBe(undefined);
       expect(agent.updatedAt).toBe(undefined);
