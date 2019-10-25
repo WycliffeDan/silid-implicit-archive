@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         notNull: {
           msg: 'Project requires a name'
+        },
+        notEmpty: {
+          msg: 'Project requires a name'
         }
       },
       unique: {

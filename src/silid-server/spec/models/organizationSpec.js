@@ -46,6 +46,18 @@ describe('Organization', () => {
         });
       });
 
+      it('blank not allowed', done => {
+        _valid.name = '   ';
+        organization = new Organization(_valid);
+        organization.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Organization requires a name');
+          done();
+        });
+      });
+
       it('does not allow duplicate names', done => {
         organization.save().then(obj => {
           expect(obj.name).toEqual(_valid.name);

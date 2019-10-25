@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         notNull: {
           msg: 'Organization requires a name'
+        },
+        notEmpty: {
+          msg: 'Organization requires a name'
         }
       },
       unique: {

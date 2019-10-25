@@ -46,6 +46,18 @@ describe('Project', () => {
         });
       });
 
+      it('blank not allowed', done => {
+        _valid.name = '   ';
+        project = new Project(_valid);
+        project.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Project requires a name');
+          done();
+        });
+      });
+
       it('does not allow duplicate names', done => {
         project.save().then(obj => {
           expect(obj.name).toEqual(_valid.name);
