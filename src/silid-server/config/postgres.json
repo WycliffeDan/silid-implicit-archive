@@ -14,9 +14,9 @@
   },
   "production": {
     "username": "organizationuser",
-    "password": "y#o9FK52&8yl#$h",
-    "database": "transcriberauthdb",
-    "host": "ttc10v98xz64xd.c3ruqs5ucpmi.us-east-1.rds.amazonaws.com",
+    "password": "S0m3pa55w0rD",
+    "database": "silid_production",
+    "host": "some-server.us-east-1.rds.amazonaws.com",
     "dialect": "postgres"
   }
 }
