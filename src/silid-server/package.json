@@ -21,6 +21,7 @@
   "devDependencies": {
     "jasmine": "^3.5.0",
     "nodemon": "^1.19.4",
-    "sequelize-fixtures": "^1.1.1"
+    "sequelize-fixtures": "^1.1.1",
+    "supertest": "^4.0.2"
   }
 }
