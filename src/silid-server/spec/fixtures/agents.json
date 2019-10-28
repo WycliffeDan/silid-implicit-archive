@@ -1,0 +1,9 @@
+[
+  {
+    "model": "Agent",
+    "data": {
+      "name": "Some Guy",
+      "email": "someguy@example.com"
+    }
+  }
+]
