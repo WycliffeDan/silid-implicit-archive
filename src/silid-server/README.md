@@ -8,6 +8,7 @@ silid-server
 
 ```
 npm install
+cp .env.example .env
 ```
 
 ## Test
