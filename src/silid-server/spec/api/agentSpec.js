@@ -118,15 +118,13 @@ describe('agentSpec', () => {
             .put('/agent')
             .send({
               token: token,
-              id: agent.id ,
+              id: agent.id,
               name: 'Some Cool Guy' 
             })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
-console.log('ERRROR');
-console.log(err);
               if (err) done.fail(err);
                 expect(res.body.name).toEqual('Some Cool Guy');
   
@@ -145,7 +143,7 @@ console.log(err);
             .put('/agent')
             .send({
               token: token,
-              id: 'no such id',
+              id: 111,
               name: 'Some Guy' 
             })
             .set('Accept', 'application/json')
