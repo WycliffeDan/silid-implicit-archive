@@ -20,7 +20,11 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 });
 
 router.post('/', jwtAuth, function(req, res, next) {
-  let agent = new models.Agent({ email: req.body.email });
+  let email = req.user.email;
+  if (req.body.email) {
+    email = req.body.email;
+  }
+  let agent = new models.Agent({ email: email });
   agent.save().then(result => {
     res.status(201).json(result);
   }).catch(err => {
@@ -43,6 +47,21 @@ router.put('/', jwtAuth, function(req, res, next) {
     }).catch(err => {
       res.json(err);
     });
+  }).catch(err => {
+    res.json(err);
+  });
+});
+
+router.delete('/', jwtAuth, function(req, res, next) {
+  models.Agent.findOne({ where: { id: req.body.id } }).then(agent => {
+    if (!agent) {
+      return res.json( { message: 'No such agent' });
+    }
+    agent.destroy().then(results => {
+      res.json( { message: 'Agent deleted' });
+    }).catch(err => {
+      res.json(err);
+    });   
   }).catch(err => {
     res.json(err);
   });

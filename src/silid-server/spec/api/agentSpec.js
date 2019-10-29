@@ -49,15 +49,15 @@ describe('agentSpec', () => {
               .expect(201)
               .end(function(err, res) {
                 if (err) done.fail(err);
-                  expect(res.body.email).toEqual('someotherguy@example.com');
+                expect(res.body.email).toEqual('someotherguy@example.com');
 
-                  models.Agent.findAll().then(results => {
-                    expect(results.length).toEqual(2);
-                    done();
-                  }).catch(err => {
-                    done.fail(err);
-                  });
+                models.Agent.findAll().then(results => {
+                  expect(results.length).toEqual(2);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
                 });
+              });
           }).catch(err => {
             done.fail(err);
           });
@@ -75,10 +75,10 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.errors.length).toEqual(1);
-                expect(res.body.errors[0].message).toEqual('That agent is already registered');
-                done();
-              });
+              expect(res.body.errors.length).toEqual(1);
+              expect(res.body.errors[0].message).toEqual('That agent is already registered');
+              done();
+            });
         });
       });
   
@@ -92,9 +92,9 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.email).toEqual(agent.email);
-                done();
-              });
+              expect(res.body.email).toEqual(agent.email);
+              done();
+            });
         });
 
         it('doesn\'t barf if record doesn\'t exist', done => {
@@ -106,9 +106,9 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('No such agent');
-                done();
-              });
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
         });
       });
  
@@ -126,16 +126,16 @@ describe('agentSpec', () => {
             .expect(201)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.name).toEqual('Some Cool Guy');
-  
-                models.Agent.findOne({ where: { id: agent.id }}).then(results => {
-                  expect(results.name).toEqual('Some Cool Guy');
-                  expect(results.email).toEqual(agent.email);
-                  done();
-                }).catch(err => {
-                  done.fail(err);
-                });
+              expect(res.body.name).toEqual('Some Cool Guy');
+ 
+              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
+                expect(results.name).toEqual('Some Cool Guy');
+                expect(results.email).toEqual(agent.email);
+                done();
+              }).catch(err => {
+                done.fail(err);
               });
+            });
         });
 
         it('doesn\'t barf if agent doesn\'t exist', done => {
@@ -151,35 +151,126 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('No such agent');
-                done();
-              });
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
         });
       });
 
-//      describe('delete', () => {
-//        it('removes an existing record from the database', done => {
-//          done.fail();
-//        });
-//
-//        it('doesn\'t barf if agent doesn\'t exist', done => {
-//          done.fail();
-//        });
-//      });
+      describe('delete', () => {
+        it('removes an existing record from the database', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              token: token,
+              id: agent.id,
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Agent deleted');
+              done();
+            });
+        });
+
+        it('doesn\'t barf if agent doesn\'t exist', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              token: token,
+              id: 111,
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
+        });
+      });
     });
 
-//    describe('unauthorized', () => {
-//
-//      describe('create', () => {
-//        it('returns 401', done => {
-//          done.fail();
-//        });
-//
-//        it('does not create a record from in database', done => {
-//          done.fail();
-//        });
-//      });
-//  
+    describe('unknown', () => {
+      let newToken;
+      beforeEach(done => {
+        newToken = jwt.sign({ email: 'brandnewagent@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        done();
+      });
+
+      describe('create', () => {
+        it('adds a new record to the database', done => {
+          models.Agent.findAll().then(results => {
+            expect(results.length).toEqual(1);
+
+            request(app)
+              .post('/agent')
+              .send({
+                token: newToken,
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(201)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                expect(res.body.email).toEqual('brandnewagent@example.com');
+
+                models.Agent.findAll().then(results => {
+                  expect(results.length).toEqual(2);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('returns an error if record already exists', done => {
+          request(app)
+            .post('/agent')
+            .send({
+              token: newToken,
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.errors).toBe(undefined);
+
+              request(app)
+                .post('/agent')
+                .send({
+                  token: newToken,
+                })
+                .set('Accept', 'application/json')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  expect(res.body.errors.length).toEqual(1);
+                  expect(res.body.errors[0].message).toEqual('That agent is already registered');
+                  done();
+                });
+            });
+        });
+      });
+    });
+
+    describe('unauthorized', () => {
+
+      let wrongToken;
+      beforeEach(done => {
+        wrongToken = jwt.sign({ email: 'unauthorizedagent@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        done();
+      });
+
+
 //      describe('read', () => {
 //        it('returns 401', done => {
 //          done.fail();
@@ -219,7 +310,7 @@ describe('agentSpec', () => {
 //          done.fail();
 //        });
 //      });
-//    });
+    });
   });
 
   describe('not authenticated', () => {
@@ -233,9 +324,9 @@ describe('agentSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
-            expect(res.body.message).toEqual('Unauthorized: Invalid token');
-            done();
-          });
+          expect(res.body.message).toEqual('Unauthorized: Invalid token');
+          done();
+        });
     });
 
     it('returns 401 if provided no token', done => {
@@ -247,9 +338,9 @@ describe('agentSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
-            expect(res.body.message).toEqual('Unauthorized: No token provided');
-            done();
-          });
+          expect(res.body.message).toEqual('Unauthorized: No token provided');
+          done();
+        });
     });
   });
 });
