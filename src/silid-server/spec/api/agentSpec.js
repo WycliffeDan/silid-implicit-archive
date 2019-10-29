@@ -119,7 +119,7 @@ describe('agentSpec', () => {
             .send({
               token: token,
               id: agent.id,
-              name: 'Some Cool Guy' 
+              name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
@@ -270,27 +270,49 @@ describe('agentSpec', () => {
         done();
       });
 
+      describe('update', () => {
+        it('returns 401', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              token: wrongToken,
+              id: agent.id,
+              name: 'Some Cool Guy'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
+        });
 
-//      describe('read', () => {
-//        it('returns 401', done => {
-//          done.fail();
-//        });
-//
-//        it('does\'t barf if the record doesn\'t exist', done => {
-//          done.fail();
-//        });
-//      });
-// 
-//      describe('update', () => {
-//        it('returns 401', done => {
-//          done.fail();
-//        });
-//
-//        it('does not change the record in the database', done => {
-//          done.fail();
-//        });
-//      });
-//
+        it('does not change the record in the database', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              token: wrongToken,
+              id: agent.id,
+              name: 'Some Cool Guy'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
+                expect(results.name).toEqual('Some Guy');
+                expect(results.email).toEqual(agent.email);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+        });
+      });
+
 //      describe('delete', () => {
 //        it('returns 401', done => {
 //          request(app)

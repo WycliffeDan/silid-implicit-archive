@@ -37,6 +37,11 @@ router.put('/', jwtAuth, function(req, res, next) {
     if (!agent) {
       return res.json( { message: 'No such agent' });
     }
+
+    if (req.user.email !== agent.email) {
+      return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+    }
+
     for (let key in req.body) {
       if (agent[key]) {
         agent[key] = req.body[key];
