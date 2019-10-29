@@ -62,6 +62,11 @@ router.delete('/', jwtAuth, function(req, res, next) {
     if (!agent) {
       return res.json( { message: 'No such agent' });
     }
+
+    if (req.user.email !== agent.email) {
+      return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+    }
+
     agent.destroy().then(results => {
       res.json( { message: 'Agent deleted' });
     }).catch(err => {

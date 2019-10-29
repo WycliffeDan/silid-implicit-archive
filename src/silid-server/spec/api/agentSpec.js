@@ -313,25 +313,51 @@ describe('agentSpec', () => {
         });
       });
 
-//      describe('delete', () => {
-//        it('returns 401', done => {
-//          request(app)
-//            .delete('/agent')
-//            .send({ token: token, agent_id: agent.id })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-//                done();
-//              });
-//        });
-//
-//        it('does not remove the record from the database', done => {
-//          done.fail();
-//        });
-//      });
+      describe('delete', () => {
+        it('returns 401', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              token: wrongToken,
+              id: agent.id
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+                expect(res.body.message).toEqual('Unauthorized: Invalid token');
+                done();
+              });
+        });
+
+        it('does not remove the record from the database', done => {
+          models.Agent.findAll().then(results => {
+            expect(results.length).toEqual(1);
+
+            request(app)
+              .delete('/agent')
+              .send({
+                token: wrongToken,
+                id: agent.id
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(401)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                models.Agent.findAll().then(results => {
+                  expect(results.length).toEqual(1);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+      });
     });
   });
 
@@ -340,7 +366,7 @@ describe('agentSpec', () => {
       const expiredToken = jwt.sign({ email: agent.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.SECRET, { expiresIn: '1h' });
       request(app)
         .get('/agent')
-        .send({ token: expiredToken})
+        .send({ token: expiredToken })
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(401)
