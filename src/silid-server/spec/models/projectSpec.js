@@ -10,11 +10,25 @@ describe('Project', () => {
   const _valid = {};
   beforeEach(done => {
     db.sequelize.sync({force: true}).then(() => {
-      _valid.name = 'Codename: Mario';
 
-      project = new Project(_valid);
+      fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, db).then(() => {
+        fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
+          db.Organization.findAll().then(results => {
+            let org = results[0];
 
-      done();
+            _valid.name = 'Codename: Mario';
+            _valid.organizationId = org.id;
+
+            project = new Project(_valid);
+
+            done();
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      }).catch(err => {
+        done.fail(err);
+      });
     }).catch(err => {
       done.fail(err);
     });
@@ -30,6 +44,47 @@ describe('Project', () => {
         done();
       }).catch(err => {
         done.fail(err);
+      });
+    });
+
+    describe('organization', () => {
+      it('requires an organization', done => {
+        delete _valid.organizationId;
+        project = new Project(_valid);
+        project.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Project.organizationId cannot be null');
+          done();
+        });
+      });
+
+      /**
+       * 2019-10-20 https://github.com/sequelize/sequelize/issues/7826
+       *
+       * Foreign key constraints have wonky errors (cf., Validation Errors)
+       */
+      it('blank organization not allowed', done => {
+        _valid.organizationId = '   ';
+        project = new Project(_valid);
+        project.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err instanceof db.Sequelize.DatabaseError).toBe(true);
+          done();
+        });
+      });
+
+      it('unknown organization not allowed', done => {
+        _valid.organizationId = 111;
+        project = new Project(_valid);
+        project.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err instanceof db.Sequelize.ForeignKeyConstraintError).toBe(true);
+          done();
+        });
       });
     });
 

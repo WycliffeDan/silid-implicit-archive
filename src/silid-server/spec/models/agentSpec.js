@@ -166,10 +166,14 @@ describe('Agent', () => {
       let project;
       beforeEach(done => {
         agent.save().then(result => {
-          fixtures.loadFile(`${__dirname}/../fixtures/projects.json`, db).then(() => {
-            db.Project.findAll().then(results => {
-              project = results[0];
-              done();
+          fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
+            fixtures.loadFile(`${__dirname}/../fixtures/projects.json`, db).then(() => {
+              db.Project.findAll().then(results => {
+                project = results[0];
+                done();
+              });
+            }).catch(err => {
+              done.fail(err);
             });
           }).catch(err => {
             done.fail(err);
