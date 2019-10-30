@@ -2,7 +2,10 @@
   {
     "model": "Project",
     "data": {
-      "name": "Codename: Mario"
+      "name": "Codename: Mario",
+      "organization": {
+        "name": "Chill Bill International"
+      }
     }
   }
 ]
