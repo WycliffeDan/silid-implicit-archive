@@ -1,0 +1,11 @@
+[
+  {
+    "model": "Organization",
+    "data": {
+      "name": "Chill Bill International",
+      "creator": {
+        "email": "someguy@example.com"
+      }
+    }
+  }
+]
