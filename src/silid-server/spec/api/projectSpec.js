@@ -54,31 +54,77 @@ describe('projectSpec', () => {
     describe('authorized', () => {
 
       describe('create', () => {
-        it('adds a new record to the database', done => {
-          models.Project.findAll().then(results => {
-            expect(results.length).toEqual(1);
+        it('allows organization creator to add a new record to the database', done => {
+          organization.getCreator().then(creator => {
+            expect(creator.email).toEqual(agent.email);
 
-            request(app)
-              .post('/project')
-              .send({
-                token: token,
-                organizationId: organization.id, 
-                name: 'Tsuutina Translation' 
-              })
-              .set('Accept', 'application/json')
-              .expect('Content-Type', /json/)
-              .expect(201)
-              .end(function(err, res) {
-                if (err) done.fail(err);
-                expect(res.body.name).toEqual('Tsuutina Translation');
+            models.Project.findAll().then(results => {
+              expect(results.length).toEqual(1);
 
-                models.Project.findAll().then(results => {
-                  expect(results.length).toEqual(2);
-                  done();
-                }).catch(err => {
-                  done.fail(err);
+              request(app)
+                .post('/project')
+                .send({
+                  token: token,
+                  organizationId: organization.id,
+                  name: 'Tsuutina Translation'
+                })
+                .set('Accept', 'application/json')
+                .expect('Content-Type', /json/)
+                .expect(201)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  expect(res.body.name).toEqual('Tsuutina Translation');
+
+                  models.Project.findAll().then(results => {
+                    expect(results.length).toEqual(2);
+                    done();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
                 });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('allows organization member to add a new record to the database', done => {
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          memberAgent.save().then(results => {
+            memberAgent.addOrganization(organization).then(results => {
+              models.Project.findAll().then(results => {
+                expect(results.length).toEqual(1);
+
+                let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+                request(app)
+                  .post('/project')
+                  .send({
+                    token: newToken,
+                    organizationId: organization.id,
+                    name: 'Tsuutina Translation'
+                  })
+                  .set('Accept', 'application/json')
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    expect(res.body.name).toEqual('Tsuutina Translation');
+
+                    models.Project.findAll().then(results => {
+                      expect(results.length).toEqual(2);
+                      done();
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
+              }).catch(err => {
+                done.fail(err);
               });
+            }).catch(err => {
+              done.fail(err);
+            });
           }).catch(err => {
             done.fail(err);
           });
@@ -135,29 +181,71 @@ describe('projectSpec', () => {
       });
  
       describe('update', () => {
-        it('updates an existing record in the database', done => {
-          request(app)
-            .put('/project')
-            .send({
-              token: token,
-              id: project.id,
-              name: 'Tsuutina Mark Translation'
-            })
-            .set('Accept', 'application/json')
-            .expect('Content-Type', /json/)
-            .expect(201)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              expect(res.body.name).toEqual('Tsuutina Mark Translation');
- 
-              models.Project.findOne({ where: { id: project.id }}).then(results => {
-                expect(results.name).toEqual('Tsuutina Mark Translation');
-                expect(results.email).toEqual(project.email);
-                done();
-              }).catch(err => {
-                done.fail(err);
+        it('allows an organization creator to update an existing record in the database', done => {
+          organization.getCreator().then(creator => {
+            expect(creator.email).toEqual(agent.email);
+            expect(project.organizationId).toEqual(organization.id);
+
+            request(app)
+              .put('/project')
+              .send({
+                token: token,
+                id: project.id,
+                name: 'Tsuutina Mark Translation'
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(201)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                expect(res.body.name).toEqual('Tsuutina Mark Translation');
+
+                models.Project.findOne({ where: { id: project.id }}).then(results => {
+                  expect(results.name).toEqual('Tsuutina Mark Translation');
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
               });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('allows an organization member to update an existing record in the database', done => {
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          memberAgent.save().then(results => {
+            memberAgent.addOrganization(organization).then(results => {
+
+              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+
+              request(app)
+                .put('/project')
+                .send({
+                  token: newToken,
+                  id: project.id,
+                  name: 'Tsuutina Mark Translation'
+                })
+                .set('Accept', 'application/json')
+                .expect('Content-Type', /json/)
+                .expect(201)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  expect(res.body.name).toEqual('Tsuutina Mark Translation');
+
+                  models.Project.findOne({ where: { id: project.id }}).then(results => {
+                    expect(results.name).toEqual('Tsuutina Mark Translation');
+                    done();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
+                });
+            }).catch(err => {
+              done.fail(err);
             });
+          }).catch(err => {
+            done.fail(err);
+          });
         });
 
         it('doesn\'t barf if project doesn\'t exist', done => {
@@ -179,194 +267,289 @@ describe('projectSpec', () => {
         });
       });
 
-//      describe('delete', () => {
-//        it('removes an existing record from the database', done => {
-//          request(app)
-//            .delete('/project')
-//            .send({
-//              token: token,
-//              id: project.id,
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('Project deleted');
-//              done();
-//            });
-//        });
-//
-//        it('doesn\'t barf if project doesn\'t exist', done => {
-//          request(app)
-//            .delete('/project')
-//            .send({
-//              token: token,
-//              id: 111,
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('No such project');
-//              done();
-//            });
-//        });
-//      });
+      describe('delete', () => {
+        it('allows organization creator to remove an existing record from the database', done => {
+          organization.getCreator().then(creator => {
+            expect(creator.email).toEqual(agent.email);
+            expect(project.organizationId).toEqual(organization.id);
+
+            request(app)
+              .delete('/project')
+              .send({
+                token: token,
+                id: project.id,
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                expect(res.body.message).toEqual('Project deleted');
+                models.Project.findAll().then(results => {
+                  expect(results.length).toEqual(0);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('does not allow organization member to remove an existing record from the database', done => {
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          memberAgent.save().then(results => {
+            memberAgent.addOrganization(organization).then(results => {
+
+              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+              request(app)
+                .delete('/project')
+                .send({
+                  token: newToken,
+                  id: project.id,
+                })
+                .set('Accept', 'application/json')
+                .expect('Content-Type', /json/)
+                .expect(401)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  expect(res.body.message).toEqual('Unauthorized: Invalid token');
+                  models.Project.findAll().then(results => {
+                    expect(results.length).toEqual(1);
+                    done();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
+                });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('doesn\'t barf if project doesn\'t exist', done => {
+          request(app)
+            .delete('/project')
+            .send({
+              token: token,
+              id: 111,
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such project');
+              done();
+            });
+        });
+      });
     });
 
     describe('unknown', () => {
-//      let newToken;
-//      beforeEach(done => {
-//        newToken = jwt.sign({ email: 'brandnewproject@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
-//        done();
-//      });
-//
-//      describe('create', () => {
-//        it('returns 500', done => {
-//          request(app)
-//            .post('/project')
-//            .send({
-//              token: newToken,
-//              name: 'One Book Canada' 
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(500)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.errors.length).toEqual(1);
-//              expect(res.body.errors[0].message).toEqual('Project.creatorId cannot be null');
-//
-//              done();
-//            });
-//        });
-//
-//        it('does not add a new record to the database', done => {
-//          models.Project.findAll().then(results => {
-//            expect(results.length).toEqual(1);
-//
-//            request(app)
-//              .post('/project')
-//              .send({
-//                token: newToken,
-//                name: 'One Book Canada' 
-//              })
-//              .set('Accept', 'application/json')
-//              .expect('Content-Type', /json/)
-//              .expect(500)
-//              .end(function(err, res) {
-//                if (err) done.fail(err);
-//                models.Project.findAll().then(results => {
-//                  expect(results.length).toEqual(1);
-//                  done();
-//                }).catch(err => {
-//                  done.fail(err);
-//                });
-//              });
-//          }).catch(err => {
-//            done.fail(err);
-//          });
-//        });
-//      });
+      let newToken;
+      beforeEach(done => {
+        newToken = jwt.sign({ email: 'unknownagent@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        done();
+      });
+
+      describe('create', () => {
+        it('returns 401', done => {
+          request(app)
+            .post('/project')
+            .send({
+              token: newToken,
+              organizationId: organization.id,
+              name: 'Cree Translation Team'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+
+              done();
+            });
+        });
+
+        it('does not add a new record to the database', done => {
+          models.Project.findAll().then(results => {
+            expect(results.length).toEqual(1);
+
+            request(app)
+              .post('/project')
+              .send({
+                token: newToken,
+                organizationId: organization.id,
+                name: 'Cree Translation Team'
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(401)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                models.Project.findAll().then(results => {
+                  expect(results.length).toEqual(1);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+      });
     });
 
     describe('unauthorized', () => {
-//
-//      let wrongToken;
-//      beforeEach(done => {
-//        wrongToken = jwt.sign({ email: 'unauthorizedproject@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
-//        done();
-//      });
-//
-//      describe('update', () => {
-//        it('returns 401', done => {
-//          request(app)
-//            .put('/project')
-//            .send({
-//              token: wrongToken,
-//              id: project.id,
-//              name: 'Some Cool Guy'
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('Unauthorized: Invalid token');
-//              done();
-//            });
-//        });
-//
-//        it('does not change the record in the database', done => {
-//          request(app)
-//            .put('/project')
-//            .send({
-//              token: wrongToken,
-//              id: project.id,
-//              name: 'Some Cool Guy'
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              models.Project.findOne({ where: { id: project.id }}).then(results => {
-//                expect(results.name).toEqual(project.name);
-//                done();
-//              }).catch(err => {
-//                done.fail(err);
-//              });
-//            });
-//        });
-//      });
-//
-//      describe('delete', () => {
-//        it('returns 401', done => {
-//          request(app)
-//            .delete('/project')
-//            .send({
-//              token: wrongToken,
-//              id: project.id
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-//                done();
-//              });
-//        });
-//
-//        it('does not remove the record from the database', done => {
-//          models.Project.findAll().then(results => {
-//            expect(results.length).toEqual(1);
-//
-//            request(app)
-//              .delete('/project')
-//              .send({
-//                token: wrongToken,
-//                id: project.id
-//              })
-//              .set('Accept', 'application/json')
-//              .expect('Content-Type', /json/)
-//              .expect(401)
-//              .end(function(err, res) {
-//                if (err) done.fail(err);
-//                models.Project.findAll().then(results => {
-//                  expect(results.length).toEqual(1);
-//                  done();
-//                }).catch(err => {
-//                  done.fail(err);
-//                });
-//              });
-//          }).catch(err => {
-//            done.fail(err);
-//          });
-//        });
-//      });
+
+      let wrongToken;
+      beforeEach(done => {
+        wrongToken = jwt.sign({ email: 'unauthorizedproject@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        done();
+      });
+
+      describe('create', () => {
+        it('returns 401', done => {
+          request(app)
+            .post('/project')
+            .send({
+              token: wrongToken,
+              organizationId: organization.id,
+              name: 'Cree Translation Team'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+
+              done();
+            });
+        });
+
+        it('does not add a new record to the database', done => {
+          models.Project.findAll().then(results => {
+            expect(results.length).toEqual(1);
+
+            request(app)
+              .post('/project')
+              .send({
+                token: wrongToken,
+                organizationId: organization.id,
+                name: 'Cree Translation Team'
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(401)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                models.Project.findAll().then(results => {
+                  expect(results.length).toEqual(1);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+      });
+
+      describe('update', () => {
+        it('returns 401', done => {
+          request(app)
+            .put('/project')
+            .send({
+              token: wrongToken,
+              id: project.id,
+              name: 'Mark Cree Translation'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
+        });
+
+        it('does not change the record in the database', done => {
+          request(app)
+            .put('/project')
+            .send({
+              token: wrongToken,
+              id: project.id,
+              name: 'Mark Cree Translation'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              models.Project.findOne({ where: { id: project.id }}).then(results => {
+                expect(results.name).toEqual(project.name);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+        });
+      });
+
+      describe('delete', () => {
+        it('returns 401', done => {
+          request(app)
+            .delete('/project')
+            .send({
+              token: wrongToken,
+              id: project.id
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+                expect(res.body.message).toEqual('Unauthorized: Invalid token');
+                done();
+              });
+        });
+
+        it('does not remove the record from the database', done => {
+          models.Project.findAll().then(results => {
+            expect(results.length).toEqual(1);
+
+            request(app)
+              .delete('/project')
+              .send({
+                token: wrongToken,
+                id: project.id
+              })
+              .set('Accept', 'application/json')
+              .expect('Content-Type', /json/)
+              .expect(401)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                models.Project.findAll().then(results => {
+                  expect(results.length).toEqual(1);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+      });
     });
   });
 

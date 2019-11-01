@@ -21,37 +21,50 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 
 router.post('/', jwtAuth, function(req, res, next) {
   delete req.body.token;
-//  req.body.creatorId = req.user.id;
-  let project = new models.Project(req.body);
-  project.save().then(result => {
-    res.status(201).json(result);
+  models.Organization.findOne({ where: { id: req.body.organizationId } }).then(organization => {
+    organization.getAgents({attributes: ['email']}).then(agents => {
+      // 2019-11-1 https://github.com/sequelize/sequelize/issues/6950#issuecomment-373937803
+      // Sequelize doesn't return a flat array
+      agents = agents.map(agent => agent.email);
+      organization.getCreator().then(creator => {
+
+        if (creator.email !== req.user.email && !agents.includes(req.user.email)) {
+          return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+        }
+
+        let project = new models.Project(req.body);
+        project.save().then(result => {
+          res.status(201).json(result);
+        }).catch(err => {
+          let status = 500;
+          if (err instanceof models.Sequelize.UniqueConstraintError) {
+            status = 200;
+          }
+          res.status(status).json(err);
+        });
+      }).catch(err => {
+        res.status(500).json(err);
+      });
+    }).catch(err => {
+      res.json(err);
+    });
   }).catch(err => {
-    let status = 500;
-    if (err instanceof models.Sequelize.UniqueConstraintError) {
-      status = 200;
-    }
-    res.status(status).json(err);
+    res.json(err);
   });
 });
 
 router.put('/', jwtAuth, function(req, res, next) {
-  models.Project.findOne({where: {id: req.body.id}}, {
-//    include: [
-//      {
-//        model: models.Organization,
-//        required: true,
-//      }
-//    ]
-  }).then(project => {
+  models.Project.findOne({where: {id: req.body.id}}).then(project => {
     if (!project) {
       return res.json( { message: 'No such project' });
     }
     project.getOrganization().then(organization => {
       
-      organization.getAgents({attributes: ['id']}).then(agents => {
+      organization.getAgents({attributes: ['email']}).then(agents => {
+        agents = agents.map(agent => agent.email);
         organization.getCreator().then(creator => {
 
-          if (creator.email !== req.user.email && !agents.include(req.user.id)) {
+          if (creator.email !== req.user.email && !agents.includes(req.user.email)) {
             return res.status(401).json( { message: 'Unauthorized: Invalid token' });
           }
           for (let key in req.body) {
@@ -84,18 +97,24 @@ router.delete('/', jwtAuth, function(req, res, next) {
       return res.json( { message: 'No such project' });
     }
 
-    project.getCreator().then(creator => {
-      if (req.user.email !== creator.email) {
-        return res.status(401).json( { message: 'Unauthorized: Invalid token' });
-      }
-  
-      project.destroy().then(results => {
-        res.json( { message: 'Project deleted' });
+    project.getOrganization().then(organization => {
+
+      organization.getCreator().then(creator => {
+
+        if (creator.email !== req.user.email) {
+          return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+        }
+
+        project.destroy().then(results => {
+          res.json({ message: 'Project deleted' });
+        }).catch(err => {
+          res.json(err);
+        });
       }).catch(err => {
-        res.json(err);
-      });   
+        res.status(500).json(err);
+      });
     }).catch(err => {
-      res.json(err);
+      res.status(500).json(err);
     });
   }).catch(err => {
     res.json(err);
