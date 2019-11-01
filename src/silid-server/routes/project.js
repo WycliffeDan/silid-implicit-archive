@@ -35,7 +35,6 @@ router.post('/', jwtAuth, function(req, res, next) {
 });
 
 router.put('/', jwtAuth, function(req, res, next) {
-console.log('WORD UP');
   models.Project.findOne({where: {id: req.body.id}}, {
 //    include: [
 //      {
@@ -48,11 +47,9 @@ console.log('WORD UP');
       return res.json( { message: 'No such project' });
     }
     project.getOrganization().then(organization => {
-      console.log(organization);
       
-      organization.getAgents({attributes: ['id']})).then(agents => {
+      organization.getAgents({attributes: ['id']}).then(agents => {
         organization.getCreator().then(creator => {
-          console.log(creator);
 
           if (creator.email !== req.user.email && !agents.include(req.user.id)) {
             return res.status(401).json( { message: 'Unauthorized: Invalid token' });

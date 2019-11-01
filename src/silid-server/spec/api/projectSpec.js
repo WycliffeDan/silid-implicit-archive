@@ -147,7 +147,6 @@ describe('projectSpec', () => {
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
-console.log(err);
               if (err) done.fail(err);
               expect(res.body.name).toEqual('Tsuutina Mark Translation');
  
@@ -161,23 +160,23 @@ console.log(err);
             });
         });
 
-//        it('doesn\'t barf if project doesn\'t exist', done => {
-//          request(app)
-//            .put('/project')
-//            .send({
-//              token: token,
-//              id: 111,
-//              name: 'Some Guy' 
-//            })
-//            .set('Accept', 'application/json')
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('No such project');
-//              done();
-//            });
-//        });
+        it('doesn\'t barf if project doesn\'t exist', done => {
+          request(app)
+            .put('/project')
+            .send({
+              token: token,
+              id: 111,
+              name: 'Tsuutina Mark Translation'
+            })
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such project');
+              done();
+            });
+        });
       });
 
 //      describe('delete', () => {
