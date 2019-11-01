@@ -30,7 +30,6 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'CASCADE'
     });
 
-
     Project.belongsToMany(models.Agent, {
       through: 'agent_project'
     });
