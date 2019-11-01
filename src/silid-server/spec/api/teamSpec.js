@@ -5,9 +5,9 @@ const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
 
-describe('projectSpec', () => {
+describe('teamSpec', () => {
 
-  let project, organization, agent;
+  let team, organization, agent;
   beforeEach(done => {
     models.sequelize.sync({force: true}).then(() => {
       fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, models).then(() => {
@@ -16,9 +16,9 @@ describe('projectSpec', () => {
           fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, models).then(() => {
             models.Organization.findAll().then(results => {
               organization = results[0];
-              fixtures.loadFile(`${__dirname}/../fixtures/projects.json`, models).then(() => {
-                models.Project.findAll().then(results => {
-                  project = results[0];
+              fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, models).then(() => {
+                models.Team.findAll().then(results => {
+                  team = results[0];
                   done();
                 }).catch(err => {
                   done.fail(err);
@@ -58,11 +58,11 @@ describe('projectSpec', () => {
           organization.getCreator().then(creator => {
             expect(creator.email).toEqual(agent.email);
 
-            models.Project.findAll().then(results => {
+            models.Team.findAll().then(results => {
               expect(results.length).toEqual(1);
 
               request(app)
-                .post('/project')
+                .post('/team')
                 .send({
                   token: token,
                   organizationId: organization.id,
@@ -75,7 +75,7 @@ describe('projectSpec', () => {
                   if (err) done.fail(err);
                   expect(res.body.name).toEqual('Tsuutina Translation');
 
-                  models.Project.findAll().then(results => {
+                  models.Team.findAll().then(results => {
                     expect(results.length).toEqual(2);
                     done();
                   }).catch(err => {
@@ -94,12 +94,12 @@ describe('projectSpec', () => {
           let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
-              models.Project.findAll().then(results => {
+              models.Team.findAll().then(results => {
                 expect(results.length).toEqual(1);
 
                 let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
                 request(app)
-                  .post('/project')
+                  .post('/team')
                   .send({
                     token: newToken,
                     organizationId: organization.id,
@@ -112,7 +112,7 @@ describe('projectSpec', () => {
                     if (err) done.fail(err);
                     expect(res.body.name).toEqual('Tsuutina Translation');
 
-                    models.Project.findAll().then(results => {
+                    models.Team.findAll().then(results => {
                       expect(results.length).toEqual(2);
                       done();
                     }).catch(err => {
@@ -132,11 +132,11 @@ describe('projectSpec', () => {
 
         it('returns an error if record already exists', done => {
           request(app)
-            .post('/project')
+            .post('/team')
             .send({
               token: token,
               organizationId: organization.id, 
-              name: project.name 
+              name: team.name 
             })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
@@ -144,7 +144,7 @@ describe('projectSpec', () => {
             .end(function(err, res) {
               if (err) done.fail(err);
               expect(res.body.errors.length).toEqual(1);
-              expect(res.body.errors[0].message).toEqual('That project is already registered');
+              expect(res.body.errors[0].message).toEqual('That team is already registered');
               done();
             });
         });
@@ -153,28 +153,28 @@ describe('projectSpec', () => {
       describe('read', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
-            .get(`/project/${project.id}`)
+            .get(`/team/${team.id}`)
             .send({ token: token })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-              expect(res.body.email).toEqual(project.email);
+              expect(res.body.email).toEqual(team.email);
               done();
             });
         });
 
         it('doesn\'t barf if record doesn\'t exist', done => {
           request(app)
-            .get('/project/33')
+            .get('/team/33')
             .send({ token: token })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-              expect(res.body.message).toEqual('No such project');
+              expect(res.body.message).toEqual('No such team');
               done();
             });
         });
@@ -184,13 +184,13 @@ describe('projectSpec', () => {
         it('allows an organization creator to update an existing record in the database', done => {
           organization.getCreator().then(creator => {
             expect(creator.email).toEqual(agent.email);
-            expect(project.organizationId).toEqual(organization.id);
+            expect(team.organizationId).toEqual(organization.id);
 
             request(app)
-              .put('/project')
+              .put('/team')
               .send({
                 token: token,
-                id: project.id,
+                id: team.id,
                 name: 'Tsuutina Mark Translation'
               })
               .set('Accept', 'application/json')
@@ -200,7 +200,7 @@ describe('projectSpec', () => {
                 if (err) done.fail(err);
                 expect(res.body.name).toEqual('Tsuutina Mark Translation');
 
-                models.Project.findOne({ where: { id: project.id }}).then(results => {
+                models.Team.findOne({ where: { id: team.id }}).then(results => {
                   expect(results.name).toEqual('Tsuutina Mark Translation');
                   done();
                 }).catch(err => {
@@ -220,10 +220,10 @@ describe('projectSpec', () => {
               let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
 
               request(app)
-                .put('/project')
+                .put('/team')
                 .send({
                   token: newToken,
-                  id: project.id,
+                  id: team.id,
                   name: 'Tsuutina Mark Translation'
                 })
                 .set('Accept', 'application/json')
@@ -233,7 +233,7 @@ describe('projectSpec', () => {
                   if (err) done.fail(err);
                   expect(res.body.name).toEqual('Tsuutina Mark Translation');
 
-                  models.Project.findOne({ where: { id: project.id }}).then(results => {
+                  models.Team.findOne({ where: { id: team.id }}).then(results => {
                     expect(results.name).toEqual('Tsuutina Mark Translation');
                     done();
                   }).catch(err => {
@@ -248,9 +248,9 @@ describe('projectSpec', () => {
           });
         });
 
-        it('doesn\'t barf if project doesn\'t exist', done => {
+        it('doesn\'t barf if team doesn\'t exist', done => {
           request(app)
-            .put('/project')
+            .put('/team')
             .send({
               token: token,
               id: 111,
@@ -261,7 +261,7 @@ describe('projectSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-              expect(res.body.message).toEqual('No such project');
+              expect(res.body.message).toEqual('No such team');
               done();
             });
         });
@@ -271,21 +271,21 @@ describe('projectSpec', () => {
         it('allows organization creator to remove an existing record from the database', done => {
           organization.getCreator().then(creator => {
             expect(creator.email).toEqual(agent.email);
-            expect(project.organizationId).toEqual(organization.id);
+            expect(team.organizationId).toEqual(organization.id);
 
             request(app)
-              .delete('/project')
+              .delete('/team')
               .send({
                 token: token,
-                id: project.id,
+                id: team.id,
               })
               .set('Accept', 'application/json')
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
                 if (err) done.fail(err);
-                expect(res.body.message).toEqual('Project deleted');
-                models.Project.findAll().then(results => {
+                expect(res.body.message).toEqual('Team deleted');
+                models.Team.findAll().then(results => {
                   expect(results.length).toEqual(0);
                   done();
                 }).catch(err => {
@@ -304,10 +304,10 @@ describe('projectSpec', () => {
 
               let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
               request(app)
-                .delete('/project')
+                .delete('/team')
                 .send({
                   token: newToken,
-                  id: project.id,
+                  id: team.id,
                 })
                 .set('Accept', 'application/json')
                 .expect('Content-Type', /json/)
@@ -315,7 +315,7 @@ describe('projectSpec', () => {
                 .end(function(err, res) {
                   if (err) done.fail(err);
                   expect(res.body.message).toEqual('Unauthorized: Invalid token');
-                  models.Project.findAll().then(results => {
+                  models.Team.findAll().then(results => {
                     expect(results.length).toEqual(1);
                     done();
                   }).catch(err => {
@@ -330,9 +330,9 @@ describe('projectSpec', () => {
           });
         });
 
-        it('doesn\'t barf if project doesn\'t exist', done => {
+        it('doesn\'t barf if team doesn\'t exist', done => {
           request(app)
-            .delete('/project')
+            .delete('/team')
             .send({
               token: token,
               id: 111,
@@ -342,7 +342,7 @@ describe('projectSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
-              expect(res.body.message).toEqual('No such project');
+              expect(res.body.message).toEqual('No such team');
               done();
             });
         });
@@ -359,7 +359,7 @@ describe('projectSpec', () => {
       describe('create', () => {
         it('returns 401', done => {
           request(app)
-            .post('/project')
+            .post('/team')
             .send({
               token: newToken,
               organizationId: organization.id,
@@ -377,11 +377,11 @@ describe('projectSpec', () => {
         });
 
         it('does not add a new record to the database', done => {
-          models.Project.findAll().then(results => {
+          models.Team.findAll().then(results => {
             expect(results.length).toEqual(1);
 
             request(app)
-              .post('/project')
+              .post('/team')
               .send({
                 token: newToken,
                 organizationId: organization.id,
@@ -392,7 +392,7 @@ describe('projectSpec', () => {
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
-                models.Project.findAll().then(results => {
+                models.Team.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
                 }).catch(err => {
@@ -410,14 +410,14 @@ describe('projectSpec', () => {
 
       let wrongToken;
       beforeEach(done => {
-        wrongToken = jwt.sign({ email: 'unauthorizedproject@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        wrongToken = jwt.sign({ email: 'unauthorizedteam@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
         done();
       });
 
       describe('create', () => {
         it('returns 401', done => {
           request(app)
-            .post('/project')
+            .post('/team')
             .send({
               token: wrongToken,
               organizationId: organization.id,
@@ -435,11 +435,11 @@ describe('projectSpec', () => {
         });
 
         it('does not add a new record to the database', done => {
-          models.Project.findAll().then(results => {
+          models.Team.findAll().then(results => {
             expect(results.length).toEqual(1);
 
             request(app)
-              .post('/project')
+              .post('/team')
               .send({
                 token: wrongToken,
                 organizationId: organization.id,
@@ -450,7 +450,7 @@ describe('projectSpec', () => {
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
-                models.Project.findAll().then(results => {
+                models.Team.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
                 }).catch(err => {
@@ -466,10 +466,10 @@ describe('projectSpec', () => {
       describe('update', () => {
         it('returns 401', done => {
           request(app)
-            .put('/project')
+            .put('/team')
             .send({
               token: wrongToken,
-              id: project.id,
+              id: team.id,
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
@@ -484,10 +484,10 @@ describe('projectSpec', () => {
 
         it('does not change the record in the database', done => {
           request(app)
-            .put('/project')
+            .put('/team')
             .send({
               token: wrongToken,
-              id: project.id,
+              id: team.id,
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
@@ -495,8 +495,8 @@ describe('projectSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
-              models.Project.findOne({ where: { id: project.id }}).then(results => {
-                expect(results.name).toEqual(project.name);
+              models.Team.findOne({ where: { id: team.id }}).then(results => {
+                expect(results.name).toEqual(team.name);
                 done();
               }).catch(err => {
                 done.fail(err);
@@ -508,10 +508,10 @@ describe('projectSpec', () => {
       describe('delete', () => {
         it('returns 401', done => {
           request(app)
-            .delete('/project')
+            .delete('/team')
             .send({
               token: wrongToken,
-              id: project.id
+              id: team.id
             })
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
@@ -524,21 +524,21 @@ describe('projectSpec', () => {
         });
 
         it('does not remove the record from the database', done => {
-          models.Project.findAll().then(results => {
+          models.Team.findAll().then(results => {
             expect(results.length).toEqual(1);
 
             request(app)
-              .delete('/project')
+              .delete('/team')
               .send({
                 token: wrongToken,
-                id: project.id
+                id: team.id
               })
               .set('Accept', 'application/json')
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
-                models.Project.findAll().then(results => {
+                models.Team.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
                 }).catch(err => {
@@ -557,7 +557,7 @@ describe('projectSpec', () => {
     it('returns 401 if provided an expired token', done => {
       const expiredToken = jwt.sign({ email: agent.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.SECRET, { expiresIn: '1h' });
       request(app)
-        .get('/project')
+        .get('/team')
         .send({ token: expiredToken })
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
@@ -571,7 +571,7 @@ describe('projectSpec', () => {
 
     it('returns 401 if provided no token', done => {
       request(app)
-        .get('/project')
+        .get('/team')
         .send({})
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)

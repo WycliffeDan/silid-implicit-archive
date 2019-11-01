@@ -1,6 +1,6 @@
 [
   {
-    "model": "Project",
+    "model": "Team",
     "data": {
       "name": "Codename: Mario",
       "organization": {

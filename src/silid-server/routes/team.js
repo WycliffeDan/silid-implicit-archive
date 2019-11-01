@@ -3,15 +3,15 @@ const router = express.Router();
 const jwtAuth = require('../lib/jwtAuth');
 const models = require('../models');
 
-/* GET project listing. */
+/* GET team listing. */
 router.get('/', jwtAuth, function(req, res, next) {
   res.send('respond with a resource');
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
-  models.Project.findOne({ where: { id: req.params.id } }).then(result => {
+  models.Team.findOne({ where: { id: req.params.id } }).then(result => {
     if (!result) {
-      result = { message: 'No such project' };
+      result = { message: 'No such team' };
     }
     res.json(result);
   }).catch(err => {
@@ -32,8 +32,8 @@ router.post('/', jwtAuth, function(req, res, next) {
           return res.status(401).json( { message: 'Unauthorized: Invalid token' });
         }
 
-        let project = new models.Project(req.body);
-        project.save().then(result => {
+        let team = new models.Team(req.body);
+        team.save().then(result => {
           res.status(201).json(result);
         }).catch(err => {
           let status = 500;
@@ -54,11 +54,11 @@ router.post('/', jwtAuth, function(req, res, next) {
 });
 
 router.put('/', jwtAuth, function(req, res, next) {
-  models.Project.findOne({where: {id: req.body.id}}).then(project => {
-    if (!project) {
-      return res.json( { message: 'No such project' });
+  models.Team.findOne({where: {id: req.body.id}}).then(team => {
+    if (!team) {
+      return res.json( { message: 'No such team' });
     }
-    project.getOrganization().then(organization => {
+    team.getOrganization().then(organization => {
       
       organization.getAgents({attributes: ['email']}).then(agents => {
         agents = agents.map(agent => agent.email);
@@ -68,11 +68,11 @@ router.put('/', jwtAuth, function(req, res, next) {
             return res.status(401).json( { message: 'Unauthorized: Invalid token' });
           }
           for (let key in req.body) {
-            if (project[key]) {
-              project[key] = req.body[key];
+            if (team[key]) {
+              team[key] = req.body[key];
             }
           }
-          project.save().then(result => {
+          team.save().then(result => {
             res.status(201).json(result);
           }).catch(err => {
             res.status(500).json(err);
@@ -92,12 +92,12 @@ router.put('/', jwtAuth, function(req, res, next) {
 });
 
 router.delete('/', jwtAuth, function(req, res, next) {
-  models.Project.findOne({ where: { id: req.body.id } }).then(project => {
-    if (!project) {
-      return res.json( { message: 'No such project' });
+  models.Team.findOne({ where: { id: req.body.id } }).then(team => {
+    if (!team) {
+      return res.json( { message: 'No such team' });
     }
 
-    project.getOrganization().then(organization => {
+    team.getOrganization().then(organization => {
 
       organization.getCreator().then(creator => {
 
@@ -105,8 +105,8 @@ router.delete('/', jwtAuth, function(req, res, next) {
           return res.status(401).json( { message: 'Unauthorized: Invalid token' });
         }
 
-        project.destroy().then(results => {
-          res.json({ message: 'Project deleted' });
+        team.destroy().then(results => {
+          res.json({ message: 'Team deleted' });
         }).catch(err => {
           res.json(err);
         });
