@@ -7,6 +7,7 @@ identity-react
 ## Setup
 
 ```
+cp .env.example .env
 npm install
 ```
 
