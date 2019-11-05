@@ -17,4 +17,10 @@ npm install
 npm start
 ```
 
+## Test
 
+For the moment, the dev server needs to be running (as above: `npm start`). Execute `cypress` tests:
+
+```
+npx cypress run
+```

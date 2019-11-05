@@ -11,10 +11,10 @@ context('Example Cypress TodoMVC test', () => {
   })
 
   describe('CRA', () => {
-    it('shows learn link', function () {
+    it('shows login link', function () {
       cy.visit('http://localhost:3000')
-      cy.get('.App-link').should('be.visible')
-        .and('have.text', 'Learn React')
+      cy.get('#login-button').should('be.visible')
+        .and('have.text', 'Log in')
     })
   })
 
@@ -31,3 +31,5 @@ context('Example Cypress TodoMVC test', () => {
   // https://github.com/cypress-io/cypress-example-kitchensink
   // https://on.cypress.io/writing-your-first-test
 })
+
+export {}
