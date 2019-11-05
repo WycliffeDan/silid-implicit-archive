@@ -2,7 +2,7 @@
 // https://on.cypress.io/intelligent-code-completion
 /// <reference types="Cypress" />
 
-context('Example Cypress TodoMVC test', () => {
+context('Landing page', () => {
   beforeEach(() => {
     // usually we recommend setting baseUrl in cypress.json
     // but for simplicity of this example we just use it here
@@ -10,20 +10,13 @@ context('Example Cypress TodoMVC test', () => {
     //cy.visit('http://todomvc.com/examples/vue/')
   })
 
-  describe('CRA', () => {
+  describe('unauthenticated', () => {
     it('shows login link', function () {
       cy.visit('http://localhost:3000')
       cy.get('#login-button').should('be.visible')
         .and('have.text', 'Log in')
     })
   })
-
-//  it('adds 2 todos', function () {
-//    cy.get('.new-todo')
-//      .type('learn testing{enter}')
-//      .type('be cool{enter}')
-//    cy.get('.todo-list li').should('have.length', 2)
-//  })
 
   // more examples
   //
