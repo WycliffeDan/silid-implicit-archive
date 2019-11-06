@@ -36,7 +36,7 @@ docker run --rm -it -v $PWD:/e2e -w /e2e --network host cypress/included:3.3.1
 Or, better yet:
 
 ```
-npm test:headless
+npm run test:headless
 ```
 
 Some helpful (but not entirely applicable) info can be found here: https://www.cypress.io/blog/2019/05/02/run-cypress-with-a-single-docker-command/
