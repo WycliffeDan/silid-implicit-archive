@@ -14,7 +14,7 @@ context('Landing page', () => {
     it('shows login link', function () {
       cy.visit('http://localhost:3000')
       cy.get('#login-button').should('be.visible')
-        .and('have.text', 'Log in')
+        .and('have.text', 'Login')
     })
   })
 

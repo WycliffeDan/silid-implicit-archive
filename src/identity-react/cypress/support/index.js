@@ -13,4 +13,17 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
+
+
+// Delete window.fetch on every window load
+//Cypress.on('window:before:load', win => {
+//  delete win.fetch;
+////  win.fetch = require('react-app-polyfill/stable');
+//  Cypress.log({
+//    name: 'Deleting Fetch',
+//  });
+//
+////  win.fetch = require('whatwg-fetch');
+//});
+
 import './login'
