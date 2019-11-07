@@ -45,7 +45,7 @@ function App() {
             Identity
           </Typography>
           {!isAuthenticated && (
-        <Button id="login-button" color="inherit" onClick={() => loginWithRedirect({})}>Log in</Button>
+        <Button id="login-button" color="inherit" onClick={() => loginWithRedirect({})}>Login</Button>
       )}
           {/* <Button color="inherit">Login</Button> */}
         </Toolbar>
