@@ -8,7 +8,7 @@ const NavBar = () => {
 
   return (
     <div>
-      {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
+      {isAuthenticated && <button onClick={() => logout()}>Logout</button>}
       {isAuthenticated && (
         <span>
           <Link to="/">Home</Link>&nbsp;
