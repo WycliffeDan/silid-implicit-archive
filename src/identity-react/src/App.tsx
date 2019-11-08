@@ -2,7 +2,7 @@
 // See: https://auth0.com/docs/quickstart/spa/react/01-login
 import React from 'react';
 import { BrowserRouter, Route } from 'react-router-dom';
-import Home from './home/Home';
+import Home from './routes/Home';
 import Auth from './auth/Auth';
 import Callback from './callback/Callback';
 import { parseQuery } from './utils/parseQuery';
@@ -27,23 +27,6 @@ function App() {
 
   return (
     <div className="App">
-<<<<<<< Updated upstream
-           <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            Identity
-          </Typography>
-          {!isAuthenticated && (
-        <Button id="login-button" color="inherit" onClick={() => loginWithRedirect({})}>Log in</Button>
-      )}
-          {/* <Button color="inherit">Login</Button> */}
-        </Toolbar>
-      </AppBar>
-=======
->>>>>>> Stashed changes
       <BrowserRouter>
       <Route
           path="/"
