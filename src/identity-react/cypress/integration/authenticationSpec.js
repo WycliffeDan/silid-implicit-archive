@@ -9,7 +9,7 @@ context('Authentication', function() {
   });
   
   beforeEach(() => {
-    cy.visit('http://localhost:3000');
+    cy.visit('/');
   });
 
   context('first visit', () => {
@@ -33,14 +33,15 @@ context('Authentication', function() {
       cy.route({
         method: 'GET',
         //url: `*dev-sillsdev.auth0.com*`,
-        url: `https://dev-sillsdev.auth0.com/oauth/token`,
-        response: []
+        url: 'http://localhost:3000/authorize?*',
+        //url: `https://dev-sillsdev.auth0.com/oauth/token`,
+        response: 'Word up!' 
       });
-      cy.login();
-
-  cy.log('window fetch being deleted');
+//      cy.login();
 
 //      cy.contains('Login').click();
+
+      cy.visit('/callback#access_token=access_token&scope=openid&id_token=id_token&expires_in=expires_in&token_type=Bearer&state=goodinthehood');
 
 //      cy.on('window:before:load', (win) => {
 //        delete win.fetch;
