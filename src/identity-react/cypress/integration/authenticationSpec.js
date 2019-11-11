@@ -38,18 +38,13 @@ context('Authentication', function() {
     });
 
     it('displays a friendly greeting', () => {
-      //cy.contains(`Welcome ${this.profile.nickname}`);
       cy.contains('You are logged in!');
     });
-//
-//    it('renders the navbar correctly', () => {
-//      cy.get('nav a').contains('Home').and('have.attr', 'href', '/');
-//      cy.get('nav a').contains('Profile').and('have.attr', 'href', '/user');
-//      cy.get('nav a').contains('Logout').and('have.attr', 'href', '/logout');
-//    });
-//
-//    it('redirects to the Profile page', () => {
-//    });
+
+    it('renders the navbar correctly', () => {
+      cy.get('#logout-button').contains('Logout');
+      cy.get('header a').contains('Profile').and('have.attr', 'href', '/agent');
+    });
   });
 });
 
