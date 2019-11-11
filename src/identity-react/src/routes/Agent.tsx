@@ -7,14 +7,13 @@ interface IProps  {
 }
 
 const Agent = (props: IProps) => {
-  console.log('test');
+
   const { auth } = props;
 
   return (
     <div className="agent">
-      <AppBar {...props} />
       <h4>
-        Hello, everybody!!
+        Profile Page 
       </h4>
     </div>
   );

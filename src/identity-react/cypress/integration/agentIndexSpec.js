@@ -39,10 +39,8 @@ context('Agent', function() {
     });
 
     it('displays agent info', () => {
-
-      cy.get('#login-button').should('not.exist');
+      cy.get('h4').contains('Profile Page');
     });
-
   });
 });
 
