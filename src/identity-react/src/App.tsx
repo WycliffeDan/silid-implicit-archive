@@ -41,7 +41,7 @@ function App() {
             return <Callback {...props} />;
           }}
         />
-        <PrivateRoute path="/agent" component={Agent} />
+        <PrivateRoute path="/agent" auth={auth} component={Agent} />
       </BrowserRouter>
     </div>
   );
