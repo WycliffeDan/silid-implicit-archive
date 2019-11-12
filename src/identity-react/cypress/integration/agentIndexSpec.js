@@ -38,8 +38,11 @@ context('Agent', function() {
       cy.location('pathname').should('equal', '/agent');
     });
 
-    it('displays agent info', () => {
+    it('displays agent info form', () => {
       cy.get('h4').contains('Profile Page');
+      cy.get('input[name="name"][type="text"]').should('exist');
+      cy.get('input[name="email"][type="email"]').should('exist');
+      cy.get('button[type="submit"]').should('exist');
     });
   });
 });
