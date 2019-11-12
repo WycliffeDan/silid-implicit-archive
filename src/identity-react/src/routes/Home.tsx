@@ -7,7 +7,7 @@ interface IProps  {
 }
 
 const Home = (props: IProps) => {
-  console.log('test');
+
   const { auth } = props;
 
   return (

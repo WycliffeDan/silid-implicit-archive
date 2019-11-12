@@ -4,7 +4,7 @@
 
 context('Agent', function() {
 
-  before(() => {
+  before(function() {
     cy.fixture('google-auth-response.json').as('profile');
   });
   
@@ -31,15 +31,37 @@ context('Agent', function() {
     });
   });
 
-  describe('authenticated', done => {
-    beforeEach(() => {
-      cy.login();
-      cy.get('#profile-link').click();
-      cy.location('pathname').should('equal', '/agent');
-    });
+  describe('authenticated', () => {
 
-    it('displays agent info', () => {
-      cy.get('h4').contains('Profile Page');
+    context('first visit', () => {
+      beforeEach(() => {
+        cy.login();
+        cy.get('#profile-link').click();
+        cy.location('pathname').should('equal', '/agent');
+      });
+
+      it('displays agent social profile info in form', function() {
+        cy.get('h4').contains('Profile Page');
+        cy.get('input[name="name"][type="text"]').should('have.value', this.profile.displayName);
+        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.emails[0].value);
+        cy.get('button[type="submit"]').should('exist');
+      });
+
+      it('disables the Save button', () => {
+        cy.get('button[type="submit"]').should('be.disabled');
+      });
+
+      it('enables Save button when Name field changes', () => {
+        cy.get('button[type="submit"]').should('be.disabled');
+        cy.get('input[name="name"][type="text"]').type('Some Guy');
+        cy.get('button[type="submit"]').should('not.be.disabled');
+      });
+
+      it('enables Save button when Email field changes', () => {
+        cy.get('button[type="submit"]').should('be.disabled');
+        cy.get('input[name="email"][type="email"]').type('someguy@example.com');
+        cy.get('button[type="submit"]').should('not.be.disabled');
+      });
     });
   });
 });

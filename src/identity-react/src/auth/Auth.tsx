@@ -5,6 +5,7 @@ import { AUTH_CONFIG } from './auth0-variables';
 export default class Auth {
   accessToken:any;
   idToken: any;
+  profile: any;
   expiresAt: any;
 
   auth0 = new auth0.WebAuth({
@@ -12,7 +13,7 @@ export default class Auth {
     clientID: AUTH_CONFIG.clientId,
     redirectUri: AUTH_CONFIG.callbackUrl,
     responseType: 'token id_token',
-    scope: 'openid'
+    scope: 'openid email profile'
   });
 
   constructor() {
@@ -23,6 +24,7 @@ export default class Auth {
     this.getAccessToken = this.getAccessToken.bind(this);
     this.getIdToken = this.getIdToken.bind(this);
     this.renewSession = this.renewSession.bind(this);
+    this.getProfile = this.getProfile.bind(this);
   }
 
   login() {
@@ -55,6 +57,10 @@ export default class Auth {
     return this.idToken;
   }
 
+  getProfile() {
+    return this.profile;
+  }
+
   setSession(authResult:any) {
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
@@ -64,7 +70,7 @@ export default class Auth {
     localStorage.setItem('accessToken', authResult.accessToken);
     localStorage.setItem('idToken', authResult.idToken);
     localStorage.setItem('expiresAt', expiresAt.toString());
-
+    localStorage.setItem('profile', JSON.stringify(authResult.idTokenPayload));
     // navigate to the home route
     window.location.href = '/';
   }
@@ -86,6 +92,7 @@ export default class Auth {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('idToken');
+    localStorage.removeItem('profile');
     localStorage.removeItem('expiresAt');
 
     this.auth0.logout({

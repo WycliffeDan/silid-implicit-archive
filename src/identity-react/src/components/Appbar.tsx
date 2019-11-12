@@ -33,7 +33,6 @@ const useStyles = makeStyles((theme: Theme) =>
 const Home = (props: IProps) => {
   const classes = useStyles();
   const { auth } = props;
-  const preventDefault = (event: React.SyntheticEvent) => event.preventDefault();
 
   return (
     <AppBar position="static">
