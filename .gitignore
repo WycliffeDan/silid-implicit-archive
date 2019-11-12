@@ -38,3 +38,4 @@ src/identity-node/serverless.env.yaml
 
 # cypress
 **/cypress/videos/
+**/cypress/screenshots/

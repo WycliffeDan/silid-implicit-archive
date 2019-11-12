@@ -3,9 +3,11 @@
 import React from 'react';
 import { BrowserRouter, Route } from 'react-router-dom';
 import Home from './routes/Home';
+import Agent from './routes/Agent';
 import Auth from './auth/Auth';
 import Callback from './callback/Callback';
 import { parseQuery } from './utils/parseQuery';
+import PrivateRoute from './components/PrivateRoute';
 
 const auth = new Auth();
 
@@ -28,7 +30,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-      <Route
+        <Route
           path="/"
           render={props => <Home auth={auth} {...props} />}
         />
@@ -39,7 +41,8 @@ function App() {
             return <Callback {...props} />;
           }}
         />
-        </BrowserRouter>
+        <PrivateRoute path="/agent" auth={auth} component={Agent} />
+      </BrowserRouter>
     </div>
   );
 }
