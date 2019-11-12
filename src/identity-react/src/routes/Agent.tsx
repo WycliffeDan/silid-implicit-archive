@@ -1,7 +1,5 @@
 import React, { useState, FormEvent } from 'react';
 import Auth from '../auth/Auth';
-
-
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 
@@ -35,6 +33,7 @@ const Agent = (props: IProps) => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -45,7 +44,7 @@ const Agent = (props: IProps) => {
       <h4>
         Profile Page 
       </h4>
-      <form className={classes.container} onSubmit={handleSubmit}>
+      <form className={classes.container} onSubmit={handleSubmit} onChange={() => setDirty(true)}>
         <TextField
           required
           name="name"
@@ -53,6 +52,7 @@ const Agent = (props: IProps) => {
           value={name}
           className={classes.textField}
           margin="normal"
+          onChange={(e) => setName(e.target.value)}
         />
         <TextField
           required
@@ -62,10 +62,15 @@ const Agent = (props: IProps) => {
           value={email}
           className={classes.textField}
           margin="normal"
+          onChange={(e) => setEmail(e.target.value)}
         />
-        <Button type="submit" variant="contained" color="primary" className={classes.button}>
-          Save
-        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          disabled={!dirty}
+        >Save</Button>
       </form>
     </div>
   );

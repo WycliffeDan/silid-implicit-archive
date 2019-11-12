@@ -44,6 +44,22 @@ context('Agent', function() {
       cy.get('input[name="email"][type="email"]').should('exist');
       cy.get('button[type="submit"]').should('exist');
     });
+
+    it('disables the Save button', () => {
+      cy.get('button[type="submit"]').should('be.disabled');
+    });
+
+    it('enables Save button when Name field changes', () => {
+      cy.get('button[type="submit"]').should('be.disabled');
+      cy.get('input[name="name"][type="text"]').type('Some Guy');
+      cy.get('button[type="submit"]').should('not.be.disabled');
+    });
+
+    it('enables Save button when Email field changes', () => {
+      cy.get('button[type="submit"]').should('be.disabled');
+      cy.get('input[name="email"][type="email"]').type('someguy@example.com');
+      cy.get('button[type="submit"]').should('not.be.disabled');
+    });
   });
 });
 
