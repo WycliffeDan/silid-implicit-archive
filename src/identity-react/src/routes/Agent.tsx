@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react';
-import Auth from '../auth/Auth';
+//import Auth from '../auth/Auth';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 
@@ -23,16 +23,16 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface IProps  {
-  auth: Auth;
+//  auth: Auth;
 }
 
 const Agent = (props: IProps) => {
   const classes = useStyles();
 
-  const { auth } = props;
+  const profile = JSON.parse(localStorage.getItem('profile')!);
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(profile.displayName);
+  const [email, setEmail] = useState(profile.emails[0].value);
   const [dirty, setDirty] = useState(false);
 
   const handleSubmit = (event: FormEvent) => {
