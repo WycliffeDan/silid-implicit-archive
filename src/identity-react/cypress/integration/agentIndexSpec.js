@@ -5,7 +5,7 @@
 context('Agent', function() {
 
   before(function() {
-    cy.fixture('google-auth-response.json').as('profile');
+    cy.fixture('google-profile-response.json').as('profile');
   });
   
   describe('unauthenticated', done => {
@@ -42,8 +42,8 @@ context('Agent', function() {
 
       it('displays agent social profile info in form', function() {
         cy.get('h4').contains('Profile Page');
-        cy.get('input[name="name"][type="text"]').should('have.value', this.profile.displayName);
-        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.emails[0].value);
+        cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
         cy.get('button[type="submit"]').should('exist');
       });
 

@@ -8,8 +8,7 @@ Cypress.Commands.add('login', function(overrides = {}) {
     name: 'loginViaAuth0',
   });
 
-  //cy.fixture('google-auth-response.json').as('profile');
-  cy.fixture('google-auth-response.json').then(profile => {;
+  cy.fixture('google-profile-response.json').then(profile => {;
 
     cy.visit('/', {
       onBeforeLoad: (win) => {

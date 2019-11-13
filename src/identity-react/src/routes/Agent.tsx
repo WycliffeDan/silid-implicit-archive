@@ -31,8 +31,9 @@ const Agent = (props: IProps) => {
 
   const profile = JSON.parse(localStorage.getItem('profile')!);
 
-  const [name, setName] = useState(profile.displayName);
-  const [email, setEmail] = useState(profile.emails[0].value);
+  console.log(profile);
+  const [name, setName] = useState(profile.name);
+  const [email, setEmail] = useState(profile.email);
   const [dirty, setDirty] = useState(false);
 
   const handleSubmit = (event: FormEvent) => {

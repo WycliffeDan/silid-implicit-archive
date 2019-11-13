@@ -5,7 +5,7 @@
 context('Authentication', function() {
 
   before(() => {
-    cy.fixture('google-auth-response.json').as('profile');
+    cy.fixture('google-profile-response.json').as('profile');
   });
   
   describe('not logged in', done => {
