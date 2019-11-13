@@ -11,8 +11,8 @@
   "locale": "en",
   "name": "Some Guy",
   "nickname": "some_guy",
-  "nonce": "ybyHwaklaG-IOa0.ZeTY0f0mXGm-prqp",
-  "picture": "https://lh3.googleusercontent.com/-JfoGMfHz6AE/AAAAAAAAAAI/AAAAAAAAAAA/ACHi3rfINLtAnyTgBqf47DuNDkibYAHohA/photo.jpg",
-  "sub": "google-oauth2|117550430200441283810",
+  "nonce": "ybyHwaklaG-IOa0.00000000000-0000",
+  "picture": "/image/photo.jpg",
+  "sub": "google-oauth2|117550400000000000000",
   "updated_at": "2019-11-13T14:07:40.795Z"
 }
