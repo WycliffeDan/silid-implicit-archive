@@ -34,9 +34,7 @@ export default class Auth {
 
   handleAuthentication() {
     return new Promise((resolve, reject) => {
-      // const nonce = 'test';
       this.auth0.parseHash(
-        // { nonce: nonce, state: 'tAdInit' },
         (err, authResult) => {
           if (err) return reject(err);
           if (!authResult || !authResult.idTokenPayload) {
