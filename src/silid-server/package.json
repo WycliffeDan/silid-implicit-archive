@@ -21,6 +21,7 @@
     "morgan": "~1.9.1",
     "pg": "^7.12.1",
     "pg-hstore": "^2.3.3",
+    "request": "^2.88.0",
     "sequelize": "^5.21.1",
     "serverless-http": "^2.3.0"
   },
