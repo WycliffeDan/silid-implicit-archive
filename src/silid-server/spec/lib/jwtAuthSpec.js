@@ -10,30 +10,36 @@ describe('jwtAuth', function() {
   const jwt = require('jsonwebtoken');
   const jwtAuth = require('../../lib/jwtAuth');
 
-  /**
-   * 2019-11-13
-   * Sample tokens taken from:
-   *
-   * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
-   */
-  const _token = require('../fixtures/sample-auth0-access-token');
-  const _identity = require('../fixtures/sample-auth0-identity-token');
+  let _token, _identity, nock, _authHeader, scope;
+  beforeEach(() => {
+    /**
+     * 2019-11-13
+     * Sample tokens taken from:
+     *
+     * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+     */
+    _token = require('../fixtures/sample-auth0-access-token');
+    _identity = require('../fixtures/sample-auth0-identity-token');
 
-  /**
-   * Auth0 /userinfo mock
-   */
-  const nock = require('nock')
-  const _authHeader = `Bearer ${jwt.sign(_token, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
-  const scope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-      reqheaders: {
-        'Authorization': _authHeader
-      }
-    })
-    .persist()
-    .get('/userinfo')
-    .reply(200, _identity);
+    /**
+     * Auth0 /userinfo mock
+     */
+    nock = require('nock')
+    _authHeader = `Bearer ${jwt.sign(_token, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+    scope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+        reqheaders: {
+          'Authorization': _authHeader
+        }
+      })
+      .get('/userinfo')
+      .reply(200, _identity);
+  });
 
   let agent, request, response;
+
+  afterEach(() => {
+    nock.cleanAll();
+  });
 
   describe('returning visitor', () => {
     beforeEach(function(done) {

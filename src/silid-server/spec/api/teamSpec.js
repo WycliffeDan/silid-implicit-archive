@@ -7,6 +7,17 @@ const request = require('supertest');
 
 describe('teamSpec', () => {
 
+  /**
+   * 2019-11-13
+   * Sample tokens taken from:
+   *
+   * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+   */
+  const _token = require('../fixtures/sample-auth0-access-token');
+  const _identity = require('../fixtures/sample-auth0-identity-token');
+  const { header, scope } = require('../support/userinfoStub')(_token, _identity);
+  const nock = require('nock')
+
   let team, organization, agent;
   beforeEach(done => {
     models.sequelize.sync({force: true}).then(() => {
@@ -19,7 +30,14 @@ describe('teamSpec', () => {
               fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, models).then(() => {
                 models.Team.findAll().then(results => {
                   team = results[0];
-                  done();
+
+                  // This agent has recently returned for a visit
+                  agent.accessToken = header;
+                  agent.save().then(() => {
+                    done();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
                 }).catch(err => {
                   done.fail(err);
                 });
@@ -64,11 +82,11 @@ describe('teamSpec', () => {
               request(app)
                 .post('/team')
                 .send({
-                  token: token,
                   organizationId: organization.id,
                   name: 'Tsuutina Translation'
                 })
                 .set('Accept', 'application/json')
+                .set('Authorization', header)
                 .expect('Content-Type', /json/)
                 .expect(201)
                 .end(function(err, res) {
@@ -101,11 +119,11 @@ describe('teamSpec', () => {
                 request(app)
                   .post('/team')
                   .send({
-                    token: newToken,
                     organizationId: organization.id,
                     name: 'Tsuutina Translation'
                   })
                   .set('Accept', 'application/json')
+                  .set('Authorization', header)
                   .expect('Content-Type', /json/)
                   .expect(201)
                   .end(function(err, res) {
@@ -134,11 +152,11 @@ describe('teamSpec', () => {
           request(app)
             .post('/team')
             .send({
-              token: token,
               organizationId: organization.id, 
               name: team.name 
             })
             .set('Accept', 'application/json')
+            .set('Authorization', header)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -149,13 +167,14 @@ describe('teamSpec', () => {
             });
         });
       });
-  
+
       describe('read', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
             .get(`/team/${team.id}`)
-            .send({ token: token })
+            .send({ name: 'My team' })
             .set('Accept', 'application/json')
+            .set('Authorization', header)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -168,8 +187,9 @@ describe('teamSpec', () => {
         it('doesn\'t barf if record doesn\'t exist', done => {
           request(app)
             .get('/team/33')
-            .send({ token: token })
+            .send({ name: 'My team' })
             .set('Accept', 'application/json')
+            .set('Authorization', header)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -189,11 +209,11 @@ describe('teamSpec', () => {
             request(app)
               .put('/team')
               .send({
-                token: token,
                 id: team.id,
                 name: 'Tsuutina Mark Translation'
               })
               .set('Accept', 'application/json')
+              .set('Authorization', header)
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
@@ -213,20 +233,28 @@ describe('teamSpec', () => {
         });
 
         it('allows an organization member to update an existing record in the database', done => {
-          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          const memberHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+
+          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+              reqheaders: {
+                'Authorization': memberHeader
+              }
+            })
+            .get('/userinfo')
+            .reply(200, { email: 'member-agent@example.com', ..._identity });
+
+
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: memberHeader });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
-
-              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-
               request(app)
                 .put('/team')
                 .send({
-                  token: newToken,
                   id: team.id,
                   name: 'Tsuutina Mark Translation'
                 })
                 .set('Accept', 'application/json')
+                .set('Authorization', memberHeader)
                 .expect('Content-Type', /json/)
                 .expect(201)
                 .end(function(err, res) {
@@ -252,15 +280,15 @@ describe('teamSpec', () => {
           request(app)
             .put('/team')
             .send({
-              token: token,
               id: 111,
               name: 'Tsuutina Mark Translation'
             })
             .set('Accept', 'application/json')
+            .set('Authorization', header)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
-              if (err) done.fail(err);
+              if (err) return done.fail(err);
               expect(res.body.message).toEqual('No such team');
               done();
             });
@@ -276,10 +304,10 @@ describe('teamSpec', () => {
             request(app)
               .delete('/team')
               .send({
-                token: token,
                 id: team.id,
               })
               .set('Accept', 'application/json')
+              .set('Authorization', header)
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -298,7 +326,17 @@ describe('teamSpec', () => {
         });
 
         it('does not allow organization member to remove an existing record from the database', done => {
-          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          const memberHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+
+          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+              reqheaders: {
+                'Authorization': memberHeader
+              }
+            })
+            .get('/userinfo')
+            .reply(200, { email: 'member-agent@example.com', ..._identity });
+
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: memberHeader });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
 
@@ -306,14 +344,14 @@ describe('teamSpec', () => {
               request(app)
                 .delete('/team')
                 .send({
-                  token: newToken,
                   id: team.id,
                 })
                 .set('Accept', 'application/json')
+                .set('Authorization', memberHeader)
                 .expect('Content-Type', /json/)
                 .expect(401)
                 .end(function(err, res) {
-                  if (err) done.fail(err);
+                  if (err) return done.fail(err);
                   expect(res.body.message).toEqual('Unauthorized: Invalid token');
                   models.Team.findAll().then(results => {
                     expect(results.length).toEqual(1);
@@ -334,14 +372,14 @@ describe('teamSpec', () => {
           request(app)
             .delete('/team')
             .send({
-              token: token,
               id: 111,
             })
             .set('Accept', 'application/json')
+            .set('Authorization', header)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
-              if (err) done.fail(err);
+              if (err) return done.fail(err);
               expect(res.body.message).toEqual('No such team');
               done();
             });
@@ -349,69 +387,26 @@ describe('teamSpec', () => {
       });
     });
 
-    describe('unknown', () => {
-      let newToken;
-      beforeEach(done => {
-        newToken = jwt.sign({ email: 'unknownagent@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-        done();
-      });
-
-      describe('create', () => {
-        it('returns 401', done => {
-          request(app)
-            .post('/team')
-            .send({
-              token: newToken,
-              organizationId: organization.id,
-              name: 'Cree Translation Team'
-            })
-            .set('Accept', 'application/json')
-            .expect('Content-Type', /json/)
-            .expect(401)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              expect(res.body.message).toEqual('Unauthorized: Invalid token');
-
-              done();
-            });
-        });
-
-        it('does not add a new record to the database', done => {
-          models.Team.findAll().then(results => {
-            expect(results.length).toEqual(1);
-
-            request(app)
-              .post('/team')
-              .send({
-                token: newToken,
-                organizationId: organization.id,
-                name: 'Cree Translation Team'
-              })
-              .set('Accept', 'application/json')
-              .expect('Content-Type', /json/)
-              .expect(401)
-              .end(function(err, res) {
-                if (err) done.fail(err);
-                models.Team.findAll().then(results => {
-                  expect(results.length).toEqual(1);
-                  done();
-                }).catch(err => {
-                  done.fail(err);
-                });
-              });
-          }).catch(err => {
-            done.fail(err);
-          });
-        });
-      });
-    });
-
     describe('unauthorized', () => {
 
-      let wrongToken;
+      let suspicousHeader;
       beforeEach(done => {
-        wrongToken = jwt.sign({ email: 'unauthorizedteam@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-        done();
+        suspicousHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+
+        const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+            reqheaders: {
+              'Authorization': suspicousHeader
+            }
+          })
+          .get('/userinfo')
+          .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
+
+
+        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: suspicousHeader }).then(a => {
+          done();
+        }).catch(err => {
+          done.fail(err);
+        });
       });
 
       describe('create', () => {
@@ -419,11 +414,11 @@ describe('teamSpec', () => {
           request(app)
             .post('/team')
             .send({
-              token: wrongToken,
               organizationId: organization.id,
               name: 'Cree Translation Team'
             })
             .set('Accept', 'application/json')
+            .set('Authorization', suspicousHeader)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -441,11 +436,11 @@ describe('teamSpec', () => {
             request(app)
               .post('/team')
               .send({
-                token: wrongToken,
                 organizationId: organization.id,
                 name: 'Cree Translation Team'
               })
               .set('Accept', 'application/json')
+              .set('Authorization', suspicousHeader)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
@@ -468,11 +463,11 @@ describe('teamSpec', () => {
           request(app)
             .put('/team')
             .send({
-              token: wrongToken,
               id: team.id,
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
+            .set('Authorization', suspicousHeader)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -486,11 +481,11 @@ describe('teamSpec', () => {
           request(app)
             .put('/team')
             .send({
-              token: wrongToken,
               id: team.id,
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
+            .set('Authorization', suspicousHeader)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -510,10 +505,10 @@ describe('teamSpec', () => {
           request(app)
             .delete('/team')
             .send({
-              token: wrongToken,
               id: team.id
             })
             .set('Accept', 'application/json')
+            .set('Authorization', suspicousHeader)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -530,10 +525,10 @@ describe('teamSpec', () => {
             request(app)
               .delete('/team')
               .send({
-                token: wrongToken,
                 id: team.id
               })
               .set('Accept', 'application/json')
+              .set('Authorization', suspicousHeader)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
@@ -555,16 +550,17 @@ describe('teamSpec', () => {
 
   describe('not authenticated', () => {
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ email: agent.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
+      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._token }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       request(app)
         .get('/team')
         .send({ token: expiredToken })
         .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${expiredToken}`)
         .expect('Content-Type', /json/)
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
-          expect(res.body.message).toEqual('Unauthorized: Invalid token');
+          expect(res.body.message).toEqual('jwt expired');
           done();
         });
     });
@@ -578,7 +574,7 @@ describe('teamSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
-          expect(res.body.message).toEqual('Unauthorized: No token provided');
+          expect(res.body.message).toEqual('No authorization token was found');
           done();
         });
     });
