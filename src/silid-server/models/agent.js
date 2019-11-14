@@ -41,5 +41,22 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  /**
+   * Check new token agains last token provided by this agent.
+   *
+   * This method does not validate the JWT.
+   */
+  Agent.prototype.isFresh = function(accessToken, done) {
+    if (this.accessToken === accessToken) {
+      return done(null, true);
+    }
+    this.accessToken = accessToken;
+    this.save().then(() => {
+      done(null, false);
+    }).catch(err => {
+      done(err);
+    });
+  };
+
   return Agent;
 };
