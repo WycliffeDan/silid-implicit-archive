@@ -16,16 +16,7 @@ describe('jwtAuth', function() {
    *
    * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
    */
-  const _token = {
-    "iss": "https://silid.auth0.com/",
-    "sub": "auth0|123456",
-    "aud": [
-      "my-api-identifier",
-      "https://dev-sillsdev.auth0.com/userinfo"
-    ],
-    "azp": "FbIjoilGxXgDXe2a5bKY0LJB0EDNJNI4",
-    "scope": "openid profile email address phone read:appointments"
-  };
+  const _token = require('../fixtures/sample-auth0-access-token');
 
   let agent, request, response;
 
@@ -114,7 +105,7 @@ describe('jwtAuth', function() {
 
   describe('returning visitor', () => {
     it('attaches agent to request object', done => {
-      const token = jwt.sign({ email: agent.email }, process.env.SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ email: agent.email }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
 
       request = httpMocks.createRequest({
         method: 'POST',
@@ -150,7 +141,7 @@ describe('jwtAuth', function() {
     });
 
     it('attaches the agent record to the request object', done => {
-      const token = jwt.sign({ email: 'newagent@example.com' }, process.env.SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ email: 'newagent@example.com' }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
 
       request = httpMocks.createRequest({
         method: 'POST',

@@ -36,7 +36,7 @@ describe('organizationSpec', () => {
 
     let token;
     beforeEach(done => {
-      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       done();
     });
 
@@ -206,7 +206,7 @@ describe('organizationSpec', () => {
     describe('unknown', () => {
       let newToken;
       beforeEach(done => {
-        newToken = jwt.sign({ email: 'brandneworganization@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        newToken = jwt.sign({ email: 'brandneworganization@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
         done();
       });
 
@@ -263,7 +263,7 @@ describe('organizationSpec', () => {
 
       let wrongToken;
       beforeEach(done => {
-        wrongToken = jwt.sign({ email: 'unauthorizedorganization@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        wrongToken = jwt.sign({ email: 'unauthorizedorganization@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
         done();
       });
 
@@ -359,7 +359,7 @@ describe('organizationSpec', () => {
 
   describe('not authenticated', () => {
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ email: organization.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.SECRET, { expiresIn: '1h' });
+      const expiredToken = jwt.sign({ email: organization.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       request(app)
         .get('/organization')
         .send({ token: expiredToken })

@@ -47,7 +47,7 @@ describe('teamSpec', () => {
 
     let token;
     beforeEach(done => {
-      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       done();
     });
 
@@ -97,7 +97,7 @@ describe('teamSpec', () => {
               models.Team.findAll().then(results => {
                 expect(results.length).toEqual(1);
 
-                let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+                let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
                 request(app)
                   .post('/team')
                   .send({
@@ -217,7 +217,7 @@ describe('teamSpec', () => {
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
 
-              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
 
               request(app)
                 .put('/team')
@@ -302,7 +302,7 @@ describe('teamSpec', () => {
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
 
-              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
               request(app)
                 .delete('/team')
                 .send({
@@ -352,7 +352,7 @@ describe('teamSpec', () => {
     describe('unknown', () => {
       let newToken;
       beforeEach(done => {
-        newToken = jwt.sign({ email: 'unknownagent@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        newToken = jwt.sign({ email: 'unknownagent@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
         done();
       });
 
@@ -410,7 +410,7 @@ describe('teamSpec', () => {
 
       let wrongToken;
       beforeEach(done => {
-        wrongToken = jwt.sign({ email: 'unauthorizedteam@example.com', iat: Math.floor(Date.now()) }, process.env.SECRET, { expiresIn: '1h' });
+        wrongToken = jwt.sign({ email: 'unauthorizedteam@example.com', iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
         done();
       });
 
@@ -555,7 +555,7 @@ describe('teamSpec', () => {
 
   describe('not authenticated', () => {
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ email: agent.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.SECRET, { expiresIn: '1h' });
+      const expiredToken = jwt.sign({ email: agent.email, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       request(app)
         .get('/team')
         .send({ token: expiredToken })

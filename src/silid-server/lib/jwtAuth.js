@@ -10,7 +10,7 @@ const jwtAuth = function(req, res, next) {
   if (!token) {
     res.status(401).json({ message: 'Unauthorized: No token provided' });
   } else {
-    jwt.verify(token, process.env.SECRET, function(err, decoded) {
+    jwt.verify(token, process.env.CLIENT_SECRET, function(err, decoded) {
       if (err) {
         res.status(401).json({ message: 'Unauthorized: Invalid token' });
       } else {
