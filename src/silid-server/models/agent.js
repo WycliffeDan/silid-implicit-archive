@@ -25,6 +25,9 @@ module.exports = (sequelize, DataTypes) => {
     socialProfile: {
       strict: true,
       type: DataTypes.JSONB
+    },
+    accessToken: {
+      type: DataTypes.STRING
     }
   }, {});
 

@@ -103,6 +103,22 @@ describe('Agent', () => {
         });
       });
     });
+
+    describe('accessToken', () => {
+      beforeEach(() => {
+        _valid.accessToken = 'SomeJWTAccessToken';
+      });
+
+      it('is an agent property', function(done) {
+        agent = new Agent(_valid);
+        agent.save().then(obj => {
+          expect(obj.accessToken).toEqual(_valid.accessToken);
+          done();
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+    });
   });
 
   describe('relationships', () => {
