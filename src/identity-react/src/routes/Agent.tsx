@@ -2,7 +2,7 @@ import React, { useState, FormEvent } from 'react';
 //import Auth from '../auth/Auth';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-
+import useGetAgentService from '../services/useGetAgentService';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -28,13 +28,11 @@ interface IProps  {
 
 const Agent = (props: IProps) => {
   const classes = useStyles();
-
   const profile = JSON.parse(localStorage.getItem('profile')!);
-
-  console.log(profile);
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
   const [dirty, setDirty] = useState(false);
+  const service = useGetAgentService();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -43,7 +41,7 @@ const Agent = (props: IProps) => {
   return (
     <div className="agent">
       <h4>
-        Profile Page 
+        Profile Page
       </h4>
       <form className={classes.container} onSubmit={handleSubmit} onChange={() => setDirty(true)}>
         <TextField
@@ -73,6 +71,19 @@ const Agent = (props: IProps) => {
           disabled={!dirty}
         >Save</Button>
       </form>
+      <div>
+      <div>*Begin Dummy Data*</div>
+      <strong>
+      {service.status === 'loading' && <div>Loading...</div>}
+      {service.status === 'loaded' &&
+        service.payload.results.map(starship => (
+          <div key={starship.url}>Name:{starship.name}<br></br>Model:{starship.model}<br></br>Passengers:{starship.passengers}<br></br><br></br></div>
+        ))}
+      {service.status === 'error' && (
+        <div>Error, the backend moved to the dark side.</div>
+      )}</strong>
+      <div>*End Dummy Data*</div>
+    </div>
     </div>
   );
 }
