@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSONB
     },
     accessToken: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(512) // How big should this be for an Auth0 access token?
     }
   }, {});
 
