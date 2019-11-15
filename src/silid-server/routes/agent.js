@@ -5,7 +5,7 @@ const models = require('../models');
 
 /* GET agent listing. */
 router.get('/', jwtAuth, function(req, res, next) {
-  res.send('respond with a resource');
+  res.json(req.agent);
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
