@@ -31,7 +31,8 @@ const Agent = (props: IProps) => {
 
   const profile = JSON.parse(localStorage.getItem('profile')!);
 
-  console.log(profile);
+  console.log('ACCESS TOKEN: ', localStorage.getItem('accessToken'));
+
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
   const [dirty, setDirty] = useState(false);
