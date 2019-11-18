@@ -15,11 +15,12 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import MailIcon from '@material-ui/icons/Mail';
+import Avatar from '@material-ui/core/Avatar';
+import Grid from '@material-ui/core/Grid';
 
 interface IProps  {
   auth: Auth;
 }
-
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -41,11 +42,21 @@ const useStyles = makeStyles((theme: Theme) =>
     fullList: {
       width: 'auto',
     },
+    avatar: {
+      margin: 10,
+    },
+    bigAvatar: {
+      margin: 10,
+      width: 60,
+      height: 60,
+    },
   }),
 );
 
 const Home = (props: IProps) => {
   const classes = useStyles();
+  let profile = JSON.parse(localStorage.getItem('profile')!);
+  if(profile === null){ profile = false}
   const { auth } = props;
   const [state, setState] = React.useState({
     left: false,
@@ -111,6 +122,9 @@ const Home = (props: IProps) => {
         <Typography variant="h6" className={classes.title}>
           Identity
         </Typography>
+        <Grid container justify="flex-end" alignItems="flex-start">
+        {profile.picture ? <Avatar alt="avatar" src={profile.picture} className={classes.avatar} /> :<div></div> }
+       </Grid>
         {!auth.isAuthenticated() && (
           <Button id="login-button" color="inherit" onClick={() => auth.login()}>Login</Button>
         )}
