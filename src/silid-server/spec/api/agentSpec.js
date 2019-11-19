@@ -19,7 +19,7 @@ describe('agentSpec', () => {
   const pem2jwk = require('pem-jwk').pem2jwk
 
   const NodeRSA = require('node-rsa');
-  const key = new NodeRSA({b: 512, e: 5, use: 'sig'});
+  const key = new NodeRSA({b: 512, e: 5});
 
   key.setOptions({
     encryptionScheme: {
@@ -39,33 +39,20 @@ describe('agentSpec', () => {
   
   const keystore = jose.JWK.createKeyStore();
 
-//  const { jwksScope } = require('../support/jwksStub')(signedAccessToken, keystore);
-
-
-//  const _access = require('../fixtures/sample-auth0-access-token');
-//  const _identity = require('../fixtures/sample-auth0-identity-token');
-////  const _jwks = require('../fixtures/sample-auth0-jwks');
-//  const { header, scope } = require('../support/userinfoStub')(_access, _identity);
-//  const { jwksScope } = require('../support/jwksStub')(_access, _jwks, key.exportKey());
-//  const { jwksScope } = require('../support/jwksStub')(_access, _jwks, key.exportKey());
-//  const nock = require('nock')
-
-  let signedAccessToken;// = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: 'some-kid' } });
-  let scope;
+  let signedAccessToken, scope;
   beforeAll(done => {
     let jwkPub = pem2jwk(pub);
     jwkPub.use = 'sig';
     jwkPub.alg = 'RS256';
 
     keystore.add(jwkPub, 'pkcs8').then(function(result) {
-      result.use = 'sig';
+//      result.use = 'sig';
       signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
 
       scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
         .persist()
         .log(console.log)
         .get('/.well-known/jwks.json')
-        //.reply(200, JSON.stringify(keystore));
         .reply(200, keystore);
 
       done();
@@ -146,8 +133,9 @@ describe('agentSpec', () => {
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
-                scope.done();
                 if (err) return done.fail(err);
+                scope.done();
+
                 expect(res.body.email).toEqual('someotherguy@example.com');
 
                 models.Agent.findAll().then(results => {
@@ -174,6 +162,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.errors.length).toEqual(1);
               expect(res.body.errors[0].message).toEqual('That agent is already registered');
               done();
@@ -191,6 +181,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.email).toEqual(agent.email);
               done();
             });
@@ -205,6 +197,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.message).toEqual('No such agent');
               done();
             });
@@ -225,6 +219,8 @@ describe('agentSpec', () => {
             .expect(201)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.name).toEqual('Some Cool Guy');
  
               models.Agent.findOne({ where: { id: agent.id }}).then(results => {
@@ -250,6 +246,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.message).toEqual('No such agent');
               done();
             });
@@ -269,6 +267,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.message).toEqual('Agent deleted');
               done();
             });
@@ -286,6 +286,8 @@ describe('agentSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
+
               expect(res.body.message).toEqual('No such agent');
               done();
             });
@@ -407,17 +409,32 @@ describe('agentSpec', () => {
   });
 
   describe('not authenticated', () => {
+
+    let expiredToken;
+    beforeAll(done => {
+      let jwkPub = pem2jwk(pub);
+      jwkPub.use = 'sig';
+      jwkPub.alg = 'RS256';
+
+      keystore.add(jwkPub, 'pkcs8').then(function(result) {
+        expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+        done();
+      }).catch(err => {
+        done.fail(err);
+      });
+    });
+
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       request(app)
         .get('/agent')
-        .send({})
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect('Content-Type', /json/)
         .expect(401)
         .end(function(err, res) {
-          if (err) done.fail(err);
+          if (err) return done.fail(err);
+          scope.done();
+
           expect(res.body.message).toEqual('jwt expired');
           done();
         });
@@ -426,12 +443,13 @@ describe('agentSpec', () => {
     it('returns 401 if provided no token', done => {
       request(app)
         .get('/agent')
-        .send({})
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(401)
         .end(function(err, res) {
-          if (err) done.fail(err);
+          if (err) return done.fail(err);
+          scope.done();
+
           expect(res.body.message).toEqual('No authorization token was found');
           done();
         });
