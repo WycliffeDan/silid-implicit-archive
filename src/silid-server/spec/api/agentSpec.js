@@ -4,6 +4,7 @@ const fixtures = require('sequelize-fixtures');
 const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
+const nock = require('nock');
 
 describe('agentSpec', () => {
 
@@ -13,40 +14,65 @@ describe('agentSpec', () => {
    *
    * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
    */
-  const JSONWebKey = require('json-web-key');
-  const NodeRSA = require('node-rsa');
-
-  //const key = new NodeRSA({ b: 256 });
-//  const key = new NodeRSA({ b: 256 });
-  const keyOptions = {
-//    encryptionScheme: {
-//      scheme: 'pkcs1_oaep', //scheme
-//      hash: 'md5', //hash using for scheme
-//      mgf: function(...) {...} //mask generation function
-//    },
-    signingScheme: {
-//      scheme: 'pss', //scheme
-      hash: 'sha256', //hash using for scheme
-//      saltLength: 20 //salt length for pss sign
-    }
-  };
-  const key = new NodeRSA({ hash: 'sha256' });
-
-
-
-
-//  const jwk = JSONWebKey.fromPEM(key.exportKey()).toJSON();
-  const jwk = JSONWebKey.fromJSON({ 'kty': 'RSA', 'kid': 'myjwt', 'e': 'e', 'n': 'n', 'd': 'd', 'p': 'p', 'q': 'q', 'dp': 'dp', 'dq': 'dq', 'qi': 'qi' }).toJSON();
-  const _jwks = { "keys": [ ] };
-  _jwks.keys.push(jwk);
-
-
   const _access = require('../fixtures/sample-auth0-access-token');
-  const _identity = require('../fixtures/sample-auth0-identity-token');
-//  const _jwks = require('../fixtures/sample-auth0-jwks');
-  const { header, scope } = require('../support/userinfoStub')(_access, _identity);
-  const { jwksScope } = require('../support/jwksStub')(_access, _jwks, key.exportKey());
-  const nock = require('nock')
+
+  const pem2jwk = require('pem-jwk').pem2jwk
+
+  const NodeRSA = require('node-rsa');
+  const key = new NodeRSA({b: 512, e: 5, use: 'sig'});
+
+  key.setOptions({
+    encryptionScheme: {
+      scheme: 'pkcs1',
+      label: 'Optimization-Service'
+    },
+//    signingScheme: 'pkcs1'
+//    signingScheme: {
+//      saltLength: 25
+//    }
+  });
+  
+  const prv = key.exportKey('pkcs1-private-pem');
+  const pub = key.exportKey('pkcs8-public-pem');
+
+  const jose = require('node-jose');
+  
+  const keystore = jose.JWK.createKeyStore();
+
+//  const { jwksScope } = require('../support/jwksStub')(signedAccessToken, keystore);
+
+
+//  const _access = require('../fixtures/sample-auth0-access-token');
+//  const _identity = require('../fixtures/sample-auth0-identity-token');
+////  const _jwks = require('../fixtures/sample-auth0-jwks');
+//  const { header, scope } = require('../support/userinfoStub')(_access, _identity);
+//  const { jwksScope } = require('../support/jwksStub')(_access, _jwks, key.exportKey());
+//  const { jwksScope } = require('../support/jwksStub')(_access, _jwks, key.exportKey());
+//  const nock = require('nock')
+
+  let signedAccessToken;// = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: 'some-kid' } });
+  let scope;
+  beforeAll(done => {
+    let jwkPub = pem2jwk(pub);
+    jwkPub.use = 'sig';
+    jwkPub.alg = 'RS256';
+
+    keystore.add(jwkPub, 'pkcs8').then(function(result) {
+      result.use = 'sig';
+      signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
+
+      scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
+        .persist()
+        .log(console.log)
+        .get('/.well-known/jwks.json')
+        //.reply(200, JSON.stringify(keystore));
+        .reply(200, keystore);
+
+      done();
+    }).catch(err => {
+      done.fail(err);
+    });
+  });
 
   let agent;
   beforeEach(done => {
@@ -56,7 +82,7 @@ describe('agentSpec', () => {
           agent = results[0];
 
           // This agent has recently returned for a visit
-          agent.accessToken = header;
+          agent.accessToken = `Bearer ${signedAccessToken}`;
           agent.save().then(() => {
             done();
           }).catch(err => {
@@ -73,17 +99,40 @@ describe('agentSpec', () => {
 
   describe('authenticated', () => {
 
-//    let token;
-    beforeEach(done => {
-//      token = jwt.sign(_access, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-      done();
+//    let scope;
+//    beforeEach(done => {
+//      console.log('ADDING KEY TO STORE', pub);
+//      let jwkPub = pem2jwk(pub);
+//      jwkPub.use = 'sig';
+//      jwkPub.alg = 'RS256';
+//
+//      keystore.add(jwkPub, 'pkcs8').then(function(result) {
+//        result.use = 'sig';
+//        console.log('\n\n\n\nRESULT');
+//        console.log(result);
+//
+//        scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
+////          .persist()
+//          .log(console.log)
+//          .get('/.well-known/jwks.json')
+//          //.reply(200, JSON.stringify(keystore));
+//          .reply(200, keystore);
+//
+//        done();
+//      }).catch(err => {
+//        console.log('EROR',err);
+//        done.fail(err);
+//      });
+//    });
+
+    afterEach(() => {
+      nock.cleanAll();
     });
 
     describe('authorized', () => {
 
       describe('create', () => {
         it('adds a new record to the database', done => {
-console.log(header);
           models.Agent.findAll().then(results => {
             expect(results.length).toEqual(1);
 
@@ -93,10 +142,11 @@ console.log(header);
                 email: 'someotherguy@example.com' 
               })
               .set('Accept', 'application/json')
-              .set('Authorization', header)
+              .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
+                scope.done();
                 if (err) return done.fail(err);
                 expect(res.body.email).toEqual('someotherguy@example.com');
 
@@ -112,141 +162,138 @@ console.log(header);
           });
         });
 
-//        it('returns an error if record already exists', done => {
-//          request(app)
-//            .post('/agent')
-//            .send({
-//              email: agent.email 
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.errors.length).toEqual(1);
-//              expect(res.body.errors[0].message).toEqual('That agent is already registered');
-//              done();
-//            });
-//        });
+        it('returns an error if record already exists', done => {
+          request(app)
+            .post('/agent')
+            .send({
+              email: agent.email 
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.errors.length).toEqual(1);
+              expect(res.body.errors[0].message).toEqual('That agent is already registered');
+              done();
+            });
+        });
       });
   
-//      describe('read', () => {
-//        it('retrieves an existing record from the database', done => {
-//          request(app)
-//            .get(`/agent/${agent.id}`)
-//            .send({ token: token })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.email).toEqual(agent.email);
-//              done();
-//            });
-//        });
-//
-//        it('doesn\'t barf if record doesn\'t exist', done => {
-//          request(app)
-//            .get('/agent/33')
-//            .send({ token: token })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('No such agent');
-//              done();
-//            });
-//        });
-//      });
-// 
-//      describe('update', () => {
-//        it('updates an existing record in the database', done => {
-//          request(app)
-//            .put('/agent')
-//            .send({
-//              id: agent.id,
-//              name: 'Some Cool Guy'
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(201)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.name).toEqual('Some Cool Guy');
-// 
-//              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
-//                expect(results.name).toEqual('Some Cool Guy');
-//                expect(results.email).toEqual(agent.email);
-//                done();
-//              }).catch(err => {
-//                done.fail(err);
-//              });
-//            });
-//        });
-//
-//        it('doesn\'t barf if agent doesn\'t exist', done => {
-//          request(app)
-//            .put('/agent')
-//            .send({
-//              token: token,
-//              id: 111,
-//              name: 'Some Guy' 
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('No such agent');
-//              done();
-//            });
-//        });
-//      });
-//
-//      describe('delete', () => {
-//        it('removes an existing record from the database', done => {
-//          request(app)
-//            .delete('/agent')
-//            .send({
-//              id: agent.id,
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('Agent deleted');
-//              done();
-//            });
-//        });
-//
-//        it('doesn\'t barf if agent doesn\'t exist', done => {
-//          request(app)
-//            .delete('/agent')
-//            .send({
-//              id: 111,
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', header)
-//            .expect('Content-Type', /json/)
-//            .expect(200)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              expect(res.body.message).toEqual('No such agent');
-//              done();
-//            });
-//        });
+      describe('read', () => {
+        it('retrieves an existing record from the database', done => {
+          request(app)
+            .get(`/agent/${agent.id}`)
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.email).toEqual(agent.email);
+              done();
+            });
+        });
+
+        it('doesn\'t barf if record doesn\'t exist', done => {
+          request(app)
+            .get('/agent/33')
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
+        });
+      });
+ 
+      describe('update', () => {
+        it('updates an existing record in the database', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              id: agent.id,
+              name: 'Some Cool Guy'
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.name).toEqual('Some Cool Guy');
+ 
+              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
+                expect(results.name).toEqual('Some Cool Guy');
+                expect(results.email).toEqual(agent.email);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+        });
+
+        it('doesn\'t barf if agent doesn\'t exist', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              id: 111,
+              name: 'Some Guy' 
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
+        });
+      });
+
+      describe('delete', () => {
+        it('removes an existing record from the database', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              id: agent.id,
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('Agent deleted');
+              done();
+            });
+        });
+
+        it('doesn\'t barf if agent doesn\'t exist', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              id: 111,
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              expect(res.body.message).toEqual('No such agent');
+              done();
+            });
+        });
       });
     });
 
-//    describe('unauthorized', () => {
+    describe('unauthorized', () => {
 //
 //      let suspicousHeader;
 //      beforeEach(done => {
@@ -356,38 +403,38 @@ console.log(header);
 //          });
 //        });
 //      });
-//    });
-//  });
-//
-//  describe('not authenticated', () => {
-//    it('returns 401 if provided an expired token', done => {
-//      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-//      request(app)
-//        .get('/agent')
-//        .send({})
-//        .set('Accept', 'application/json')
-//        .set('Authorization', `Bearer ${expiredToken}`)
-//        .expect('Content-Type', /json/)
-//        .expect(401)
-//        .end(function(err, res) {
-//          if (err) done.fail(err);
-//          expect(res.body.message).toEqual('jwt expired');
-//          done();
-//        });
-//    });
-//
-//    it('returns 401 if provided no token', done => {
-//      request(app)
-//        .get('/agent')
-//        .send({})
-//        .set('Accept', 'application/json')
-//        .expect('Content-Type', /json/)
-//        .expect(401)
-//        .end(function(err, res) {
-//          if (err) done.fail(err);
-//          expect(res.body.message).toEqual('No authorization token was found');
-//          done();
-//        });
-//    });
-//  });
+    });
+  });
+
+  describe('not authenticated', () => {
+    it('returns 401 if provided an expired token', done => {
+      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
+      request(app)
+        .get('/agent')
+        .send({})
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect('Content-Type', /json/)
+        .expect(401)
+        .end(function(err, res) {
+          if (err) done.fail(err);
+          expect(res.body.message).toEqual('jwt expired');
+          done();
+        });
+    });
+
+    it('returns 401 if provided no token', done => {
+      request(app)
+        .get('/agent')
+        .send({})
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(401)
+        .end(function(err, res) {
+          if (err) done.fail(err);
+          expect(res.body.message).toEqual('No authorization token was found');
+          done();
+        });
+    });
+  });
 });

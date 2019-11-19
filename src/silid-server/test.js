@@ -14,8 +14,8 @@ key.setOptions({
   }
 });
 
-const private = key.exportKey('pkcs1-private-pem');
-const public = key.exportKey('pkcs8-public-pem');
+const prv = key.exportKey('pkcs1-private-pem');
+const pub = key.exportKey('pkcs8-public-pem');
 
 
 var jose = require('node-jose');
@@ -23,20 +23,44 @@ var jose = require('node-jose');
 const keystore = jose.JWK.createKeyStore();
 
 
-keystore.add(pem2jwk(public), 'pkcs8').then(function(result) {
-
+//keystore.add(pem2jwk(pub), 'pkcs8').then(function(result) {
+const p2j = pem2jwk(pub);
+p2j.use = 'sig';
+console.log('p2j');
+console.log(p2j);
+keystore.add(p2j, 'pkcs8').then(function(result) {
           // {result} is a jose.JWK.Key
-  console.log(result);
+  //console.log(result);
 });
 
 
 
-jwt.sign({name: 'Dan', message: 'Hello, world!'}, private, { algorithm: 'RS256' });
+//////
+const key2 = new NodeRSA({b: 512, e: 5});
+
+key2.setOptions({
+  encryptionScheme: {
+    scheme: 'pkcs1',
+    label: 'Optimization-Service'
+  },
+  signingScheme: {
+      saltLength: 25
+  }
+});
+
+const prv2 = key2.exportKey('pkcs1-private-pem');
+const pub2 = key2.exportKey('pkcs8-public-pem');
+//////
 
 
-jwt.verify(token, public, {algorithms: ['RS256'], ignoreExpiration: true}, function(err, result) {
-  console.log(err);
-  console.log(result);
+const jwt = require('jsonwebtoken');
+
+const token = jwt.sign({name: 'Dan', message: 'Hello, world!'}, prv2, { algorithm: 'RS256' });
+
+jwt.verify(token, pub2, {algorithms: ['RS256'], ignoreExpiration: true}, function(err, result) {
+  console.log('HELLO');
+  console.log('error', err);
+  console.log('verified', result);
 });
 
 

@@ -4,6 +4,7 @@ const models = require('../models');
 const request = require('request');
 
 const jwtAuth = function(req, res, next) {
+console.log("JWT AUTH");
 
   models.Agent.findOne({ where: { accessToken: req.header('Authorization') } }).then(agent => {
     req.agent = agent;
