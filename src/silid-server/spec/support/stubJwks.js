@@ -1,3 +1,8 @@
+/**
+ * Mock the Auth0 `/.well-known/jwks.json` endpoint
+ *
+ * Not configurable, though self-documenting and reusable
+ */
 const jwt = require('jsonwebtoken');
 const nock = require('nock');
 
@@ -63,22 +68,4 @@ module.exports = function(done) {
   }).catch(err => {
     done(err);
   });
-//  });
-
-
-
-
-
-//  const nock = require('nock');
-//  const jwksScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-//      reqheaders: {
-//        'Accept': 'application/json', 
-//        'Authorization': `Bearer ${signedAccessToken}`
-//      }
-//    })
-//    .persist()
-//    .get('/.well-known/jwks.json')
-//    .reply(200, JSON.stringify(jwks));
-//
-//  return { jwksScope };
 };

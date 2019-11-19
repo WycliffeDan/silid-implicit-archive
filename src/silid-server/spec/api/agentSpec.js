@@ -16,24 +16,10 @@ describe('agentSpec', () => {
    * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
    */
   const _access = require('../fixtures/sample-auth0-access-token');
-//
-//  const jose = require('node-jose');
+  const _identity = require('../fixtures/sample-auth0-identity-token');
+
   const pem2jwk = require('pem-jwk').pem2jwk
-//
-//  const NodeRSA = require('node-rsa');
-//  const key = new NodeRSA({b: 512, e: 5});
-//  key.setOptions({
-//    encryptionScheme: {
-//      scheme: 'pkcs1',
-//      label: 'Optimization-Service'
-//    }
-//  });
-//  
-//  const prv = key.exportKey('pkcs1-private-pem');
-//  const pub = key.exportKey('pkcs8-public-pem');
-//  
-//  const keystore = jose.JWK.createKeyStore();
-//
+
   let signedAccessToken, scope, pub, prv, keystore;
   beforeAll(done => {
     stubJwks((err, tokenAndScope) => {
@@ -41,23 +27,6 @@ describe('agentSpec', () => {
       ({ signedAccessToken, scope, pub, prv, keystore } = tokenAndScope);
       done();
     });
-//    let jwkPub = pem2jwk(pub);
-//    jwkPub.use = 'sig';
-//    jwkPub.alg = 'RS256';
-//
-//    keystore.add(jwkPub, 'pkcs8').then(function(result) {
-//      signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
-//
-//      scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
-//        .persist()
-//        .log(console.log)
-//        .get('/.well-known/jwks.json')
-//        .reply(200, keystore);
-//
-//      done();
-//    }).catch(err => {
-//      done.fail(err);
-//    });
   });
 
   let agent;
@@ -82,10 +51,6 @@ describe('agentSpec', () => {
       done.fail(err);
     });
   });
-
-//  afterEach(() => {
-//    nock.cleanAll();
-//  });
 
   describe('authenticated', () => {
 
@@ -270,7 +235,6 @@ describe('agentSpec', () => {
 
     describe('unauthorized', () => {
 
-      const _identity = require('../fixtures/sample-auth0-identity-token');
       let suspiciousHeader, suspiciousToken;
       beforeEach(done => {
 
