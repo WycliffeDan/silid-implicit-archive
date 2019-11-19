@@ -16,26 +16,20 @@ describe('agentSpec', () => {
    */
   const _access = require('../fixtures/sample-auth0-access-token');
 
+  const jose = require('node-jose');
   const pem2jwk = require('pem-jwk').pem2jwk
 
   const NodeRSA = require('node-rsa');
   const key = new NodeRSA({b: 512, e: 5});
-
   key.setOptions({
     encryptionScheme: {
       scheme: 'pkcs1',
       label: 'Optimization-Service'
-    },
-//    signingScheme: 'pkcs1'
-//    signingScheme: {
-//      saltLength: 25
-//    }
+    }
   });
   
   const prv = key.exportKey('pkcs1-private-pem');
   const pub = key.exportKey('pkcs8-public-pem');
-
-  const jose = require('node-jose');
   
   const keystore = jose.JWK.createKeyStore();
 
@@ -46,7 +40,6 @@ describe('agentSpec', () => {
     jwkPub.alg = 'RS256';
 
     keystore.add(jwkPub, 'pkcs8').then(function(result) {
-//      result.use = 'sig';
       signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
 
       scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
@@ -84,37 +77,11 @@ describe('agentSpec', () => {
     });
   });
 
+  afterEach(() => {
+    nock.cleanAll();
+  });
+
   describe('authenticated', () => {
-
-//    let scope;
-//    beforeEach(done => {
-//      console.log('ADDING KEY TO STORE', pub);
-//      let jwkPub = pem2jwk(pub);
-//      jwkPub.use = 'sig';
-//      jwkPub.alg = 'RS256';
-//
-//      keystore.add(jwkPub, 'pkcs8').then(function(result) {
-//        result.use = 'sig';
-//        console.log('\n\n\n\nRESULT');
-//        console.log(result);
-//
-//        scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
-////          .persist()
-//          .log(console.log)
-//          .get('/.well-known/jwks.json')
-//          //.reply(200, JSON.stringify(keystore));
-//          .reply(200, keystore);
-//
-//        done();
-//      }).catch(err => {
-//        console.log('EROR',err);
-//        done.fail(err);
-//      });
-//    });
-
-    afterEach(() => {
-      nock.cleanAll();
-    });
 
     describe('authorized', () => {
 
@@ -296,115 +263,125 @@ describe('agentSpec', () => {
     });
 
     describe('unauthorized', () => {
-//
-//      let suspicousHeader;
-//      beforeEach(done => {
-//        suspicousHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._access}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
-//
-//        const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-//            reqheaders: {
-//              'Authorization': suspicousHeader
-//            }
-//          })
-//          .get('/userinfo')
-//          .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
-//
-//
-//        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: suspicousHeader }).then(a => {
-//          done();
-//        }).catch(err => {
-//          done.fail(err);
-//        });
-//      });
-//
-//      describe('update', () => {
-//        it('returns 401', done => {
-//          request(app)
-//            .put('/agent')
-//            .send({
-//              id: agent.id,
-//              name: 'Some Cool Guy'
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', suspicousHeader)
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) return done.fail(err);
-//              expect(res.body.message).toEqual('Unauthorized: Invalid token');
-//              done();
-//            });
-//        });
-//
-//        it('does not change the record in the database', done => {
-//          request(app)
-//            .put('/agent')
-//            .send({
-//              id: agent.id,
-//              name: 'Some Cool Guy'
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', suspicousHeader)
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
-//                expect(results.name).toEqual('Some Guy');
-//                expect(results.email).toEqual(agent.email);
-//                done();
-//              }).catch(err => {
-//                done.fail(err);
-//              });
-//            });
-//        });
-//      });
-//
-//      describe('delete', () => {
-//        it('returns 401', done => {
-//          request(app)
-//            .delete('/agent')
-//            .send({
-//              id: agent.id
-//            })
-//            .set('Accept', 'application/json')
-//            .set('Authorization', suspicousHeader)
-//            .expect('Content-Type', /json/)
-//            .expect(401)
-//            .end(function(err, res) {
-//              if (err) done.fail(err);
-//                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-//                done();
-//              });
-//        });
-//
-//        it('does not remove the record from the database', done => {
-//          models.Agent.findAll().then(results => {
-//            expect(results.length).toEqual(2);
-//
-//            request(app)
-//              .delete('/agent')
-//              .send({
-//                id: agent.id
-//              })
-//              .set('Accept', 'application/json')
-//              .set('Authorization', suspicousHeader)
-//              .expect('Content-Type', /json/)
-//              .expect(401)
-//              .end(function(err, res) {
-//                if (err) done.fail(err);
-//                models.Agent.findAll().then(results => {
-//                  expect(results.length).toEqual(2);
-//                  done();
-//                }).catch(err => {
-//                  done.fail(err);
-//                });
-//              });
-//          }).catch(err => {
-//            done.fail(err);
-//          });
-//        });
-//      });
+
+      const _identity = require('../fixtures/sample-auth0-identity-token');
+      let suspicousHeader;
+      beforeEach(done => {
+
+        let jwkPub = pem2jwk(pub);
+        jwkPub.use = 'sig';
+        jwkPub.alg = 'RS256';
+  
+        keystore.add(jwkPub, 'pkcs8').then(function(result) {
+          suspicousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+
+          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+              reqheaders: {
+                'Authorization': `Bearer ${suspicousToken}`
+              }
+            })
+            .get('/userinfo')
+            .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
+
+          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspicousToken}` }).then(a => {
+            done();
+          }).catch(err => {
+            done.fail(err);
+          });
+
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+      describe('update', () => {
+        it('returns 401', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              id: agent.id,
+              name: 'Some Cool Guy'
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${suspicousToken}`)
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) return done.fail(err);
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
+        });
+
+        it('does not change the record in the database', done => {
+          request(app)
+            .put('/agent')
+            .send({
+              id: agent.id,
+              name: 'Some Cool Guy'
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${suspicousToken}`)
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              models.Agent.findOne({ where: { id: agent.id }}).then(results => {
+                expect(results.name).toEqual('Some Guy');
+                expect(results.email).toEqual(agent.email);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+        });
+      });
+
+      describe('delete', () => {
+        it('returns 401', done => {
+          request(app)
+            .delete('/agent')
+            .send({
+              id: agent.id
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${suspicousToken}`)
+            .expect('Content-Type', /json/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+                expect(res.body.message).toEqual('Unauthorized: Invalid token');
+                done();
+              });
+        });
+
+        it('does not remove the record from the database', done => {
+          models.Agent.findAll().then(results => {
+            expect(results.length).toEqual(2);
+
+            request(app)
+              .delete('/agent')
+              .send({
+                id: agent.id
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${suspicousToken}`)
+              .expect('Content-Type', /json/)
+              .expect(401)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                models.Agent.findAll().then(results => {
+                  expect(results.length).toEqual(2);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+      });
     });
   });
 
