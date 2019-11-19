@@ -20,7 +20,6 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 });
 
 router.post('/', jwtAuth, function(req, res, next) {
-console.log('WORD UP');
   let email = req.body.email;
   if (req.body.email) {
     email = req.body.email;
