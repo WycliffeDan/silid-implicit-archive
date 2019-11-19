@@ -5,6 +5,7 @@ const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
 const nock = require('nock');
+const stubJwks = require('../support/stubJwks');
 
 describe('agentSpec', () => {
 
@@ -15,43 +16,48 @@ describe('agentSpec', () => {
    * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
    */
   const _access = require('../fixtures/sample-auth0-access-token');
-
-  const jose = require('node-jose');
+//
+//  const jose = require('node-jose');
   const pem2jwk = require('pem-jwk').pem2jwk
-
-  const NodeRSA = require('node-rsa');
-  const key = new NodeRSA({b: 512, e: 5});
-  key.setOptions({
-    encryptionScheme: {
-      scheme: 'pkcs1',
-      label: 'Optimization-Service'
-    }
-  });
-  
-  const prv = key.exportKey('pkcs1-private-pem');
-  const pub = key.exportKey('pkcs8-public-pem');
-  
-  const keystore = jose.JWK.createKeyStore();
-
-  let signedAccessToken, scope;
+//
+//  const NodeRSA = require('node-rsa');
+//  const key = new NodeRSA({b: 512, e: 5});
+//  key.setOptions({
+//    encryptionScheme: {
+//      scheme: 'pkcs1',
+//      label: 'Optimization-Service'
+//    }
+//  });
+//  
+//  const prv = key.exportKey('pkcs1-private-pem');
+//  const pub = key.exportKey('pkcs8-public-pem');
+//  
+//  const keystore = jose.JWK.createKeyStore();
+//
+  let signedAccessToken, scope, pub, prv, keystore;
   beforeAll(done => {
-    let jwkPub = pem2jwk(pub);
-    jwkPub.use = 'sig';
-    jwkPub.alg = 'RS256';
-
-    keystore.add(jwkPub, 'pkcs8').then(function(result) {
-      signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
-
-      scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
-        .persist()
-        .log(console.log)
-        .get('/.well-known/jwks.json')
-        .reply(200, keystore);
-
+    stubJwks((err, tokenAndScope) => {
+      if (err) return done.fail(err);
+      ({ signedAccessToken, scope, pub, prv, keystore } = tokenAndScope);
       done();
-    }).catch(err => {
-      done.fail(err);
     });
+//    let jwkPub = pem2jwk(pub);
+//    jwkPub.use = 'sig';
+//    jwkPub.alg = 'RS256';
+//
+//    keystore.add(jwkPub, 'pkcs8').then(function(result) {
+//      signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
+//
+//      scope = nock(`https://${process.env.AUTH0_DOMAIN}`)
+//        .persist()
+//        .log(console.log)
+//        .get('/.well-known/jwks.json')
+//        .reply(200, keystore);
+//
+//      done();
+//    }).catch(err => {
+//      done.fail(err);
+//    });
   });
 
   let agent;
@@ -77,9 +83,9 @@ describe('agentSpec', () => {
     });
   });
 
-  afterEach(() => {
-    nock.cleanAll();
-  });
+//  afterEach(() => {
+//    nock.cleanAll();
+//  });
 
   describe('authenticated', () => {
 
@@ -265,7 +271,7 @@ describe('agentSpec', () => {
     describe('unauthorized', () => {
 
       const _identity = require('../fixtures/sample-auth0-identity-token');
-      let suspicousHeader;
+      let suspiciousHeader, suspiciousToken;
       beforeEach(done => {
 
         let jwkPub = pem2jwk(pub);
@@ -273,17 +279,17 @@ describe('agentSpec', () => {
         jwkPub.alg = 'RS256';
   
         keystore.add(jwkPub, 'pkcs8').then(function(result) {
-          suspicousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+          suspiciousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
 
           const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
               reqheaders: {
-                'Authorization': `Bearer ${suspicousToken}`
+                'Authorization': `Bearer ${suspiciousToken}`
               }
             })
             .get('/userinfo')
             .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
 
-          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspicousToken}` }).then(a => {
+          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
             done();
           }).catch(err => {
             done.fail(err);
@@ -303,7 +309,7 @@ describe('agentSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${suspicousToken}`)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -321,7 +327,7 @@ describe('agentSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${suspicousToken}`)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -345,7 +351,7 @@ describe('agentSpec', () => {
               id: agent.id
             })
             .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${suspicousToken}`)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -365,7 +371,7 @@ describe('agentSpec', () => {
                 id: agent.id
               })
               .set('Accept', 'application/json')
-              .set('Authorization', `Bearer ${suspicousToken}`)
+              .set('Authorization', `Bearer ${suspiciousToken}`)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
