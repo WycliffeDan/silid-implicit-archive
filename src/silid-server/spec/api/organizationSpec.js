@@ -4,19 +4,31 @@ const fixtures = require('sequelize-fixtures');
 const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
+const stubJwks = require('../support/stubJwks');
+const pem2jwk = require('pem-jwk').pem2jwk
+const nock = require('nock');
+
+/**
+ * 2019-11-13
+ * Sample tokens taken from:
+ *
+ * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+ */
+const _access = require('../fixtures/sample-auth0-access-token');
+const _identity = require('../fixtures/sample-auth0-identity-token');
 
 describe('organizationSpec', () => {
 
-  /**
-   * 2019-11-13
-   * Sample tokens taken from:
-   *
-   * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
-   */
-  const _token = require('../fixtures/sample-auth0-access-token');
-  const _identity = require('../fixtures/sample-auth0-identity-token');
-  const { header, scope } = require('../support/userinfoStub')(_token, _identity);
-  const nock = require('nock')
+  let userinfoScope;
+  let signedAccessToken, scope, pub, prv, keystore;
+  beforeAll(done => {
+    stubJwks((err, tokenAndScope) => {
+      if (err) return done.fail(err);
+      ({ signedAccessToken, scope, pub, prv, keystore } = tokenAndScope);
+      userinfoScope = require('../support/userinfoStub')(signedAccessToken);
+      done();
+    });
+  });
 
   let organization, agent;
   beforeEach(done => {
@@ -29,7 +41,7 @@ describe('organizationSpec', () => {
               organization = results[0];
 
               // This agent has recently returned for a visit
-              agent.accessToken = header;
+              agent.accessToken = `Bearer ${signedAccessToken}`;
               agent.save().then(() => {
                 done();
               }).catch(err => {
@@ -52,12 +64,6 @@ describe('organizationSpec', () => {
 
   describe('authenticated', () => {
 
-    let token;
-    beforeEach(done => {
-      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-      done();
-    });
-
     describe('authorized', () => {
 
       describe('create', () => {
@@ -71,7 +77,7 @@ describe('organizationSpec', () => {
                 name: 'One Book Canada' 
               })
               .set('Accept', 'application/json')
-              .set('Authorization', header)
+              .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
@@ -94,11 +100,10 @@ describe('organizationSpec', () => {
           request(app)
             .post('/organization')
             .send({
-              token: token,
               name: organization.name 
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -114,9 +119,8 @@ describe('organizationSpec', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
             .get(`/organization/${organization.id}`)
-            .send({ token: token })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -129,9 +133,8 @@ describe('organizationSpec', () => {
         it('doesn\'t barf if record doesn\'t exist', done => {
           request(app)
             .get('/organization/33')
-            .send({ token: token })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -147,12 +150,11 @@ describe('organizationSpec', () => {
           request(app)
             .put('/organization')
             .send({
-              token: token,
               id: organization.id,
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
@@ -173,12 +175,11 @@ describe('organizationSpec', () => {
           request(app)
             .put('/organization')
             .send({
-              token: token,
               id: 111,
               name: 'Some Guy' 
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -194,11 +195,10 @@ describe('organizationSpec', () => {
           request(app)
             .delete('/organization')
             .send({
-              token: token,
               id: organization.id,
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -212,11 +212,10 @@ describe('organizationSpec', () => {
           request(app)
             .delete('/organization')
             .send({
-              token: token,
               id: 111,
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -229,21 +228,30 @@ describe('organizationSpec', () => {
     });
 
     describe('unauthorized', () => {
-      let suspicousHeader;
+
+      let suspiciousToken;
       beforeEach(done => {
-        suspicousHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+        let jwkPub = pem2jwk(pub);
+        jwkPub.use = 'sig';
+        jwkPub.alg = 'RS256';
+  
+        keystore.add(jwkPub, 'pkcs8').then(function(result) {
+          suspiciousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
 
-        const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-            reqheaders: {
-              'Authorization': suspicousHeader
-            }
-          })
-          .get('/userinfo')
-          .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
+          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+              reqheaders: {
+                'Authorization': `Bearer ${suspiciousToken}`
+              }
+            })
+            .get('/userinfo')
+            .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
 
+          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
+            done();
+          }).catch(err => {
+            done.fail(err);
+          });
 
-        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: suspicousHeader }).then(a => {
-          done();
         }).catch(err => {
           done.fail(err);
         });
@@ -258,7 +266,7 @@ describe('organizationSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -276,7 +284,7 @@ describe('organizationSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -299,7 +307,7 @@ describe('organizationSpec', () => {
               id: organization.id
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
@@ -319,7 +327,7 @@ describe('organizationSpec', () => {
                 id: organization.id
               })
               .set('Accept', 'application/json')
-              .set('Authorization', suspicousHeader)
+              .set('Authorization', `Bearer ${suspiciousToken}`)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
@@ -340,8 +348,22 @@ describe('organizationSpec', () => {
   });
 
   describe('not authenticated', () => {
+
+    let expiredToken;
+    beforeAll(done => {
+      let jwkPub = pem2jwk(pub);
+      jwkPub.use = 'sig';
+      jwkPub.alg = 'RS256';
+
+      keystore.add(jwkPub, 'pkcs8').then(function(result) {
+        expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+        done();
+      }).catch(err => {
+        done.fail(err);
+      });
+    });
+
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._token }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
       request(app)
         .get('/organization')
         .send({ name: 'Some org' })

@@ -47,9 +47,6 @@ module.exports = function(done) {
    */
   const keystore = jose.JWK.createKeyStore();
 
-//  let signedAccessToken, scope;
-//  beforeAll(done => {
-
   // Convert PEM to JWK object
   let jwkPub = pem2jwk(pub);
   jwkPub.use = 'sig';
