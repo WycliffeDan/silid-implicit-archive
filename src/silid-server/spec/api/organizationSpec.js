@@ -4,19 +4,31 @@ const fixtures = require('sequelize-fixtures');
 const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
+const stubJwks = require('../support/stubJwks');
+const pem2jwk = require('pem-jwk').pem2jwk
+const nock = require('nock');
+
+/**
+ * 2019-11-13
+ * Sample tokens taken from:
+ *
+ * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+ */
+const _access = require('../fixtures/sample-auth0-access-token');
+const _identity = require('../fixtures/sample-auth0-identity-token');
 
 describe('organizationSpec', () => {
 
-  /**
-   * 2019-11-13
-   * Sample tokens taken from:
-   *
-   * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
-   */
-  const _token = require('../fixtures/sample-auth0-access-token');
-  const _identity = require('../fixtures/sample-auth0-identity-token');
-  const { header, scope } = require('../support/userinfoStub')(_token, _identity);
-  const nock = require('nock')
+  let userinfoScope;
+  let signedAccessToken, scope, pub, prv, keystore;
+  beforeAll(done => {
+    stubJwks((err, tokenAndScope) => {
+      if (err) return done.fail(err);
+      ({ signedAccessToken, scope, pub, prv, keystore } = tokenAndScope);
+      userinfoScope = require('../support/userinfoStub')(signedAccessToken);
+      done();
+    });
+  });
 
   let organization, agent;
   beforeEach(done => {
@@ -29,7 +41,7 @@ describe('organizationSpec', () => {
               organization = results[0];
 
               // This agent has recently returned for a visit
-              agent.accessToken = header;
+              agent.accessToken = `Bearer ${signedAccessToken}`;
               agent.save().then(() => {
                 done();
               }).catch(err => {
@@ -52,12 +64,6 @@ describe('organizationSpec', () => {
 
   describe('authenticated', () => {
 
-    let token;
-    beforeEach(done => {
-      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-      done();
-    });
-
     describe('authorized', () => {
 
       describe('create', () => {
@@ -71,11 +77,12 @@ describe('organizationSpec', () => {
                 name: 'One Book Canada' 
               })
               .set('Accept', 'application/json')
-              .set('Authorization', header)
+              .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 expect(res.body.name).toEqual('One Book Canada');
 
                 models.Organization.findAll().then(results => {
@@ -94,15 +101,15 @@ describe('organizationSpec', () => {
           request(app)
             .post('/organization')
             .send({
-              token: token,
               name: organization.name 
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.errors.length).toEqual(1);
               expect(res.body.errors[0].message).toEqual('That organization is already registered');
               done();
@@ -114,13 +121,13 @@ describe('organizationSpec', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
             .get(`/organization/${organization.id}`)
-            .send({ token: token })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.email).toEqual(organization.email);
               done();
             });
@@ -129,13 +136,13 @@ describe('organizationSpec', () => {
         it('doesn\'t barf if record doesn\'t exist', done => {
           request(app)
             .get('/organization/33')
-            .send({ token: token })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -147,16 +154,16 @@ describe('organizationSpec', () => {
           request(app)
             .put('/organization')
             .send({
-              token: token,
               id: organization.id,
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.name).toEqual('Some Cool Guy');
  
               models.Organization.findOne({ where: { id: organization.id }}).then(results => {
@@ -173,16 +180,16 @@ describe('organizationSpec', () => {
           request(app)
             .put('/organization')
             .send({
-              token: token,
               id: 111,
               name: 'Some Guy' 
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -194,15 +201,15 @@ describe('organizationSpec', () => {
           request(app)
             .delete('/organization')
             .send({
-              token: token,
               id: organization.id,
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Organization deleted');
               done();
             });
@@ -212,15 +219,15 @@ describe('organizationSpec', () => {
           request(app)
             .delete('/organization')
             .send({
-              token: token,
               id: 111,
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -229,20 +236,12 @@ describe('organizationSpec', () => {
     });
 
     describe('unauthorized', () => {
-      let suspicousHeader;
+
+      let suspiciousToken;
       beforeEach(done => {
-        suspicousHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+        suspiciousToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-        const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-            reqheaders: {
-              'Authorization': suspicousHeader
-            }
-          })
-          .get('/userinfo')
-          .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
-
-
-        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: suspicousHeader }).then(a => {
+        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
           done();
         }).catch(err => {
           done.fail(err);
@@ -258,11 +257,12 @@ describe('organizationSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Unauthorized: Invalid token');
               done();
             });
@@ -276,11 +276,12 @@ describe('organizationSpec', () => {
               name: 'Some Cool Guy'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               models.Organization.findOne({ where: { id: organization.id }}).then(results => {
                 expect(results.name).toEqual(organization.name);
                 done();
@@ -299,14 +300,15 @@ describe('organizationSpec', () => {
               id: organization.id
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${suspiciousToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-                done();
-              });
+              scope.done();
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
         });
 
         it('does not remove the record from the database', done => {
@@ -319,11 +321,12 @@ describe('organizationSpec', () => {
                 id: organization.id
               })
               .set('Accept', 'application/json')
-              .set('Authorization', suspicousHeader)
+              .set('Authorization', `Bearer ${suspiciousToken}`)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 models.Organization.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
@@ -340,8 +343,9 @@ describe('organizationSpec', () => {
   });
 
   describe('not authenticated', () => {
+
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._token }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
+      let expiredToken = jwt.sign({ ..._access, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
       request(app)
         .get('/organization')
         .send({ name: 'Some org' })
@@ -351,6 +355,7 @@ describe('organizationSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
+          scope.done();
           expect(res.body.message).toEqual('jwt expired');
           done();
         });

@@ -4,19 +4,31 @@ const fixtures = require('sequelize-fixtures');
 const models = require('../../models');
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
+const nock = require('nock')
+const stubJwks = require('../support/stubJwks');
+const NodeRSA = require('node-rsa');
+
+/**
+ * 2019-11-13
+ * Sample tokens taken from:
+ *
+ * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+ */
+const _access = require('../fixtures/sample-auth0-access-token');
+const _identity = require('../fixtures/sample-auth0-identity-token');
 
 describe('teamSpec', () => {
 
-  /**
-   * 2019-11-13
-   * Sample tokens taken from:
-   *
-   * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
-   */
-  const _token = require('../fixtures/sample-auth0-access-token');
-  const _identity = require('../fixtures/sample-auth0-identity-token');
-  const { header, scope } = require('../support/userinfoStub')(_token, _identity);
-  const nock = require('nock')
+  let signedAccessToken, scope, pub, prv, keystore;
+  beforeAll(done => {
+    stubJwks((err, tokenAndScope) => {
+      if (err) return done.fail(err);
+      ({ signedAccessToken, scope, pub, prv, keystore } = tokenAndScope);
+
+      done();
+    });
+  });
+
 
   let team, organization, agent;
   beforeEach(done => {
@@ -32,7 +44,7 @@ describe('teamSpec', () => {
                   team = results[0];
 
                   // This agent has recently returned for a visit
-                  agent.accessToken = header;
+                  agent.accessToken = `Bearer ${signedAccessToken}`;
                   agent.save().then(() => {
                     done();
                   }).catch(err => {
@@ -63,12 +75,6 @@ describe('teamSpec', () => {
 
   describe('authenticated', () => {
 
-    let token;
-    beforeEach(done => {
-      token = jwt.sign({ email: agent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
-      done();
-    });
-
     describe('authorized', () => {
 
       describe('create', () => {
@@ -86,11 +92,12 @@ describe('teamSpec', () => {
                   name: 'Tsuutina Translation'
                 })
                 .set('Accept', 'application/json')
-                .set('Authorization', header)
+                .set('Authorization', `Bearer ${signedAccessToken}`)
                 .expect('Content-Type', /json/)
                 .expect(201)
                 .end(function(err, res) {
                   if (err) done.fail(err);
+                  scope.done();
                   expect(res.body.name).toEqual('Tsuutina Translation');
 
                   models.Team.findAll().then(results => {
@@ -109,13 +116,13 @@ describe('teamSpec', () => {
         });
 
         it('allows organization member to add a new record to the database', done => {
-          let memberAgent = new models.Agent({ email: 'member-agent@example.com' });
+          const newMemberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${newMemberToken}` });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
               models.Team.findAll().then(results => {
                 expect(results.length).toEqual(1);
-
-                let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
                 request(app)
                   .post('/team')
                   .send({
@@ -123,11 +130,13 @@ describe('teamSpec', () => {
                     name: 'Tsuutina Translation'
                   })
                   .set('Accept', 'application/json')
-                  .set('Authorization', header)
+                  .set('Authorization', `Bearer ${newMemberToken}`)
                   .expect('Content-Type', /json/)
                   .expect(201)
                   .end(function(err, res) {
                     if (err) done.fail(err);
+                    scope.done();
+
                     expect(res.body.name).toEqual('Tsuutina Translation');
 
                     models.Team.findAll().then(results => {
@@ -156,11 +165,12 @@ describe('teamSpec', () => {
               name: team.name 
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.errors.length).toEqual(1);
               expect(res.body.errors[0].message).toEqual('That team is already registered');
               done();
@@ -174,11 +184,12 @@ describe('teamSpec', () => {
             .get(`/team/${team.id}`)
             .send({ name: 'My team' })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.email).toEqual(team.email);
               done();
             });
@@ -189,11 +200,12 @@ describe('teamSpec', () => {
             .get('/team/33')
             .send({ name: 'My team' })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such team');
               done();
             });
@@ -213,11 +225,12 @@ describe('teamSpec', () => {
                 name: 'Tsuutina Mark Translation'
               })
               .set('Accept', 'application/json')
-              .set('Authorization', header)
+              .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
               .expect(201)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 expect(res.body.name).toEqual('Tsuutina Mark Translation');
 
                 models.Team.findOne({ where: { id: team.id }}).then(results => {
@@ -233,18 +246,9 @@ describe('teamSpec', () => {
         });
 
         it('allows an organization member to update an existing record in the database', done => {
-          const memberHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+          const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-              reqheaders: {
-                'Authorization': memberHeader
-              }
-            })
-            .get('/userinfo')
-            .reply(200, { email: 'member-agent@example.com', ..._identity });
-
-
-          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: memberHeader });
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
               request(app)
@@ -254,11 +258,12 @@ describe('teamSpec', () => {
                   name: 'Tsuutina Mark Translation'
                 })
                 .set('Accept', 'application/json')
-                .set('Authorization', memberHeader)
+                .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
                 .expect(201)
                 .end(function(err, res) {
                   if (err) done.fail(err);
+                  scope.done();
                   expect(res.body.name).toEqual('Tsuutina Mark Translation');
 
                   models.Team.findOne({ where: { id: team.id }}).then(results => {
@@ -284,11 +289,12 @@ describe('teamSpec', () => {
               name: 'Tsuutina Mark Translation'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) return done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such team');
               done();
             });
@@ -307,11 +313,12 @@ describe('teamSpec', () => {
                 id: team.id,
               })
               .set('Accept', 'application/json')
-              .set('Authorization', header)
+              .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 expect(res.body.message).toEqual('Team deleted');
                 models.Team.findAll().then(results => {
                   expect(results.length).toEqual(0);
@@ -326,32 +333,24 @@ describe('teamSpec', () => {
         });
 
         it('does not allow organization member to remove an existing record from the database', done => {
-          const memberHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+          const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-              reqheaders: {
-                'Authorization': memberHeader
-              }
-            })
-            .get('/userinfo')
-            .reply(200, { email: 'member-agent@example.com', ..._identity });
-
-          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: memberHeader });
+          let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
           memberAgent.save().then(results => {
             memberAgent.addOrganization(organization).then(results => {
 
-              let newToken = jwt.sign({ email: memberAgent.email, iat: Math.floor(Date.now()) }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
               request(app)
                 .delete('/team')
                 .send({
                   id: team.id,
                 })
                 .set('Accept', 'application/json')
-                .set('Authorization', memberHeader)
+                .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
                 .expect(401)
                 .end(function(err, res) {
                   if (err) return done.fail(err);
+                  scope.done();
                   expect(res.body.message).toEqual('Unauthorized: Invalid token');
                   models.Team.findAll().then(results => {
                     expect(results.length).toEqual(1);
@@ -375,11 +374,12 @@ describe('teamSpec', () => {
               id: 111,
             })
             .set('Accept', 'application/json')
-            .set('Authorization', header)
+            .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) return done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such team');
               done();
             });
@@ -389,20 +389,11 @@ describe('teamSpec', () => {
 
     describe('unauthorized', () => {
 
-      let suspicousHeader;
+      let unauthorizedToken;
       beforeEach(done => {
-        suspicousHeader = `Bearer ${jwt.sign({ sub: 'somethingdifferent', ..._token}, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
+        unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-        const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-            reqheaders: {
-              'Authorization': suspicousHeader
-            }
-          })
-          .get('/userinfo')
-          .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
-
-
-        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: suspicousHeader }).then(a => {
+        models.Agent.create({ email: 'unauthorizedagent@example.com', accessToken: `Bearer ${unauthorizedToken}` }).then(a => {
           done();
         }).catch(err => {
           done.fail(err);
@@ -418,11 +409,12 @@ describe('teamSpec', () => {
               name: 'Cree Translation Team'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Unauthorized: Invalid token');
 
               done();
@@ -440,11 +432,12 @@ describe('teamSpec', () => {
                 name: 'Cree Translation Team'
               })
               .set('Accept', 'application/json')
-              .set('Authorization', suspicousHeader)
+              .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 models.Team.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
@@ -467,11 +460,12 @@ describe('teamSpec', () => {
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Unauthorized: Invalid token');
               done();
             });
@@ -485,11 +479,12 @@ describe('teamSpec', () => {
               name: 'Mark Cree Translation'
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               models.Team.findOne({ where: { id: team.id }}).then(results => {
                 expect(results.name).toEqual(team.name);
                 done();
@@ -508,14 +503,15 @@ describe('teamSpec', () => {
               id: team.id
             })
             .set('Accept', 'application/json')
-            .set('Authorization', suspicousHeader)
+            .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-                done();
-              });
+              scope.done();
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
         });
 
         it('does not remove the record from the database', done => {
@@ -528,11 +524,12 @@ describe('teamSpec', () => {
                 id: team.id
               })
               .set('Accept', 'application/json')
-              .set('Authorization', suspicousHeader)
+              .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 models.Team.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
@@ -550,7 +547,7 @@ describe('teamSpec', () => {
 
   describe('not authenticated', () => {
     it('returns 401 if provided an expired token', done => {
-      const expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._token }, process.env.CLIENT_SECRET, { expiresIn: '1h' });
+      const expiredToken = jwt.sign({ ..._access, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
       request(app)
         .get('/team')
         .send({ token: expiredToken })
@@ -560,6 +557,7 @@ describe('teamSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
+          scope.done();
           expect(res.body.message).toEqual('jwt expired');
           done();
         });
@@ -574,6 +572,7 @@ describe('teamSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
+          scope.done();
           expect(res.body.message).toEqual('No authorization token was found');
           done();
         });

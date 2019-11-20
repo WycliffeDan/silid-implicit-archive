@@ -1,19 +1,24 @@
-const jwt = require('jsonwebtoken');
+/**
+ * 2019-11-13
+ * Sample tokens taken from:
+ *
+ * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+ */
+const _identity = require('../fixtures/sample-auth0-identity-token');
+const nock = require('nock')
 
 /**
  * Auth0 /userinfo mock
  */
-module.exports = function(access, identity) {
-  const nock = require('nock')
-  const header = `Bearer ${jwt.sign(access, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
-  const scope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
+module.exports = function(access) {
+  const userinfoScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
       reqheaders: {
-        'Authorization': header
+        'Authorization': `Bearer ${access}`
       }
     })
     .persist()
     .get('/userinfo')
-    .reply(200, identity);
+    .reply(200, _identity);
 
-  return { header, scope };
+  return userinfoScope;
 };

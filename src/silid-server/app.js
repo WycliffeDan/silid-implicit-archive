@@ -42,7 +42,7 @@ const checkJwt = jwt({
   audience: process.env.AUTH0_AUDIENCE,
   issuer: `https://${process.env.AUTH0_DOMAIN}/`,
   requestProperty: 'agent',
-  algorithm: ["RS256"]
+  algorithm: ['RS256']
 });
 
 app.use(checkJwt);
@@ -73,5 +73,4 @@ app.use(function(err, req, res, next) {
 //  res.render('error');
 });
 
-//module.exports.handler = serverless(app);
 module.exports = app;
