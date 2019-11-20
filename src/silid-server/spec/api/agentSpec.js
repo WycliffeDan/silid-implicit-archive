@@ -18,8 +18,6 @@ describe('agentSpec', () => {
   const _access = require('../fixtures/sample-auth0-access-token');
   const _identity = require('../fixtures/sample-auth0-identity-token');
 
-  const pem2jwk = require('pem-jwk').pem2jwk
-
   let signedAccessToken, scope, pub, prv, keystore;
   beforeAll(done => {
     stubJwks((err, tokenAndScope) => {
@@ -238,27 +236,10 @@ describe('agentSpec', () => {
       let suspiciousHeader, suspiciousToken;
       beforeEach(done => {
 
-        let jwkPub = pem2jwk(pub);
-        jwkPub.use = 'sig';
-        jwkPub.alg = 'RS256';
-  
-        keystore.add(jwkPub, 'pkcs8').then(function(result) {
-          suspiciousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+        suspiciousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-              reqheaders: {
-                'Authorization': `Bearer ${suspiciousToken}`
-              }
-            })
-            .get('/userinfo')
-            .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
-
-          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
-            done();
-          }).catch(err => {
-            done.fail(err);
-          });
-
+        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
+          done();
         }).catch(err => {
           done.fail(err);
         });
@@ -278,6 +259,7 @@ describe('agentSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) return done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Unauthorized: Invalid token');
               done();
             });
@@ -296,6 +278,7 @@ describe('agentSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               models.Agent.findOne({ where: { id: agent.id }}).then(results => {
                 expect(results.name).toEqual('Some Guy');
                 expect(results.email).toEqual(agent.email);
@@ -320,9 +303,10 @@ describe('agentSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-                done();
-              });
+              scope.done();
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
         });
 
         it('does not remove the record from the database', done => {
@@ -340,6 +324,7 @@ describe('agentSpec', () => {
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 models.Agent.findAll().then(results => {
                   expect(results.length).toEqual(2);
                   done();
@@ -359,16 +344,8 @@ describe('agentSpec', () => {
 
     let expiredToken;
     beforeAll(done => {
-      let jwkPub = pem2jwk(pub);
-      jwkPub.use = 'sig';
-      jwkPub.alg = 'RS256';
-
-      keystore.add(jwkPub, 'pkcs8').then(function(result) {
-        expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
-        done();
-      }).catch(err => {
-        done.fail(err);
-      });
+      expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+      done();
     });
 
     it('returns 401 if provided an expired token', done => {
