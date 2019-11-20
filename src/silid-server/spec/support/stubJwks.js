@@ -23,6 +23,10 @@ const NodeRSA = require('node-rsa');
  */
 module.exports = function(done) {
 
+  // Note to future self: this will probably muck things up if I
+  // try to stub any other services
+  nock.cleanAll();
+
   /**
    * Build RSA key
    */
