@@ -82,6 +82,7 @@ describe('organizationSpec', () => {
               .expect(201)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 expect(res.body.name).toEqual('One Book Canada');
 
                 models.Organization.findAll().then(results => {
@@ -108,6 +109,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.errors.length).toEqual(1);
               expect(res.body.errors[0].message).toEqual('That organization is already registered');
               done();
@@ -125,6 +127,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.email).toEqual(organization.email);
               done();
             });
@@ -139,6 +142,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -159,6 +163,7 @@ describe('organizationSpec', () => {
             .expect(201)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.name).toEqual('Some Cool Guy');
  
               models.Organization.findOne({ where: { id: organization.id }}).then(results => {
@@ -184,6 +189,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -203,6 +209,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Organization deleted');
               done();
             });
@@ -220,6 +227,7 @@ describe('organizationSpec', () => {
             .expect(200)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();
             });
@@ -231,27 +239,10 @@ describe('organizationSpec', () => {
 
       let suspiciousToken;
       beforeEach(done => {
-        let jwkPub = pem2jwk(pub);
-        jwkPub.use = 'sig';
-        jwkPub.alg = 'RS256';
-  
-        keystore.add(jwkPub, 'pkcs8').then(function(result) {
-          suspiciousToken = jwt.sign({ sub: 'somethingdifferent', ..._access}, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
+        suspiciousToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
-          const newTokenScope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
-              reqheaders: {
-                'Authorization': `Bearer ${suspiciousToken}`
-              }
-            })
-            .get('/userinfo')
-            .reply(200, { email: 'suspiciousagent@example.com', ..._identity });
-
-          models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
-            done();
-          }).catch(err => {
-            done.fail(err);
-          });
-
+        models.Agent.create({ email: 'suspiciousagent@example.com', accessToken: `Bearer ${suspiciousToken}` }).then(a => {
+          done();
         }).catch(err => {
           done.fail(err);
         });
@@ -271,6 +262,7 @@ describe('organizationSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               expect(res.body.message).toEqual('Unauthorized: Invalid token');
               done();
             });
@@ -289,6 +281,7 @@ describe('organizationSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
+              scope.done();
               models.Organization.findOne({ where: { id: organization.id }}).then(results => {
                 expect(results.name).toEqual(organization.name);
                 done();
@@ -312,9 +305,10 @@ describe('organizationSpec', () => {
             .expect(401)
             .end(function(err, res) {
               if (err) done.fail(err);
-                expect(res.body.message).toEqual('Unauthorized: Invalid token');
-                done();
-              });
+              scope.done();
+              expect(res.body.message).toEqual('Unauthorized: Invalid token');
+              done();
+            });
         });
 
         it('does not remove the record from the database', done => {
@@ -332,6 +326,7 @@ describe('organizationSpec', () => {
               .expect(401)
               .end(function(err, res) {
                 if (err) done.fail(err);
+                scope.done();
                 models.Organization.findAll().then(results => {
                   expect(results.length).toEqual(1);
                   done();
@@ -349,21 +344,8 @@ describe('organizationSpec', () => {
 
   describe('not authenticated', () => {
 
-    let expiredToken;
-    beforeAll(done => {
-      let jwkPub = pem2jwk(pub);
-      jwkPub.use = 'sig';
-      jwkPub.alg = 'RS256';
-
-      keystore.add(jwkPub, 'pkcs8').then(function(result) {
-        expiredToken = jwt.sign({ iat: Math.floor(Date.now() / 1000) - (60 * 60), ..._access }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: result.kid } });
-        done();
-      }).catch(err => {
-        done.fail(err);
-      });
-    });
-
     it('returns 401 if provided an expired token', done => {
+      let expiredToken = jwt.sign({ ..._access, iat: Math.floor(Date.now() / 1000) - (60 * 60) }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
       request(app)
         .get('/organization')
         .send({ name: 'Some org' })
@@ -373,6 +355,7 @@ describe('organizationSpec', () => {
         .expect(401)
         .end(function(err, res) {
           if (err) done.fail(err);
+          scope.done();
           expect(res.body.message).toEqual('jwt expired');
           done();
         });
