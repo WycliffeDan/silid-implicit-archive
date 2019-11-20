@@ -1,31 +1,52 @@
 'use strict';
 require('dotenv').config();
 
+const nock = require('nock');
+const httpMocks = require('node-mocks-http');
+const fixtures = require('sequelize-fixtures');
+const models = require('../../models');
+const Agent = models.Agent;
+
+const jwt = require('jsonwebtoken');
+const jwtAuth = require('../../lib/jwtAuth');
+const NodeRSA = require('node-rsa');
+
+/**
+ * 2019-11-13
+ * Sample tokens taken from:
+ *
+ * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+ */
+const _access = require('../fixtures/sample-auth0-access-token');
+const _identity = require('../fixtures/sample-auth0-identity-token');
+
 describe('jwtAuth', function() {
-  const httpMocks = require('node-mocks-http');
-  const fixtures = require('sequelize-fixtures');
-  const models = require('../../models');
-  const Agent = models.Agent;
 
-  const jwt = require('jsonwebtoken');
-  const jwtAuth = require('../../lib/jwtAuth');
+  /**
+   * Build RSA key
+   */
+  let _authHeader;
+  beforeAll(() => {
+    const key = new NodeRSA({b: 512, e: 5});
+    key.setOptions({
+      encryptionScheme: {
+        scheme: 'pkcs1',
+        label: 'Optimization-Service'
+      }
+    });
 
-  let _token, _identity, nock, _authHeader, scope;
+    // Get public/private pair
+    const pub = key.exportKey('pkcs8-public-pem');
+    const prv = key.exportKey('pkcs1-private-pem');
+
+    _authHeader = `Bearer ${jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: 'some-kid' } })}`;
+  });
+
+  let scope;
   beforeEach(() => {
-    /**
-     * 2019-11-13
-     * Sample tokens taken from:
-     *
-     * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
-     */
-    _token = require('../fixtures/sample-auth0-access-token');
-    _identity = require('../fixtures/sample-auth0-identity-token');
-
     /**
      * Auth0 /userinfo mock
      */
-    nock = require('nock')
-    _authHeader = `Bearer ${jwt.sign(_token, process.env.CLIENT_SECRET, { expiresIn: '1h' })}`;
     scope = nock(`https://${process.env.AUTH0_DOMAIN}`, {
         reqheaders: {
           'Authorization': _authHeader
@@ -35,11 +56,11 @@ describe('jwtAuth', function() {
       .reply(200, _identity);
   });
 
-  let agent, request, response;
-
   afterEach(() => {
     nock.cleanAll();
   });
+
+  let agent, request, response;
 
   describe('returning visitor', () => {
     beforeEach(function(done) {
