@@ -83,6 +83,7 @@ const Home = (props: IProps) => {
   };
   const sideList = (side: DrawerSide) => (
     <div
+      id="app-menu"
       className={classes.list}
       role="presentation"
       onClick={toggleDrawer(side, false)}
@@ -113,7 +114,7 @@ const Home = (props: IProps) => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <IconButton onClick={toggleDrawer('left', true)} edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+        <IconButton id="app-menu-button" onClick={toggleDrawer('left', true)} edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
           <MenuIcon />
         </IconButton>
         <Drawer open={state.left} onClose={toggleDrawer('left', false)}>
