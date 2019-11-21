@@ -4,7 +4,7 @@
 
 context('Authentication', function() {
 
-  before(() => {
+  before(function() {
     cy.fixture('google-profile-response.json').as('profile');
   });
   
@@ -37,13 +37,18 @@ context('Authentication', function() {
       cy.get('#login-button').should('not.exist');
     });
 
-    it('displays a friendly greeting', () => {
-      cy.contains('You are logged in!');
+    it('renders the navbar correctly', function() {
+      cy.get('#logout-button').contains('Logout');
+      cy.get('img[alt=avatar]').should('have.attr', 'src', this.profile.picture);
     });
 
-    it('renders the navbar correctly', () => {
-      cy.get('#logout-button').contains('Logout');
-      cy.get('header a').contains('Profile').and('have.attr', 'href', '/agent');
+    it('renders the app-menu correctly', () => {
+      cy.get('#app-menu').should('not.exist');
+      cy.get('#app-menu-button').click();
+
+      cy.get('#app-menu ul div:nth-of-type(1) a').should('have.attr', 'href', '#/').and('contain', 'Home');
+      cy.get('#app-menu ul div:nth-of-type(2) a').should('have.attr', 'href', '#agent').and('contain', 'Personal Info');
+      cy.get('#app-menu ul:nth-of-type(2) div').contains('Help');
     });
   });
 });
