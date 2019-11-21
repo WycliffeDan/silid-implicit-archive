@@ -1,7 +1,7 @@
 // src/App.js
 // See: https://auth0.com/docs/quickstart/spa/react/01-login
 import React from 'react';
-import { BrowserRouter, Route } from 'react-router-dom';
+import { BrowserRouter,HashRouter, Route } from 'react-router-dom';
 import Home from './routes/Home';
 import Agent from './routes/Agent';
 import Auth from './auth/Auth';
@@ -29,19 +29,21 @@ function App() {
 
   return (
     <div className="App">
-      <BrowserRouter>
+      <HashRouter>
         <Route
           path="/"
           render={props => <Home auth={auth} {...props} />}
         />
-        <Route
-          path="/callback"
-          render={props => {
-            handleAuthentication(props);
-            return <Callback {...props} />;
-          }}
-        />
         <PrivateRoute path="/agent" auth={auth} component={Agent} />
+      </HashRouter>
+      <BrowserRouter>
+        <Route
+            path="/callback"
+            render={props => {
+              handleAuthentication(props);
+              return <Callback {...props} />;
+            }}
+          />
       </BrowserRouter>
     </div>
   );
