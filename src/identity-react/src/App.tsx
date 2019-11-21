@@ -34,7 +34,7 @@ function App() {
           path="/"
           render={props => <Home auth={auth} {...props} />}
         />
-        <PrivateRoute path="/agent" auth={auth} component={Agent} />
+        <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
       </HashRouter>
       <BrowserRouter>
         <Route
