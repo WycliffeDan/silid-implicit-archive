@@ -28,7 +28,18 @@ npm test
 ## Dev server
 
 ```
+npm run dev
+```
+
+### docker-compose
+
+```
 docker-compose up
 ```
 
+Seed database:
+
+```
+docker-compose exec app node config/seed.js
+```
 

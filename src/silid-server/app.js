@@ -11,6 +11,10 @@ var agentRouter = require('./routes/agent');
 var organizationRouter = require('./routes/organization');
 var teamRouter = require('./routes/team');
 
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
+
+
 var app = express();
 
 // view engine setup
@@ -23,6 +27,29 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/**
+ * Access Token verification
+ */
+//app.use(jwt({ secret: process.env.CLIENT_SECRET, requestProperty: 'agent' }));
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+  }),
+
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+  requestProperty: 'agent',
+  algorithm: ['RS256']
+});
+
+app.use(checkJwt);
+
+/**
+ * Routes
+ */
 app.use('/', indexRouter);
 app.use('/agent', agentRouter);
 app.use('/organization', organizationRouter);
@@ -35,13 +62,15 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.status(err.status || 500).json(err);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+//  // set locals, only providing error in development
+//  res.locals.message = err.message;
+//  res.locals.error = req.app.get('env') === 'development' ? err : {};
+//
+//  // render the error page
+//  res.status(err.status || 500);
+//  res.render('error');
 });
 
-module.exports.handler = serverless(app);
+module.exports = app;

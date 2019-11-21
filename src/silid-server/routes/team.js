@@ -28,7 +28,7 @@ router.post('/', jwtAuth, function(req, res, next) {
       agents = agents.map(agent => agent.email);
       organization.getCreator().then(creator => {
 
-        if (creator.email !== req.user.email && !agents.includes(req.user.email)) {
+        if (creator.email !== req.agent.email && !agents.includes(req.agent.email)) {
           return res.status(401).json( { message: 'Unauthorized: Invalid token' });
         }
 
@@ -64,7 +64,7 @@ router.put('/', jwtAuth, function(req, res, next) {
         agents = agents.map(agent => agent.email);
         organization.getCreator().then(creator => {
 
-          if (creator.email !== req.user.email && !agents.includes(req.user.email)) {
+          if (creator.email !== req.agent.email && !agents.includes(req.agent.email)) {
             return res.status(401).json( { message: 'Unauthorized: Invalid token' });
           }
           for (let key in req.body) {
@@ -101,7 +101,7 @@ router.delete('/', jwtAuth, function(req, res, next) {
 
       organization.getCreator().then(creator => {
 
-        if (creator.email !== req.user.email) {
+        if (creator.email !== req.agent.email) {
           return res.status(401).json( { message: 'Unauthorized: Invalid token' });
         }
 

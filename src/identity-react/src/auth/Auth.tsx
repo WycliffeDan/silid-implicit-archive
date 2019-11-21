@@ -12,6 +12,7 @@ export default class Auth {
     domain: AUTH_CONFIG.domain,
     clientID: AUTH_CONFIG.clientId,
     redirectUri: AUTH_CONFIG.callbackUrl,
+    audience: AUTH_CONFIG.audience,
     responseType: 'token id_token',
     scope: 'openid email profile'
   });
@@ -70,6 +71,7 @@ export default class Auth {
     localStorage.setItem('expiresAt', expiresAt.toString());
     localStorage.setItem('profile', JSON.stringify(authResult.idTokenPayload));
     // navigate to the home route
+
     window.location.href = '/';
   }
 

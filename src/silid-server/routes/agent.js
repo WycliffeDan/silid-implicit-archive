@@ -5,7 +5,7 @@ const models = require('../models');
 
 /* GET agent listing. */
 router.get('/', jwtAuth, function(req, res, next) {
-  res.send('respond with a resource');
+  res.json(req.agent);
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
@@ -20,7 +20,7 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 });
 
 router.post('/', jwtAuth, function(req, res, next) {
-  let email = req.user.email;
+  let email = req.body.email;
   if (req.body.email) {
     email = req.body.email;
   }
@@ -38,7 +38,7 @@ router.put('/', jwtAuth, function(req, res, next) {
       return res.json( { message: 'No such agent' });
     }
 
-    if (req.user.email !== agent.email) {
+    if (req.agent.email !== agent.email) {
       return res.status(401).json( { message: 'Unauthorized: Invalid token' });
     }
 
@@ -63,7 +63,7 @@ router.delete('/', jwtAuth, function(req, res, next) {
       return res.json( { message: 'No such agent' });
     }
 
-    if (req.user.email !== agent.email) {
+    if (req.agent.email !== agent.email) {
       return res.status(401).json( { message: 'Unauthorized: Invalid token' });
     }
 
