@@ -30,7 +30,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Access Token verification
  */
-//app.use(jwt({ secret: process.env.CLIENT_SECRET, requestProperty: 'agent' }));
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
