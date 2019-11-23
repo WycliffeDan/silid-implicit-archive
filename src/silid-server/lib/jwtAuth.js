@@ -2,6 +2,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const models = require('../models');
 const request = require('request');
+const protocol = process.env.NODE_ENV === 'test' || 'e2e' ? 'http' : 'https';
 
 const jwtAuth = function(req, res, next) {
 
@@ -9,7 +10,7 @@ const jwtAuth = function(req, res, next) {
     req.agent = agent;
 
     if (!req.agent) {
-      request.get(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
+      request.get(`${protocol}://${process.env.AUTH0_DOMAIN}/userinfo`, {
           headers: {
             'Authorization': req.header('Authorization')
           }
