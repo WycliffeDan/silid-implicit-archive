@@ -12,6 +12,13 @@
     "host": "localhost",
     "dialect": "postgres"
   },
+  "e2e": {
+    "username": "user",
+    "password": "pass",
+    "database": "postgres",
+    "host": "postgres",
+    "dialect": "postgres"
+  },
   "production": {
     "username": "organizationuser",
     "password": "S0m3pa55w0rD",
