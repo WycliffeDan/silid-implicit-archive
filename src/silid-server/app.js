@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv-flow').config();
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -30,16 +30,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Access Token verification
  */
+const protocol = process.env.NODE_ENV === 'test' || 'e2e' ? 'http' : 'https';
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+    jwksUri: `${protocol}://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
   }),
 
   audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+  issuer: `${protocol}://${process.env.AUTH0_DOMAIN}/`,
   requestProperty: 'agent',
   algorithm: ['RS256']
 });
