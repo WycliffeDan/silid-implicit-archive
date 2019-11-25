@@ -11,8 +11,9 @@ const useStarshipsService = () => {
     status: 'loading'
   });
 
+  const headers = new Headers({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`}); 
   useEffect(() => {
-    fetch('https://swapi.co/api/starships')
+    fetch(`${process.env.REACT_APP_API_URL}agent`, { headers })
       .then(response => response.json())
       .then(response => setResult({ status: 'loaded', payload: response }))
       .catch(error => setResult({ status: 'error', error }));
