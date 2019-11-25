@@ -26,7 +26,6 @@ const handleAuthentication = (props: any) => {
 
 
 function App() {
-
   return (
     <div className="App">
       <HashRouter>
