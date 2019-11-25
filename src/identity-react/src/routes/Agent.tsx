@@ -39,6 +39,7 @@ const Agent = () => {
   // const profile = JSON.parse(localStorage.getItem('profile')!);
   const service = useGetAgentService();
 
+//console.log(service.payload);
   return (
     <div className="agent">
       <Card className={classes.card}>
@@ -49,48 +50,32 @@ const Agent = () => {
           <Typography variant="body2" color="textSecondary" component="p">
             {/* {JSON.stringify(profile)} */}
             {service.status === 'loading' && <div>Loading...</div>}
-            {service.status === 'loaded' &&
-              service.payload.results.map(starship => (
-                <div key={starship.url}>
-                  <TextField
-                    id="standard-number"
-                    label="Name"
-                    type="string"
-                    className={classes.textField}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin="normal"
-                    value={starship.name}
-                  />
-                  <br></br>
-                  <TextField
-                    id="standard-number"
-                    label="Model"
-                    type="string"
-                    className={classes.textField}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin="normal"
-                    value={starship.model}
-                  />
-                  <br></br>
-                  <TextField
-                    id="standard-number"
-                    label="Passengers"
-                    type="string"
-                    className={classes.textField}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin="normal"
-                    value={starship.passengers}
-                  />
-                  <br></br>
-                  <br></br>
-                </div>
-              ))}
+            {service.status === 'loaded' && service.payload ?
+              <div>
+              <TextField
+                id="email-input"
+                label="Email"
+                type="string"
+                className={classes.textField}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                margin="normal"
+                value={service.payload.email}
+              />
+              <br></br>
+              <TextField
+                id="name-input"
+                label="Name"
+                type="string"
+                className={classes.textField}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                margin="normal"
+                value={service.payload.name}
+              />
+              </div> : ''}
             {service.status === 'error' && (
               <div>Error, the backend moved to the dark side.</div>
             )}
