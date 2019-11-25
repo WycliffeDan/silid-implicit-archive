@@ -13,7 +13,8 @@ const useStarshipsService = () => {
 
   const headers = new Headers({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`}); 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_URL}agent`, { headers })
+    //fetch(`${process.env.REACT_APP_API_DOMAIN}agent`, { headers })
+    fetch(`/agent`, { headers })
       .then(response => response.json())
       .then(response => setResult({ status: 'loaded', payload: response }))
       .catch(error => setResult({ status: 'error', error }));
