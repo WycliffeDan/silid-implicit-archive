@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Service } from '../types/Service';
 import { Agent } from '../types/Agent';
 
-export interface Agents {
-  results: Agent[];
-}
+//export interface Agents {
+//  results: Agent[];
+//}
 
 const useStarshipsService = () => {
   const [result, setResult] = useState<Service<Agent>>({

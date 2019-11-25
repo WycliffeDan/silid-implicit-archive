@@ -45,9 +45,9 @@ context('Agent', function() {
 
       it('displays agent social profile info in form', function() {
         cy.get('h3').contains('Profile Page');
-//        cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
-//        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
-//        cy.get('button[type="submit"]').should('exist');
+        cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
+        cy.get('button[type="submit"]').should('exist');
       });
 
 //      it('disables the Save button', () => {
