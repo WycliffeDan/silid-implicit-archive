@@ -4,6 +4,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const cors = require('cors');
 const serverless = require("serverless-http");
 
 var indexRouter = require('./routes/index');
@@ -21,6 +22,7 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -30,7 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Access Token verification
  */
-const protocol = process.env.NODE_ENV === 'test' || 'e2e' ? 'http' : 'https';
+const protocol = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'e2e' ? 'http' : 'https';
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
@@ -62,7 +64,9 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
+  console.log("ERROR", err);
   res.status(err.status || 500).json(err);
+
 
 //  // set locals, only providing error in development
 //  res.locals.message = err.message;
