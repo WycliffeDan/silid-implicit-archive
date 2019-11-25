@@ -1,9 +1,15 @@
 'use strict';
 require('dotenv-flow').config();
 
+
 if (process.env.NODE_ENV === 'e2e') {
-  require('../../models');
-  console.log('Database synced');
+  const models =  require('../../models');
+
+  models.sequelize.sync({force: true}).then(() => {
+    console.log('Database synced');
+  }).catch(err => {
+    console.error(err);
+  });
 }
 
 /**
