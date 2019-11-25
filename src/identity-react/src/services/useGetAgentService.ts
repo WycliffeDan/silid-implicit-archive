@@ -7,7 +7,7 @@ export interface Agents {
 }
 
 const useStarshipsService = () => {
-  const [result, setResult] = useState<Service<Agents>>({
+  const [result, setResult] = useState<Service<Agent>>({
     status: 'loading'
   });
 
