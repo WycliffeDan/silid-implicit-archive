@@ -4,6 +4,7 @@ import React from 'react';
 import { BrowserRouter,HashRouter, Route } from 'react-router-dom';
 import Home from './routes/Home';
 import Agent from './routes/Agent';
+import Organization from './routes/Organization';
 import Auth from './auth/Auth';
 import Callback from './callback/Callback';
 import { parseQuery } from './utils/parseQuery';
@@ -34,6 +35,7 @@ function App() {
           render={props => <Home auth={auth} {...props} />}
         />
         <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
+        <PrivateRoute path="/organization" auth={auth} component={Organization} redirect="/" />
       </HashRouter>
       <BrowserRouter>
         <Route
