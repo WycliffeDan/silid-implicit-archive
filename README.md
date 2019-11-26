@@ -3,54 +3,77 @@ silid
 
 This client app was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-The server app uses `express` and was scrounged from the ruined heap of a now forgotten app with the exact same purpose.
+The server app was produced by `express-generator` and was scrounged from the ruined heap of a now forgotten app with the exact same purpose. It is backed by a `sequelize`/`postgres` pairing.
+
+The following describes how to deploy the combined application to a local development environment and run end-to-end tests.
 
 ## Server
 
+From the `src/silid-server` project directory:
+
 ```
 npm install
+cp .env.example .env
 ```
 
+### Test
+
+Apart from the client-driven e2e tests, the server has tests of its own. It requires a PostgreSQL development server. Here's how I start one with `docker`:
+
+```
+docker run --name dev-postgres -p 5432:5432 -d postgres
+```
+
+Execute server-specific tests:
+
+```
+npm test
+```
 
 ## Client
 
-In the project directory, you can run:
+From the `src/identity-react` project directory:
 
-### `npm start`
+```
+npm install
+cp .env.example .env
+```
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Client build server
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+In a new shell, from the `src/identity-react` project directory:
 
-### `npm test`
+```
+npm start
+```
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### e2e API test server
 
-### `npm run build`
+The client application tests against a local instance of the `silid-server` and a special mock server whose purpose is to return a public key with which to verify an Auth0 access token. These tests _do not_ execute against a live server.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The `silid-server`/mock server combo are containerized. In a separate shell, from the `src/silid-server` project directory, launch the e2e API server:
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+```
+docker-compose -f docker-compose.e2e.yml up
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Execute e2e tests 
 
-### `npm run eject`
+End-to-end tests depend on `cypress`. They are executed from the `src/identity-react` project directory. Tests may be executed in your preferred browser, or _headlessly_, as may be appropriate in a staging environment.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+#### In-browser tests:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This will open an interface and allow you to watch your tests execute:
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+npx cypress open
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+#### _Headless_ tests:
 
-## Learn More
+`cypress` is executed in a container in this case, so first execution will be slow:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+npm run test:headless
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
