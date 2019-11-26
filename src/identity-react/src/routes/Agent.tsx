@@ -52,29 +52,31 @@ const Agent = () => {
             {service.status === 'loading' && <div>Loading...</div>}
             {service.status === 'loaded' && service.payload ?
               <div>
-              <TextField
-                id="email-input"
-                label="Email"
-                type="string"
-                className={classes.textField}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                margin="normal"
-                value={service.payload.email}
-              />
-              <br></br>
-              <TextField
-                id="name-input"
-                label="Name"
-                type="string"
-                className={classes.textField}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                margin="normal"
-                value={service.payload.name}
-              />
+                <TextField
+                  id="email-input"
+                  label="Email"
+                  type="email"
+                  className={classes.textField}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  name="email"
+                  value={service.payload.email}
+                />
+                <br></br>
+                <TextField
+                  id="name-input"
+                  label="Name"
+                  type="string"
+                  className={classes.textField}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  name="name"
+                  value={service.payload.name}
+                />
               </div> : ''}
             {service.status === 'error' && (
               <div>Error, the backend moved to the dark side.</div>
