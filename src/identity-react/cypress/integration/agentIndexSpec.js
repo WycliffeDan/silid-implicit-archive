@@ -33,18 +33,25 @@ context('Agent', function() {
   describe('authenticated', () => {
 
     context('first visit', () => {
-      beforeEach(done => {
+      beforeEach(() => {
+cy.task('log', 'BEFORE EACH');
         cy.login();
+cy.task('log', 'ALL LOGGED IN');
         cy.get('#app-menu-button').click();
+cy.task('log', 'APP BUTTON CLICKED');
+        cy.contains('Personal Info').click();//.then(() => {
+cy.task('log', 'PERSONAL INFO CLICKED');
+cy.task('log', 'PASSED - BEFORE EACH DONE');
+      });
 
-        cy.contains('Personal Info').click().then(() => {
-          cy.location('pathname').should('equal', '/#/agent');
-          done();
-        });
+      it('lands in the right spot', function() {
+        cy.location('pathname').should('equal', '/#/agent');
       });
 
       it('displays agent social profile info in form', function() {
+cy.task('log', 'TESTING');
         cy.get('h3').contains('Profile Page');
+cy.task('log', 'First test done');
         cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
         cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
         cy.get('button[type="submit"]').should('exist');
