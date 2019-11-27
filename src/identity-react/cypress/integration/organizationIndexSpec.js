@@ -2,8 +2,8 @@
 // https://on.cypress.io/intelligent-code-completion
 /// <reference types="Cypress" />
 
-const models = require('../../../silid-server/models');
-const fixtures = require('sequelize-fixtures');
+//const models = require('../../../silid-server/models');
+//const fixtures = require('sequelize-fixtures');
 
 context('Organization', function() {
 

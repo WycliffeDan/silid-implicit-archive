@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const Organization = () => {
   const classes = useStyles();
   // const profile = JSON.parse(localStorage.getItem('profile')!);
-  const service = {payload: []};//useGetOrganizationService();
+  const service = {payload: [], status: 'loaded'};//useGetOrganizationService();
 
 //console.log(service.payload);
   return (
