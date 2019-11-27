@@ -54,7 +54,7 @@ The client application tests against a local instance of the `silid-server` and 
 The `silid-server`/mock server combo are containerized. In a separate shell, from the `src/silid-server` project directory, launch the e2e API server:
 
 ```
-docker-compose -f docker-compose.e2e.yml up
+docker-compose -f docker-compose.e2e.yml up --build
 ```
 
 ### Execute e2e tests 
