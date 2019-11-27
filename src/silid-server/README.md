@@ -44,12 +44,6 @@ curl --request GET \
 ## Dev server
 
 ```
-npm run dev
-```
-
-### docker-compose
-
-```
 docker-compose up
 ```
 
