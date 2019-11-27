@@ -73,11 +73,9 @@ context('Organization', function() {
 
 
     beforeEach(() => {
-      cy.task('getDatabase');//.then(models => {
-        cy.login();
-        cy.get('#app-menu-button').click();
-        cy.contains('Organizations').click();
-//      });
+      cy.login();
+      cy.get('#app-menu-button').click();
+      cy.contains('Organizations').click();
     });
 
     it('lands in the right spot', () => {
@@ -92,6 +90,11 @@ context('Organization', function() {
     describe('organization membership', () => {
       context('no organizations', () => {
         it('displays no organizations', () => {
+          cy.task('log', 'THE TEST IS RUNNING HERE');
+          console.log('*******************************************************');
+          cy.log('*******************************************************');
+          let results = cy.task('query', 'SELECT * FROM organizations;');
+          expect(results.length).to.equal(0);
         });
       });
 

@@ -27,3 +27,4 @@
 //});
 
 import './login'
+import './log'
