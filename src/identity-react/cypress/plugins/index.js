@@ -1,6 +1,7 @@
 const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor')
+const models = require('../plugins/models');
 
-module.exports = on => {
+module.exports = (on, config) => {
   on('file:preprocessor', cypressTypeScriptPreprocessor)
 
 
@@ -12,6 +13,10 @@ module.exports = on => {
   on('task', {
     log (message) {
       console.log(message);
+      return null;
+    },
+
+    getDatabase() {
       return null;
     }
   });

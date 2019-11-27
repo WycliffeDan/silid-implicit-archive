@@ -2,7 +2,7 @@
 // https://on.cypress.io/intelligent-code-completion
 /// <reference types="Cypress" />
 
-//const models = require('../../../silid-server/models');
+//const models = require('../plugins/models');
 //const fixtures = require('sequelize-fixtures');
 
 context('Organization', function() {
@@ -73,9 +73,11 @@ context('Organization', function() {
 
 
     beforeEach(() => {
-      cy.login();
-      cy.get('#app-menu-button').click();
-      cy.contains('Organizations').click();
+      cy.task('getDatabase');//.then(models => {
+        cy.login();
+        cy.get('#app-menu-button').click();
+        cy.contains('Organizations').click();
+//      });
     });
 
     it('lands in the right spot', () => {
