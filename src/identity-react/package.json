@@ -59,8 +59,7 @@
     "node-mocks-http": "^1.8.0",
     "passport": "^0.4.0",
     "pg": "^7.14.0",
-    "sequelize": "^5.21.2",
-    "sequelize-fixtures": "^1.1.1"
+    "sequelize": "^5.21.2"
   },
   "proxy": "http://localhost:3001"
 }
