@@ -15,15 +15,11 @@ module.exports = (on, config) => {
       return null;
     },
 
+    /**
+     * Execute arbitrary queries against the API database
+     */
     query(queryStr) {
-        console.log('QUERYING');
-        console.log(queryStr);
-//      return null;
-      db.sequelize.query(queryStr).then(([results, metadata]) => {
-        console.log('RESULTS');
-        console.log(results, metadata);
-        return results;
-      });
+      return db.sequelize.query(queryStr);
     },
   });
 }
