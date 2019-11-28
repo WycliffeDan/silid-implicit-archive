@@ -1,9 +1,7 @@
 const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor')
 const db = require('./database');
-//const models = require('../plugins/models');
 
 module.exports = (on, config) => {
-//  require('cypress-log-to-output').install(on);
   on('file:preprocessor', cypressTypeScriptPreprocessor);
 
   /**
@@ -11,7 +9,6 @@ module.exports = (on, config) => {
    *
    * Log to stdout in headless tests
    */
-
   on('task', {
     log (message) {
       console.log(message);
@@ -19,15 +16,14 @@ module.exports = (on, config) => {
     },
 
     query(queryStr) {
-      cy.log('QUERYING');
         console.log('QUERYING');
         console.log(queryStr);
-      return null;
-//      db.sequelize.query(queryStr).then(([results, metadata]) => {
-//        console.log('RESULTS');
-//        console.log(results, metadata);
-//        return results;
-//      });
+//      return null;
+      db.sequelize.query(queryStr).then(([results, metadata]) => {
+        console.log('RESULTS');
+        console.log(results, metadata);
+        return results;
+      });
     },
   });
 }

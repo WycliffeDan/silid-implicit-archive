@@ -2,17 +2,16 @@
 // https://on.cypress.io/intelligent-code-completion
 /// <reference types="Cypress" />
 
-//const models = require('../plugins/models');
-//const fixtures = require('sequelize-fixtures');
-
 context('Organization', function() {
 
   before(function() {
+          cy.log('BEFORE GIVE ME ANYTHING');
     cy.fixture('google-profile-response.json').as('profile');
   });
   
   describe('unauthenticated', done => {
     beforeEach(() => {
+          cy.log('BEFORE EACHE UNAUTH');
       cy.visit('/#/organization');
     });
 
@@ -73,16 +72,19 @@ context('Organization', function() {
 
 
     beforeEach(() => {
+          cy.log('BEFORE EACH AUTH');
       cy.login();
       cy.get('#app-menu-button').click();
       cy.contains('Organizations').click();
     });
 
     it('lands in the right spot', () => {
+          cy.log('Landed in right spot');
       cy.url().should('contain', '/#/organization');
     });
 
     it('displays common Organization interface elements', function() {
+          cy.log('displays common Organization interface elements');
       cy.get('h3').contains('Organizations');
       cy.get('button#add-organization').should('exist');
     });
@@ -90,16 +92,17 @@ context('Organization', function() {
     describe('organization membership', () => {
       context('no organizations', () => {
         it('displays no organizations', () => {
-          cy.task('log', 'THE TEST IS RUNNING HERE');
-          console.log('*******************************************************');
-          cy.log('*******************************************************');
-          let results = cy.task('query', 'SELECT * FROM organizations;');
-          expect(results.length).to.equal(0);
+          cy.log('*******************8 displays no organizations');
+          //let results = cy.task('query', 'SELECT * FROM organizations;');
+          cy.task('query', 'SELECT * FROM "Agents";');
+          //cy.log(results);
+//         expect(results.length).to.equal(0);
         });
       });
 
       context('some organizations', () => {
         it('displays a list of organizations', () => {
+          cy.log('displays a list of organizations');
         });
       });
     });
