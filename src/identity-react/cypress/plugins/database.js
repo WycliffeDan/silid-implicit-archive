@@ -10,7 +10,7 @@ const config = {
   "username": "user",
   "password": "pass",
   "database": "postgres",
-  "host": "postgres",
+  "host": "localhost",
   "dialect": "postgres"
 };
 
