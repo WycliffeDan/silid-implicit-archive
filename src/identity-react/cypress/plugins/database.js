@@ -4,7 +4,7 @@ const Sequelize = require('sequelize');
 const db = {};
 
 /**
- * This matches the `e2e` config in `src/silid/server/config/
+ * This matches the `e2e` config in `src/silid-server/config/
  */
 const config = {
   "username": "user",
