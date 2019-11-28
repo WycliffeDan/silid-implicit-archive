@@ -41,6 +41,13 @@ curl --request GET \
   --header 'authorization: Bearer [access_token]'
 ```
 
+If you want to poke around in the test database, connect like this:
+
+```
+psql -h localhost -d postgres -U user -W
+```
+
+
 ## Dev server
 
 ```
