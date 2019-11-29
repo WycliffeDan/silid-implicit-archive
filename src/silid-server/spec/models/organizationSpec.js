@@ -43,13 +43,13 @@ describe('Organization', () => {
     });
 
     describe('creator', () => {
-      it('sets includes creator agent as a member', done => {
+      it('includes creator agent as a member', done => {
         organization = new Organization(_valid);
         organization.save().then(obj => {
           obj.getAgents().then(members => {
             expect(members.length).toEqual(1);
             obj.getCreator().then(creator => {
-              expect(members[0]).toEqual(creator);
+              expect(members[0].id).toEqual(creator.id);
               done();
             }).catch(err => {
               done.fail(err);
@@ -61,7 +61,6 @@ describe('Organization', () => {
           done.fail(err);
         });
       });
-
 
       it('requires a creator agent', done => {
         delete _valid.creatorId;
@@ -166,11 +165,16 @@ describe('Organization', () => {
       });
 
       it('has many', done => {
-        org.addAgent(agent.id).then(result => {
-          org.getAgents().then(result => {
-            expect(result.length).toEqual(1);
-            expect(result[0].name).toEqual(agent.name);
-            done();
+        models.Agent.create({ name: 'Some Other Guy', email: 'someotherguy@example.com' }).then(newAgent => {
+          org.addAgent(newAgent).then(result => {
+            org.getAgents().then(result => {
+              expect(result.length).toEqual(2);
+              expect(result[0].id).toEqual(agent.id);
+              expect(result[1].id).toEqual(newAgent.id);
+              done();
+            }).catch(err => {
+              done.fail(err);
+            });
           }).catch(err => {
             done.fail(err);
           });
