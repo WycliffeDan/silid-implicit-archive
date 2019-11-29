@@ -43,11 +43,31 @@ describe('Organization', () => {
     });
 
     describe('creator', () => {
+      it('sets includes creator agent as a member', done => {
+        organization = new Organization(_valid);
+        organization.save().then(obj => {
+          obj.getAgents().then(members => {
+            expect(members.length).toEqual(1);
+            obj.getCreator().then(creator => {
+              expect(members[0]).toEqual(creator);
+              done();
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+
       it('requires a creator agent', done => {
         delete _valid.creatorId;
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          done.fail('This shouldn\'t haved saved');
+          done.fail('This shouldn\'t have saved');
         }).catch(err => {
           expect(err.errors.length).toEqual(1);
           expect(err.errors[0].message).toEqual('Organization.creatorId cannot be null');
@@ -64,7 +84,7 @@ describe('Organization', () => {
         _valid.creatorId = '   ';
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          done.fail('This shouldn\'t haved saved');
+          done.fail('This shouldn\'t have saved');
         }).catch(err => {
           expect(err instanceof models.Sequelize.DatabaseError).toBe(true);
           done();
@@ -75,7 +95,7 @@ describe('Organization', () => {
         _valid.creatorId = 111;
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          done.fail('This shouldn\'t haved saved');
+          done.fail('This shouldn\'t have saved');
         }).catch(err => {
           expect(err instanceof models.Sequelize.ForeignKeyConstraintError).toBe(true);
           done();
@@ -88,7 +108,7 @@ describe('Organization', () => {
         delete _valid.name;
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          done.fail('This shouldn\'t haved saved');
+          done.fail('This shouldn\'t have saved');
         }).catch(err => {
           expect(err.errors.length).toEqual(1);
           expect(err.errors[0].message).toEqual('Organization requires a name');
@@ -100,7 +120,7 @@ describe('Organization', () => {
         _valid.name = '   ';
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          done.fail('This shouldn\'t haved saved');
+          done.fail('This shouldn\'t have saved');
         }).catch(err => {
           expect(err.errors.length).toEqual(1);
           expect(err.errors[0].message).toEqual('Organization requires a name');
