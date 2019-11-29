@@ -5,7 +5,7 @@
 context('Organization', function() {
 
   before(function() {
-    cy.fixture('google-profile-response.json').as('profile');
+    cy.fixture('someguy-auth0-access-token.json').as('agent');
   });
   
   describe('unauthenticated', done => {
@@ -33,8 +33,8 @@ context('Organization', function() {
   describe('authenticated', () => {
 
     let token, agent;
-    beforeEach(() => {
-      cy.login();
+    beforeEach(function() {
+      cy.login(this.agent);
       cy.get('#app-menu-button').click();
       cy.contains('Organizations').click().then(() =>  {
         token = localStorage.getItem('accessToken');

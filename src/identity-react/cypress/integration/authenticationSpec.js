@@ -6,6 +6,7 @@ context('Authentication', function() {
 
   before(function() {
     cy.fixture('google-profile-response.json').as('profile');
+    cy.fixture('someguy-auth0-access-token.json').as('agent');
   });
   
   describe('not logged in', done => {
@@ -29,8 +30,8 @@ context('Authentication', function() {
   });
 
   describe('logged in', done => {
-    beforeEach(() => {
-      cy.login();
+    beforeEach(function() {
+      cy.login(this.agent);
     });
 
     it('does not display the login link', () => {

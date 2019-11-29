@@ -6,6 +6,7 @@ context('Agent', function() {
 
   before(function() {
     cy.fixture('google-profile-response.json').as('profile');
+    cy.fixture('someguy-auth0-access-token.json').as('agent');
   });
   
   describe('unauthenticated', done => {
@@ -33,8 +34,8 @@ context('Agent', function() {
   describe('authenticated', () => {
 
     context('first visit', () => {
-      beforeEach(() => {
-        cy.login();
+      beforeEach(function() {
+        cy.login(this.agent);
         cy.get('#app-menu-button').click();
         cy.contains('Personal Info').click();
       });

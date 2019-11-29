@@ -2,14 +2,12 @@
  * Auth0 is a real pain to stub. This fakes login by setting some
  * items in localStorage
  */
-Cypress.Commands.add('login', function(overrides = {}) {
+Cypress.Commands.add('login', function(token) {
   Cypress.log({
     name: 'loginViaAuth0',
   });
 
-//  cy.fixture('google-profile-response.json').then(profile => {;
-
-  cy.request('http://localhost:3002/access').then(function(res) {
+  cy.request({ url: 'http://localhost:3002/sign', method: 'POST', body: { accessToken: token } }).then(function(res) {
 
     cy.visit('/', {
       onBeforeLoad: (win) => {
