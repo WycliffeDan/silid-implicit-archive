@@ -97,6 +97,24 @@ describe('organizationSpec', () => {
           });
         });
 
+        it('credits creator agent', done => {
+          request(app)
+            .post('/organization')
+            .send({
+              name: 'One Book Canada'
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.creatorId).toEqual(agent.id);
+              done();
+            });
+        });
+
         it('returns an error if record already exists', done => {
           request(app)
             .post('/organization')
