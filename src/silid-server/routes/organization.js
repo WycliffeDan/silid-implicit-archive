@@ -5,7 +5,11 @@ const models = require('../models');
 
 /* GET organization listing. */
 router.get('/', jwtAuth, function(req, res, next) {
-  res.send('respond with a resource');
+  req.agent.getOrganizations().then(orgs => {
+    res.json(orgs);
+  }).catch(err => {
+    res.status(500).json(err);
+  });
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
