@@ -31,10 +31,22 @@ context('Organization', function() {
   });
 
   describe('authenticated', () => {
+
+    let token, agent;
     beforeEach(() => {
       cy.login();
       cy.get('#app-menu-button').click();
-      cy.contains('Organizations').click();
+      cy.contains('Organizations').click().then(() =>  {
+        token = localStorage.getItem('accessToken');
+        cy.request({ url: '/agent',  method: 'POST', auth: { bearer: token } });
+        cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {;
+          agent = results[0];
+        });
+      });
+    });
+
+    afterEach(() => {
+      cy.task('query', 'TRUNCATE TABLE "Organizations" CASCADE;');
     });
 
     it('lands in the right spot', () => {
@@ -47,14 +59,9 @@ context('Organization', function() {
     });
 
     describe('organization membership', () => {
-      let organization, agent;
-      beforeEach(() => {
-        
-      });
-
       context('no organizations', () => {
         it('displays no organizations', () => {
-          cy.task('query', 'SELECT * FROM "Organizations";').then(([results, metadata]) => {;
+          cy.task('query', 'SELECT * FROM "Organizations";').then(([results, metadata]) => {
             expect(results.length).to.equal(0);
             cy.get('#organization-list').should('not.exist');
           });
@@ -63,18 +70,33 @@ context('Organization', function() {
 
       context('some organizations', () => {
         it('displays a list of organizations', () => {
+          cy.get('#organization-list').should('exist');
         });
       });
     });
 
     describe('organization creator', () => {
+
       context('no organizations created by this agent', () => {
         it('displays no organizations', () => {
+          cy.task('query', `SELECT * FROM "Organizations" WHERE "creatorId"=${agent.id};`).then(([results, metadata]) => {;
+            expect(results.length).to.equal(0);
+            cy.get('#organization-list').should('not.exist');
+          });
         });
       });
 
       context('agent has created organizations', () => {
+
+        let organization;
+        beforeEach(() => {
+          cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } });
+          cy.get('#app-menu-button').click();
+          cy.contains('Organizations').click();
+        });
+
         it('displays a list of organizations', () => {
+          cy.get('#organization-list').should('exist');
         });
       });
     });
