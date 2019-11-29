@@ -116,6 +116,17 @@ keystore.add(jwkPub, 'pkcs8').then(function(result) {
       }
     });
 
+    server.route({
+      method: 'POST',
+      path: '/sign',
+      handler: (request, h) => {
+        console.log('/sign');
+        console.log(request.payload);
+        return jwt.sign(request.payload.accessToken, prv, { algorithm: 'RS256', header: { kid: result.kid } });;
+      }
+    });
+
+
     await server.start();
     console.log('Server running on %s', server.info.uri);
   };
