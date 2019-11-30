@@ -6,6 +6,8 @@ const models = require('../models');
 /* GET organization listing. */
 router.get('/', jwtAuth, function(req, res, next) {
   req.agent.getOrganizations().then(orgs => {
+console.log('orgs');
+console.log(orgs);
     res.json(orgs);
   }).catch(err => {
     res.status(500).json(err);
@@ -26,8 +28,7 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 router.post('/', jwtAuth, function(req, res, next) {
   delete req.body.token;
   req.body.creatorId = req.agent.id;
-  let organization = new models.Organization(req.body);
-  organization.save().then(result => {
+  req.agent.createOrganization(req.body).then(result => {
     res.status(201).json(result);
   }).catch(err => {
     let status = 500;
