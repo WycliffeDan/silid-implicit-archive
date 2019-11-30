@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Service } from '../types/Service';
-import { Agent } from '../types/Agent';
+import { Organization } from '../types/Organization';
 
-const useAgentService = () => {
-  const [result, setResult] = useState<Service<Agent>>({
+export interface Organizations {
+  results: Organization[];
+}
+
+const useOrganizationService = () => {
+  const [result, setResult] = useState<Service<Organizations>>({
     status: 'loading'
   });
 
   const headers = new Headers({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`}); 
   useEffect(() => {
     //fetch(`${process.env.REACT_APP_API_DOMAIN}agent`, { headers })
-    fetch(`/agent`, { headers })
+    fetch(`/organization`, { headers })
       .then(response => response.json())
       .then(response => setResult({ status: 'loaded', payload: response }))
       .catch(error => setResult({ status: 'error', error }));
@@ -19,4 +23,4 @@ const useAgentService = () => {
   return result;
 };
 
-export default useAgentService;
+export default useOrganizationService;
