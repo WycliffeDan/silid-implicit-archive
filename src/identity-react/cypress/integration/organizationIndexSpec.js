@@ -90,9 +90,11 @@ context('Organization', function() {
 
         let organization;
         beforeEach(() => {
-          cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } });
-          cy.get('#app-menu-button').click();
-          cy.contains('Organizations').click();
+          cy.visit('/#/');
+          cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then(() => {
+            cy.get('#app-menu-button').click();
+            cy.get('#organization-button').click();
+          });
         });
 
         it('displays a list of organizations', () => {
