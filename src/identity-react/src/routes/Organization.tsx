@@ -1,12 +1,19 @@
 import React from 'react';
 import TextField from '@material-ui/core/TextField';
-//import useGetAgentService from '../services/useGetAgentService';
+import useGetOrganizationService from '../services/useGetOrganizationService';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+// Remove this junk later
+import InboxIcon from '@material-ui/icons/MoveToInbox';
+import MailIcon from '@material-ui/icons/Mail';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,10 +35,15 @@ const useStyles = makeStyles((theme: Theme) =>
 
 const Organization = () => {
   const classes = useStyles();
-  // const profile = JSON.parse(localStorage.getItem('profile')!);
-  const service = {payload: [], status: 'loaded'};//useGetOrganizationService();
+  //const service = {payload: [], status: 'loaded'};//useGetOrganizationService();
+  const service = useGetOrganizationService();
 
-//console.log(service.payload);
+  function ListItemLink(props:any) {
+    return <ListItem button component="a" {...props} />;
+  }
+
+  console.log('HELLO');
+  console.log(service);
   return (
     <div className="agent">
       <Card className={classes.card}>
@@ -45,16 +57,19 @@ const Organization = () => {
           </Fab>
 
           <Typography variant="body2" color="textSecondary" component="p">
-            {/* {JSON.stringify(profile)} */}
-            {service.status === 'loading' && <div>Loading...</div>}
-            {service.status === 'loaded' && service.payload ?
-
-            <p>organization list goes here</p> : '' }
-
-            
-            {service.status === 'error' && (
-              <div>Error, the backend moved to the dark side.</div>
-            )}
+          {service.status === 'loading' && <div>Loading...</div>}
+          {service.status === 'loaded' && service.payload && service.payload.results && service.payload.results.map(org => (
+            <List id="organization-list">
+              <ListItem button id='organization-button' key='Organizations'>
+                <ListItemIcon><InboxIcon /></ListItemIcon>
+                <ListItemLink href='#organization'>
+                  <ListItemText primary='Organizations' />
+                </ListItemLink>
+              </ListItem>
+            </List>))}
+          {service.status === 'error' && (
+            <div>Error, the backend moved to the dark side.</div>
+          )}
           </Typography>
         </CardContent>
       </Card>
