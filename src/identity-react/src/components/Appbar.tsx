@@ -123,7 +123,7 @@ const Home = (props: IProps) => {
           edge="start"
           className={classes.menuButton}
           color="inherit"
-          aria-label="menu"
+          aria-label="menu">
           <MenuIcon />
         </IconButton>
         <Drawer open={state.left} onClose={toggleDrawer('left', false)}>
