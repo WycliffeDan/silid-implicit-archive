@@ -6,6 +6,7 @@ context('Organization', function() {
 
   before(function() {
     cy.fixture('someguy-auth0-access-token.json').as('agent');
+    cy.fixture('someotherguy-auth0-access-token.json').as('anotherAgent');
   });
   
   describe('unauthenticated', done => {
@@ -69,6 +70,21 @@ context('Organization', function() {
       });
 
       context('some organizations', () => {
+        let organization;
+        beforeEach(function() {
+
+          // Create an organization with another agent
+          cy.login(this.anotherAgent);
+          const anotherToken = localStorage.getItem('accessToken');
+          cy.request({ url: '/organization',  method: 'POST', auth: { bearer: anotherToken }, body: { name: 'One Book Canada', agent_organization: [agent.id] } }).then(() => {
+
+            cy.login(this.agent);
+            cy.visit('/#/');
+            cy.get('#app-menu-button').click();
+            cy.get('#organization-button').click();
+          });
+        });
+
         it('displays a list of organizations', () => {
           cy.get('#organization-list').should('exist');
         });
