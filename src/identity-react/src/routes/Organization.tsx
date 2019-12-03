@@ -35,15 +35,12 @@ const useStyles = makeStyles((theme: Theme) =>
 
 const Organization = () => {
   const classes = useStyles();
-  //const service = {payload: [], status: 'loaded'};//useGetOrganizationService();
   const service = useGetOrganizationService();
 
   function ListItemLink(props:any) {
     return <ListItem button component="a" {...props} />;
   }
 
-  console.log('HELLO');
-  console.log(service);
   return (
     <div className="agent">
       <Card className={classes.card}>
@@ -58,15 +55,17 @@ const Organization = () => {
 
           <Typography variant="body2" color="textSecondary" component="p">
           {service.status === 'loading' && <div>Loading...</div>}
-          {service.status === 'loaded' && service.payload && service.payload.results && service.payload.results.map(org => (
+          {service.status === 'loaded' && service.payload.results.length && (
             <List id="organization-list">
-              <ListItem button id='organization-button' key='Organizations'>
-                <ListItemIcon><InboxIcon /></ListItemIcon>
-                <ListItemLink href='#organization'>
-                  <ListItemText primary='Organizations' />
-                </ListItemLink>
-              </ListItem>
-            </List>))}
+              { service.payload.results.map(org => (
+                <ListItem button id='organization-button' key='Organizations'>
+                  <ListItemIcon><InboxIcon /></ListItemIcon>
+                  <ListItemLink href='#organization'>
+                    <ListItemText primary='Organizations' />
+                  </ListItemLink>
+                </ListItem>
+              ))}
+            </List>)}
           {service.status === 'error' && (
             <div>Error, the backend moved to the dark side.</div>
           )}
