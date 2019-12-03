@@ -16,7 +16,7 @@ const useOrganizationService = () => {
     //fetch(`${process.env.REACT_APP_API_DOMAIN}agent`, { headers })
     fetch(`/organization`, { headers })
       .then(response => response.json())
-      .then(response => setResult({ status: 'loaded', payload: response }))
+      .then(response => setResult({ status: 'loaded', payload: { results: response } }))
       .catch(error => setResult({ status: 'error', error }));
   }, []);
 
