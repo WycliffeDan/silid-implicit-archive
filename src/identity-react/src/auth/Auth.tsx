@@ -3,7 +3,7 @@ import auth0 from 'auth0-js';
 import { AUTH_CONFIG } from './auth0-variables';
 
 export default class Auth {
-  accessToken:any;
+  accessToken: any;
   idToken: any;
   profile: any;
   expiresAt: any;
@@ -14,7 +14,7 @@ export default class Auth {
     redirectUri: AUTH_CONFIG.callbackUrl,
     audience: AUTH_CONFIG.audience,
     responseType: 'token id_token',
-    scope: 'openid email profile'
+    scope: 'openid email profile',
   });
 
   constructor() {
@@ -32,19 +32,16 @@ export default class Auth {
     this.auth0.authorize();
   }
 
-
   handleAuthentication() {
     return new Promise((resolve, reject) => {
-      this.auth0.parseHash(
-        (err, authResult) => {
-          if (err) return reject(err);
-          if (!authResult || !authResult.idTokenPayload) {
-            reject(err);
-          }
-          this.setSession(authResult);
-          resolve();
+      this.auth0.parseHash((err, authResult) => {
+        if (err) return reject(err);
+        if (!authResult || !authResult.idTokenPayload) {
+          reject(err);
         }
-      );
+        this.setSession(authResult);
+        resolve();
+      });
     });
   }
 
@@ -60,12 +57,12 @@ export default class Auth {
     return this.profile;
   }
 
-  setSession(authResult:any) {
+  setSession(authResult: any) {
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
 
     // Set the time that the access token will expire at
-    let expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
+    let expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
     localStorage.setItem('accessToken', authResult.accessToken);
     localStorage.setItem('idToken', authResult.idToken);
     localStorage.setItem('expiresAt', expiresAt.toString());
@@ -77,13 +74,15 @@ export default class Auth {
 
   renewSession() {
     this.auth0.checkSession({}, (err, authResult) => {
-       if (authResult && authResult.accessToken && authResult.idToken) {
-         this.setSession(authResult);
-       } else if (err) {
-         this.logout();
-         console.log(err);
-         alert(`Could not get a new token (${err.error}: ${err.error_description}).`);
-       }
+      if (authResult && authResult.accessToken && authResult.idToken) {
+        this.setSession(authResult);
+      } else if (err) {
+        this.logout();
+        console.log(err);
+        alert(
+          `Could not get a new token (${err.error}: ${err.error_description}).`
+        );
+      }
     });
   }
 
@@ -96,7 +95,7 @@ export default class Auth {
     localStorage.removeItem('expiresAt');
 
     this.auth0.logout({
-      returnTo: window.location.origin
+      returnTo: window.location.origin,
     });
 
     // navigate to the home route
@@ -107,8 +106,6 @@ export default class Auth {
     // Check whether the current time is past the
     // access token's expiry time
     const expiresAt = Number(localStorage.getItem('expiresAt'));
-
-    console.log(expiresAt);
     return new Date().getTime() < expiresAt;
   }
 }

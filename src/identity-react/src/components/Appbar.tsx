@@ -18,7 +18,7 @@ import MailIcon from '@material-ui/icons/Mail';
 import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
 
-interface IProps  {
+interface IProps {
   auth: Auth;
 }
 
@@ -50,25 +50,27 @@ const useStyles = makeStyles((theme: Theme) =>
       width: 60,
       height: 60,
     },
-  }),
+  })
 );
 
 const Home = (props: IProps) => {
   const classes = useStyles();
   let profile = JSON.parse(localStorage.getItem('profile')!);
-  if(profile === null){ profile = false}
+  if (profile === null) {
+    profile = false;
+  }
   const { auth } = props;
   const [state, setState] = React.useState({
     left: false,
   });
 
-  function ListItemLink(props:any) {
+  function ListItemLink(props: any) {
     return <ListItem button component="a" {...props} />;
   }
 
-  type DrawerSide =  'left';
+  type DrawerSide = 'left';
   const toggleDrawer = (side: DrawerSide, open: boolean) => (
-    event: React.KeyboardEvent | React.MouseEvent,
+    event: React.KeyboardEvent | React.MouseEvent
   ) => {
     if (
       event.type === 'keydown' &&
@@ -77,8 +79,6 @@ const Home = (props: IProps) => {
     ) {
       return;
     }
-    console.log(open);
-
     setState({ ...state, [side]: open });
   };
   const sideList = (side: DrawerSide) => (
@@ -92,8 +92,10 @@ const Home = (props: IProps) => {
       <List>
         {['Home', 'Personal Info'].map((text, index) => (
           <ListItem button key={text}>
-            <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-            <ListItemLink href={index === 1 ? '#agent': '#/'}>
+            <ListItemIcon>
+              {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+            </ListItemIcon>
+            <ListItemLink href={index === 1 ? '#agent' : '#/'}>
               <ListItemText primary={text} />
             </ListItemLink>
           </ListItem>
@@ -109,7 +111,9 @@ const Home = (props: IProps) => {
       <List>
         {['Help'].map((text, index) => (
           <ListItem button key={text}>
-            <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+            <ListItemIcon>
+              {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+            </ListItemIcon>
             <ListItemText primary={text} />
           </ListItem>
         ))}
@@ -120,31 +124,54 @@ const Home = (props: IProps) => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <IconButton id="app-menu-button" onClick={toggleDrawer('left', true)} edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+        <IconButton
+          onClick={toggleDrawer('left', true)}
+          edge="start"
+          className={classes.menuButton}
+          color="inherit"
+          aria-label="menu">
           <MenuIcon />
         </IconButton>
         <Drawer open={state.left} onClose={toggleDrawer('left', false)}>
-        {sideList('left')}
+          {sideList('left')}
         </Drawer>
         <Typography variant="h6" className={classes.title}>
           Identity
         </Typography>
         <Grid container justify="flex-end" alignItems="flex-start">
-        {profile.picture ? <Avatar alt="avatar" src={profile.picture} className={classes.avatar} /> :<div></div> }
-       </Grid>
+          {profile.picture ? (
+            <Avatar
+              alt="avatar"
+              src={profile.picture}
+              className={classes.avatar}
+            />
+          ) : (
+            <div></div>
+          )}
+        </Grid>
         {!auth.isAuthenticated() && (
-          <Button id="login-button" color="inherit" onClick={() => auth.login()}>Login</Button>
+          <Button
+            id="login-button"
+            color="inherit"
+            onClick={() => auth.login()}
+          >
+            Login
+          </Button>
         )}
         {auth.isAuthenticated() && (
           <>
-            <Button id="logout-button" color="inherit" onClick={() => auth.logout()}>Logout</Button>
+            <Button
+              id="logout-button"
+              color="inherit"
+              onClick={() => auth.logout()}
+            >
+              Logout
+            </Button>
           </>
         )}
       </Toolbar>
     </AppBar>
   );
-}
-
+};
 
 export default Home;
-
