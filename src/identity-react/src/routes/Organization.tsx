@@ -55,7 +55,7 @@ const Organization = () => {
 
           <Typography variant="body2" color="textSecondary" component="p">
           {service.status === 'loading' && <div>Loading...</div>}
-          {service.status === 'loaded' && service.payload.results.length && (
+          {service.status === 'loaded' && service.payload.results.length ? 
             <List id="organization-list">
               { service.payload.results.map(org => (
                 <ListItem button id='organization-button' key='Organizations'>
@@ -65,7 +65,7 @@ const Organization = () => {
                   </ListItemLink>
                 </ListItem>
               ))}
-            </List>)}
+            </List> : ''}
           {service.status === 'error' && (
             <div>Error, the backend moved to the dark side.</div>
           )}
