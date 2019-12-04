@@ -107,21 +107,13 @@ const Agent = () => {
                   margin="normal"
                   name="name"
                   required
-                  value={service.payload.name}
+                  value={formData.name === undefined ? service.payload.name : formData.name}
                   onChange={(evt) => setFormData({ ...formData, name: evt.target.value }) }
                 />
                 { Object.keys(formData).length ?
                   <Button id="cancel-changes"
                     variant="contained" color="secondary"
-                    onClick={() => {
-                      console.log("BEFORE");
-                      console.log(JSON.stringify(formData));
-                      setFormData({});
-                      console.log("AFTER");
-                      console.log(JSON.stringify(formData));
-                      console.log(!Object.keys(formData).length);
-                      }}
-                    hidden={!Object.keys(formData).length}>
+                    onClick={() => setFormData({}) }>
                       Cancel
                   </Button> : ''
                 }

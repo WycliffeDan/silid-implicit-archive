@@ -55,9 +55,15 @@ context('Agent', function() {
         cy.get('button[type="submit"]').should('be.disabled');
       });
 
+      // This is not superfluous
+      it('allows user input', () => {
+        cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
+        cy.get('input[name="name"][type="text"]').should('have.value', 'Some Radical Dude');
+      });
+
       it('enables Save button when Name field changes', () => {
         cy.get('button[type="submit"]').should('be.disabled');
-        cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+        cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
         cy.get('button[type="submit"]').should('not.be.disabled');
       });
 
@@ -69,26 +75,26 @@ context('Agent', function() {
         it('displays on form change', function() {
           cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
           cy.get('button#cancel-changes').should('not.exist');
-          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
           cy.get('button#cancel-changes').should('exist');
         });
 
         it('resets changes to the form', function() {
           cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
-          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
           cy.get('button#cancel-changes').click();
           cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
         });
 
         it('hides on click', () => {
-          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
           cy.get('button#cancel-changes').should('exist');
           cy.get('button#cancel-changes').click();
           cy.get('button#cancel-changes').should('not.exist');
         });
 
         it('disables Save button on click', () => {
-          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('input[name="name"][type="text"]').clear().type('Some Radical Dude');
           cy.get('button[type="submit"]').should('not.be.disabled');
           cy.get('button#cancel-changes').click();
           cy.get('button[type="submit"]').should('be.disabled');
