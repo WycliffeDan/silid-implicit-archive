@@ -7,6 +7,7 @@ import CardContent from '@material-ui/core/CardContent';
 
 import SaveIcon from '@material-ui/icons/Save';
 import Button from '@material-ui/core/Button';
+import useGetAgentService from '../services/useGetAgentService';
 import usePostAgentService, {
   PostAgent,
 } from '../services/usePostAgentService';
@@ -53,15 +54,17 @@ const Agent = () => {
   const [formData, setFormData] = useState<FormData>({});
 
   const classes = useStyles();
-  const profile = JSON.parse(localStorage.getItem('profile')!);
-  const initialStarshipState: PostAgent = {
-    name: '',
-    email: '',
-    // passengers: '',
-    // cost_in_credits: ''
-  };
-  const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
-  const { service, publishAgent } = usePostAgentService();
+  const service = useGetAgentService();
+
+//  const profile = JSON.parse(localStorage.getItem('profile')!);
+//  const initialStarshipState: PostAgent = {
+//    name: '',
+//    email: '',
+//    // passengers: '',
+//    // cost_in_credits: ''
+//  };
+//  const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
+//  const { service, publishAgent } = usePostAgentService();
 
   const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
     evt.preventDefault();
