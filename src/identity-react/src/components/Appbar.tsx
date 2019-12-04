@@ -125,6 +125,7 @@ const Home = (props: IProps) => {
     <AppBar position="static">
       <Toolbar>
         <IconButton
+          id="app-menu-button"
           onClick={toggleDrawer('left', true)}
           edge="start"
           className={classes.menuButton}
