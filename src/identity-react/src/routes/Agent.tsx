@@ -92,20 +92,21 @@ const Agent = () => {
                   value={service.payload.name}
                   onChange={(evt) => setFormData({ ...formData, name: evt.target.value }) }
                 />
-                <Button id="cancel-changes"
-                  variant="contained" color="secondary"
-                  onClick={() => {
-                    console.log("BEFORE");
-                    console.log(JSON.stringify(formData));
-                    setFormData({});
-                    console.log("AFTER");
-                    console.log(JSON.stringify(formData));
- 
-                  }}
-                  disabled={!Object.keys(formData).length}>
-                  hidden={!Object.keys(formData).length}>
-                    Cancel
-                </Button>
+                { Object.keys(formData).length ?
+                  <Button id="cancel-changes"
+                    variant="contained" color="secondary"
+                    onClick={() => {
+                      console.log("BEFORE");
+                      console.log(JSON.stringify(formData));
+                      setFormData({});
+                      console.log("AFTER");
+                      console.log(JSON.stringify(formData));
+                      console.log(!Object.keys(formData).length);
+                    }}
+                    hidden={!Object.keys(formData).length}>
+                      Cancel
+                  </Button> : ''
+                }
                 <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(formData).length}>
                   Save
                 </Button>

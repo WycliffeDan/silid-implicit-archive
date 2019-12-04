@@ -66,10 +66,11 @@ context('Agent', function() {
       });
 
       describe('Cancel button', () => {
-        it('displays on form change', () => {
-          cy.get('button#cancel-changes').should('not.be.visible');
+        it('displays on form change', function() {
+          cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+          cy.get('button#cancel-changes').should('not.exist');
           cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
-          cy.get('button#cancel-changes').should('be.visible');
+          cy.get('button#cancel-changes').should('exist');
         });
 
         it('resets changes to the form', function() {
@@ -81,13 +82,9 @@ context('Agent', function() {
 
         it('hides on click', () => {
           cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
-          cy.get('button#cancel-changes').should('be.visible');
-          cy.get('button#cancel-changes').click().then(() => {
-            cy.log('NO VISIBILITY!!!!!!!!!!!!!!!!!!!!!!!!!');
-            //cy.get('button[type="submit"]').should('be.disabled');
-            cy.get('button#cancel-changes').should('be.disabled');
-            cy.get('button#cancel-changes').should('not.be.visible');
-          });
+          cy.get('button#cancel-changes').should('exist');
+          cy.get('button#cancel-changes').click();
+          cy.get('button#cancel-changes').should('not.exist');
         });
 
         it('disables Save button on click', () => {
