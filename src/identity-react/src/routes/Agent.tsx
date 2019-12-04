@@ -4,6 +4,7 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+
 import SaveIcon from '@material-ui/icons/Save';
 import Button from '@material-ui/core/Button';
 import usePostAgentService, {
@@ -44,7 +45,13 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+export interface FormData {
+  name?: string 
+}
+
 const Agent = () => {
+  const [formData, setFormData] = useState<FormData>({});
+
   const classes = useStyles();
   const profile = JSON.parse(localStorage.getItem('profile')!);
   const initialStarshipState: PostAgent = {
@@ -56,17 +63,11 @@ const Agent = () => {
   const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
   const { service, publishAgent } = usePostAgentService();
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.persist();
-    setStarship(prevStarship => ({
-      ...prevStarship,
-      [event.target.name]: event.target.value,
-    }));
-  };
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    publishAgent(starship).then(() => setStarship(initialStarshipState));
-  };
+  const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
+    evt.preventDefault();
+    console.log('Submitting');
+  }
+
   return (
     <div className="agent">
       <Card className={classes.card}>
@@ -74,8 +75,66 @@ const Agent = () => {
           <Typography variant="h5" component="h3">
             Profile
           </Typography>
+          <Typography variant="body2" color="textSecondary" component="p">
+            {service.status === 'loading' && <div>Loading...</div>}
+            {service.status === 'loaded' && service.payload ?
+              <form onSubmit={handleSubmit}>
+                <TextField
+                  id="email-input"
+                  label="Email"
+                  type="email"
+                  className={classes.textField}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  name="email"
+                  disabled
+                  value={service.payload.email}
+                />
+                <br></br>
+                <TextField
+                  id="name-input"
+                  label="Name"
+                  type="text"
+                  className={classes.textField}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  name="name"
+                  required
+                  value={service.payload.name}
+                  onChange={(evt) => setFormData({ ...formData, name: evt.target.value }) }
+                />
+                { Object.keys(formData).length ?
+                  <Button id="cancel-changes"
+                    variant="contained" color="secondary"
+                    onClick={() => {
+                      console.log("BEFORE");
+                      console.log(JSON.stringify(formData));
+                      setFormData({});
+                      console.log("AFTER");
+                      console.log(JSON.stringify(formData));
+                      console.log(!Object.keys(formData).length);
+                      }}
+                    hidden={!Object.keys(formData).length}>
+                      Cancel
+                  </Button> : ''
+                }
+                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(formData).length}>
+                  Save
+                </Button>
+              </form> : ''}
+            {service.status === 'error' && (
+              <div>Error, the backend moved to the dark side.</div>
+            )}
+        </CardContent>
+      </Card>
+    </div>
+      
           {/* {JSON.stringify(profile)} */}
-          <form onSubmit={handleFormSubmit}>
+          {/*<form onSubmit={handleFormSubmit}>
             <TextField
               id="standard-number"
               label="First Name"
@@ -144,7 +203,7 @@ const Agent = () => {
               </div>
             )}
           </form>
-          <br></br>
+          <br></br> */}
           {/* {service.status === 'loading' && <div>Loading...</div>}
             {service.status === 'loaded' &&
               service.payload.results.map(starship => (
@@ -179,21 +238,9 @@ const Agent = () => {
                     type="string"
                     className={classes.textField}
                     InputLabelProps={{
-                      shrink: true,
-                    }}
-                    margin="normal"
-                    value={starship.passengers}
-                  />
-                  <br></br>
-                  <br></br>
-                </div>
-              ))}
-            {service.status === 'error' && (
-              <div>Error, the backend moved to the dark side.</div>
-            )} */}
-        </CardContent>
-      </Card>
-    </div>
+                      shrink: true, */}
+
+                    
   );
 };
 

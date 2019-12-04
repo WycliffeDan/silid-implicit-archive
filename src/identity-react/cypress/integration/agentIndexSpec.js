@@ -6,16 +6,16 @@ context('Agent', function() {
 
   before(function() {
     cy.fixture('google-profile-response.json').as('profile');
+    cy.fixture('someguy-auth0-access-token.json').as('agent');
   });
   
   describe('unauthenticated', done => {
     beforeEach(() => {
-      cy.visit('/agent');
+      cy.visit('/#/agent');
     });
 
     it('shows the home page', () => {
       cy.get('h6').contains('Identity');
-      cy.get('h4').contains('You are not logged in! Please log in to continue.');
     });
 
     it('displays the login button', () => {
@@ -34,14 +34,18 @@ context('Agent', function() {
   describe('authenticated', () => {
 
     context('first visit', () => {
-      beforeEach(() => {
-        cy.login();
-        cy.get('#profile-link').click();
-        cy.location('pathname').should('equal', '/agent');
+      beforeEach(function() {
+        cy.login(this.agent);
+        cy.get('#app-menu-button').click();
+        cy.contains('Personal Info').click();
+      });
+
+      it('lands in the right spot', () => {
+        cy.url().should('contain', '/#/agent');
       });
 
       it('displays agent social profile info in form', function() {
-        cy.get('h4').contains('Profile Page');
+        cy.get('h3').contains('Profile Page');
         cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
         cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
         cy.get('button[type="submit"]').should('exist');
@@ -53,14 +57,42 @@ context('Agent', function() {
 
       it('enables Save button when Name field changes', () => {
         cy.get('button[type="submit"]').should('be.disabled');
-        cy.get('input[name="name"][type="text"]').type('Some Guy');
+        cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
         cy.get('button[type="submit"]').should('not.be.disabled');
       });
 
-      it('enables Save button when Email field changes', () => {
-        cy.get('button[type="submit"]').should('be.disabled');
-        cy.get('input[name="email"][type="email"]').type('someguy@example.com');
-        cy.get('button[type="submit"]').should('not.be.disabled');
+      it('permanently disables the Email field', () => {
+        cy.get('input[name="email"][type="email"]').should('be.disabled');
+      });
+
+      describe('Cancel button', () => {
+        it('displays on form change', function() {
+          cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+          cy.get('button#cancel-changes').should('not.exist');
+          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('button#cancel-changes').should('exist');
+        });
+
+        it('resets changes to the form', function() {
+          cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('button#cancel-changes').click();
+          cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
+        });
+
+        it('hides on click', () => {
+          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('button#cancel-changes').should('exist');
+          cy.get('button#cancel-changes').click();
+          cy.get('button#cancel-changes').should('not.exist');
+        });
+
+        it('disables Save button on click', () => {
+          cy.get('input[name="name"][type="text"]').type('Some Radical Dude');
+          cy.get('button[type="submit"]').should('not.be.disabled');
+          cy.get('button#cancel-changes').click();
+          cy.get('button[type="submit"]').should('be.disabled');
+        });
       });
     });
   });

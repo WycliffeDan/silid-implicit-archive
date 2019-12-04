@@ -6,6 +6,7 @@ context('Authentication', function() {
 
   before(function() {
     cy.fixture('google-profile-response.json').as('profile');
+    cy.fixture('someguy-auth0-access-token.json').as('agent');
   });
   
   describe('not logged in', done => {
@@ -29,8 +30,8 @@ context('Authentication', function() {
   });
 
   describe('logged in', done => {
-    beforeEach(() => {
-      cy.login();
+    beforeEach(function() {
+      cy.login(this.agent);
     });
 
     it('does not display the login link', () => {
@@ -48,6 +49,7 @@ context('Authentication', function() {
 
       cy.get('#app-menu ul div:nth-of-type(1) a').should('have.attr', 'href', '#/').and('contain', 'Home');
       cy.get('#app-menu ul div:nth-of-type(2) a').should('have.attr', 'href', '#agent').and('contain', 'Personal Info');
+      cy.get('#app-menu ul div:nth-of-type(3) a').should('have.attr', 'href', '#organization').and('contain', 'Organizations');
       cy.get('#app-menu ul:nth-of-type(2) div').contains('Help');
     });
   });

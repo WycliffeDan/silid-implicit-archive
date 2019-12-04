@@ -100,6 +100,12 @@ const Home = (props: IProps) => {
             </ListItemLink>
           </ListItem>
         ))}
+        <ListItem button id='organization-button' key='Organizations'>
+          <ListItemIcon><InboxIcon /></ListItemIcon>
+          <ListItemLink href='#organization'>
+            <ListItemText primary='Organizations' />
+          </ListItemLink>
+        </ListItem>
       </List>
       <Divider />
       <List>

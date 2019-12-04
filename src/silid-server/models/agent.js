@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   /**
-   * Check new token agains last token provided by this agent.
+   * Check new token against last token provided by this agent.
    *
    * This method does not validate the JWT.
    */

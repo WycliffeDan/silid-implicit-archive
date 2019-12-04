@@ -97,6 +97,24 @@ describe('organizationSpec', () => {
           });
         });
 
+        it('credits creator agent', done => {
+          request(app)
+            .post('/organization')
+            .send({
+              name: 'One Book Canada'
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.creatorId).toEqual(agent.id);
+              done();
+            });
+        });
+
         it('returns an error if record already exists', done => {
           request(app)
             .post('/organization')
@@ -146,6 +164,28 @@ describe('organizationSpec', () => {
               expect(res.body.message).toEqual('No such organization');
               done();
             });
+        });
+
+        it('retrieves all organization memberships for the agent', done => {
+          agent.getOrganizations().then((results) => {
+            expect(results.length).toEqual(1);
+            request(app)
+              .get(`/organization`)
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${signedAccessToken}`)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+console.log('BODY');
+console.log(res.body);
+                expect(res.body.length).toEqual(1);
+                done();
+              });
+          }).catch(err => {
+            done.fail(err);
+          });
         });
       });
  
