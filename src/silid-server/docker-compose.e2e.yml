@@ -22,12 +22,13 @@ services:
       context: .
       dockerfile: ./spec/support/mockJwksServer-Dockerfile
     network_mode: host
+    depends_on:
+      - postgres
     environment:
       NODE_ENV: e2e
       PORT: 3002
     ports:
       - "3002:3002"
-#    command: npm run dev
     volumes:
       - .:/app/
       - /app/node_modules
