@@ -8,9 +8,15 @@ import CardContent from '@material-ui/core/CardContent';
 import SaveIcon from '@material-ui/icons/Save';
 import Button from '@material-ui/core/Button';
 import useGetAgentService from '../services/useGetAgentService';
+
 import usePostAgentService, {
   PostAgent,
 } from '../services/usePostAgentService';
+
+import usePutAgentService, {
+  PutAgent,
+} from '../services/usePutAgentService';
+
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -47,7 +53,8 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export interface FormData {
-  name?: string 
+  name?: string,
+  id?: number
 }
 
 const Agent = () => {
@@ -65,10 +72,18 @@ const Agent = () => {
 //  };
 //  const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
 //  const { service, publishAgent } = usePostAgentService();
+  let { publishAgent } = usePutAgentService();
 
   const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
     evt.preventDefault();
-    console.log('Submitting');
+    publishAgent(formData).then(results => {
+      if (service.status === 'loaded') {
+        service.payload = {...service.payload};
+        setFormData({});
+      }
+    }).catch(err => {
+      console.log(err);
+    });
   }
 
   return (
@@ -108,7 +123,7 @@ const Agent = () => {
                   name="name"
                   required
                   value={formData.name === undefined ? service.payload.name : formData.name}
-                  onChange={(evt) => setFormData({ ...formData, name: evt.target.value }) }
+                  onChange={(evt) => setFormData({ ...formData, name: evt.target.value, id: service.payload.id }) }
                 />
                 { Object.keys(formData).length ?
                   <Button id="cancel-changes"
