@@ -40,7 +40,7 @@ context('Organization', function() {
       cy.contains('Organizations').click().then(() =>  {
         token = localStorage.getItem('accessToken');
         cy.request({ url: '/agent',  method: 'POST', auth: { bearer: token } });
-        cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {;
+        cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {
           agent = results[0];
         });
       });
