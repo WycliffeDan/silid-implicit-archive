@@ -14,7 +14,6 @@ const usePutAgentService = () => {
     setService({ status: 'loading' });
 
     const headers = new Headers();
-//    const headers = new Headers({ 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`}); 
     headers.append('Authorization', `Bearer ${localStorage.getItem('accessToken')}`);
     headers.append('Content-Type', 'application/json; charset=utf-8');
 
