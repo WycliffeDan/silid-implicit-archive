@@ -108,6 +108,10 @@ const Agent = () => {
     setFormData(f);
   }
 
+  const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    evt.target.setCustomValidity(`${evt.target.name} required`);
+  }
+
   return (
     <div className="agent">
       <Card className={classes.card}>
@@ -146,6 +150,7 @@ const Agent = () => {
                   required
                   value={formData.name}
                   onChange={onChange}
+                  onInvalid={customMessage}
                 />
                 { Object.keys(prevState).length ?
                   <Button id="cancel-changes"

@@ -38,7 +38,7 @@ context('Agent', function() {
         cy.get('button[type="submit"]').click();
         cy.get('input[name="name"][type="text"]:invalid').should('have.length', 1)
         cy.get('input[name="name"][type="text"]:invalid').then($input => {
-          expect($input[0].validationMessage).to.eq('Please fill in this field.')
+          expect($input[0].validationMessage).to.eq('name required')
         });
       });
 
