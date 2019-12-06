@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TextField from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -8,9 +8,14 @@ import CardContent from '@material-ui/core/CardContent';
 import SaveIcon from '@material-ui/icons/Save';
 import Button from '@material-ui/core/Button';
 import useGetAgentService from '../services/useGetAgentService';
+
 import usePostAgentService, {
   PostAgent,
 } from '../services/usePostAgentService';
+
+import usePutAgentService, {
+  PutAgent,
+} from '../services/usePutAgentService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -47,11 +52,19 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export interface FormData {
-  name?: string 
+  [key:string]: any,
+  name?: string,
+  email?: string,
+  id?: number
+}
+
+export interface PrevState {
+  [key:string]: any
 }
 
 const Agent = () => {
   const [formData, setFormData] = useState<FormData>({});
+  const [prevState, setPrevState] = useState<PrevState>({});
 
   const classes = useStyles();
   const service = useGetAgentService();
@@ -65,10 +78,38 @@ const Agent = () => {
 //  };
 //  const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
 //  const { service, publishAgent } = usePostAgentService();
+  let { publishAgent } = usePutAgentService();
+
+
+  useEffect(() => {
+    if (service.status === 'loaded') {
+      setFormData(service.payload);
+    }
+  }, [service.status]);
+
 
   const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
     evt.preventDefault();
-    console.log('Submitting');
+    publishAgent(formData).then(results => {
+      setPrevState({});
+    }).catch(err => {
+      console.log(err);
+    });
+  }
+
+  const onChange = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    if (!prevState[evt.target.name]) {
+      const s = { ...prevState};
+      s[evt.target.name] = formData[evt.target.name];
+      setPrevState(s);
+    }
+    const f = { ...formData };
+    f[evt.target.name] = evt.target.value;
+    setFormData(f);
+  }
+
+  const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    evt.target.setCustomValidity(`${evt.target.name} required`);
   }
 
   return (
@@ -93,7 +134,7 @@ const Agent = () => {
                   margin="normal"
                   name="email"
                   disabled
-                  value={service.payload.email}
+                  value={formData.email}
                 />
                 <br></br>
                 <TextField
@@ -107,17 +148,21 @@ const Agent = () => {
                   margin="normal"
                   name="name"
                   required
-                  value={formData.name === undefined ? service.payload.name : formData.name}
-                  onChange={(evt) => setFormData({ ...formData, name: evt.target.value }) }
+                  value={formData.name}
+                  onChange={onChange}
+                  onInvalid={customMessage}
                 />
-                { Object.keys(formData).length ?
+                { Object.keys(prevState).length ?
                   <Button id="cancel-changes"
                     variant="contained" color="secondary"
-                    onClick={() => setFormData({}) }>
+                    onClick={() => {
+                      setFormData({ ...formData, ...prevState });
+                      setPrevState({});
+                    }}>
                       Cancel
                   </Button> : ''
                 }
-                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(formData).length}>
+                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
                   Save
                 </Button>
               </form> : ''}
