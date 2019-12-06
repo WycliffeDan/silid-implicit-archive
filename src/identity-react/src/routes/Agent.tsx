@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TextField from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -16,7 +16,6 @@ import usePostAgentService, {
 import usePutAgentService, {
   PutAgent,
 } from '../services/usePutAgentService';
-
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -53,12 +52,19 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export interface FormData {
+  [key:string]: any,
   name?: string,
+  email?: string,
   id?: number
+}
+
+export interface PrevState {
+  [key:string]: any
 }
 
 const Agent = () => {
   const [formData, setFormData] = useState<FormData>({});
+  const [prevState, setPrevState] = useState<PrevState>({});
 
   const classes = useStyles();
   const service = useGetAgentService();
@@ -74,16 +80,32 @@ const Agent = () => {
 //  const { service, publishAgent } = usePostAgentService();
   let { publishAgent } = usePutAgentService();
 
+
+  useEffect(() => {
+    if (service.status === 'loaded') {
+      setFormData(service.payload);
+    }
+  }, [service.status]);
+
+
   const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
     evt.preventDefault();
     publishAgent(formData).then(results => {
-      if (service.status === 'loaded') {
-        service.payload = {...service.payload};
-        setFormData({});
-      }
+      setPrevState({});
     }).catch(err => {
       console.log(err);
     });
+  }
+
+  const onChange = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    if (!prevState[evt.target.name]) {
+      const s = { ...prevState};
+      s[evt.target.name] = formData[evt.target.name];
+      setPrevState(s);
+    }
+    const f = { ...formData };
+    f[evt.target.name] = evt.target.value;
+    setFormData(f);
   }
 
   return (
@@ -108,7 +130,7 @@ const Agent = () => {
                   margin="normal"
                   name="email"
                   disabled
-                  value={service.payload.email}
+                  value={formData.email}
                 />
                 <br></br>
                 <TextField
@@ -122,17 +144,20 @@ const Agent = () => {
                   margin="normal"
                   name="name"
                   required
-                  value={formData.name === undefined ? service.payload.name : formData.name}
-                  onChange={(evt) => setFormData({ ...formData, name: evt.target.value, id: service.payload.id }) }
+                  value={formData.name}
+                  onChange={onChange}
                 />
-                { Object.keys(formData).length ?
+                { Object.keys(prevState).length ?
                   <Button id="cancel-changes"
                     variant="contained" color="secondary"
-                    onClick={() => setFormData({}) }>
+                    onClick={() => {
+                      setFormData({ ...formData, ...prevState });
+                      setPrevState({});
+                    }}>
                       Cancel
                   </Button> : ''
                 }
-                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(formData).length}>
+                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
                   Save
                 </Button>
               </form> : ''}
