@@ -126,7 +126,7 @@ const Organization = () => {
               { orgList.results.map(org => (
                 <ListItem button className='organization-button' key='Organizations'>
                   <ListItemIcon><InboxIcon /></ListItemIcon>
-                  <ListItemLink href='#organization'>
+                  <ListItemLink href={`#organization/${org.id}`}>
                     <ListItemText primary={org.name} />
                   </ListItemLink>
                 </ListItem>
