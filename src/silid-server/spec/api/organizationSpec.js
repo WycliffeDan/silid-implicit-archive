@@ -178,11 +178,35 @@ describe('organizationSpec', () => {
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
-console.log('BODY');
-console.log(res.body);
                 expect(res.body.length).toEqual(1);
                 done();
               });
+          }).catch(err => {
+            done.fail(err);
+          });
+        });
+
+        it('retrieves all organizations created by the agent in addition to memberships', done => {
+          agent.getOrganizations().then((results) => {
+            expect(results.length).toEqual(1);
+
+            models.Organization.create({ name: 'Lutheran Bible Translators', creatorId: agent.id }).then(org => {
+
+              request(app)
+                .get(`/organization`)
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.length).toEqual(2);
+                  done();
+                });
+             }).catch(err => {
+               done.fail(err);
+             });
           }).catch(err => {
             done.fail(err);
           });
