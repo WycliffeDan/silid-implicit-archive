@@ -19,7 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         msg: 'That team is already registered'
       }
     },
-  }, {});
+  }, {
+    hooks: {
+      afterCreate: function(team, options) {
+        return team.addOrganization(team.organizationId);
+      }
+    }
+  });
 
   Team.associate = function(models) {
     Team.belongsTo(models.Organization, {
