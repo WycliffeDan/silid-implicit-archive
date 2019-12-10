@@ -6,8 +6,6 @@ const models = require('../models');
 /* GET organization listing. */
 router.get('/', jwtAuth, function(req, res, next) {
   req.agent.getOrganizations().then(orgs => {
-console.log('orgs');
-console.log(orgs);
     res.json(orgs);
   }).catch(err => {
     res.status(500).json(err);
@@ -15,7 +13,8 @@ console.log(orgs);
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
-  models.Organization.findOne({ where: { id: req.params.id } }).then(result => {
+  models.Organization.findOne({ where: { id: req.params.id },
+                                include: [ { model: models.Agent, as: 'creator' }, { model: models.Team, as: 'teams' } ] }).then(result => {
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }

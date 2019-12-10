@@ -146,7 +146,8 @@ describe('organizationSpec', () => {
             .end(function(err, res) {
               if (err) done.fail(err);
               scope.done();
-              expect(res.body.email).toEqual(organization.email);
+              expect(res.body.name).toBeDefined();
+              expect(res.body.name).toEqual(organization.name);
               done();
             });
         });
@@ -210,6 +211,63 @@ describe('organizationSpec', () => {
           }).catch(err => {
             done.fail(err);
           });
+        });
+
+        it('populates the organization creator field', done => {
+          request(app)
+            .get(`/organization/${organization.id}`)
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.creator).toBeDefined();
+              expect(res.body.creator.email).toEqual(agent.email);
+              done();
+            });
+        });
+
+        it('populates the creator organization', done => {
+          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id }).then(team => {
+            request(app)
+              .get(`/organization/${organization.id}`)
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${signedAccessToken}`)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.teams).toBeDefined();
+                expect(res.body.teams.length).toEqual(1);
+                done();
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+        });
+
+        it('populates the organization team list', done => {
+          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id }).then(team => {
+            request(app)
+              .get(`/organization/${organization.id}`)
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${signedAccessToken}`)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.teams).toBeDefined();
+                expect(res.body.teams.length).toEqual(1);
+                expect(res.body.teams[0].name).toEqual('Alpha Squad 1');
+                done();
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
         });
       });
  
