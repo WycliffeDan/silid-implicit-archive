@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { Service } from '../types/Service';
-import { Agent } from '../types/Agent';
+import { Organization } from '../types/Organization';
 
-export type PutAgent = Pick<Agent, 'name' | 'email' | 'id'>;
+export type PostOrganization = Pick<Organization, 'name'>;
 
-const usePutAgentService = () => {
-  const [service, setService] = useState<Service<PutAgent>>({
+const usePostOrganizationService = () => {
+  const [service, setService] = useState<Service<PostOrganization>>({
     status: 'init',
   });
 
-  //const publishAgent = (agent: PutAgent) => {
-  const publishAgent = (agent: any) => {
+  const publishOrganization = (organization: PostOrganization) => {
     setService({ status: 'loading' });
 
     const headers = new Headers();
@@ -18,10 +17,10 @@ const usePutAgentService = () => {
     headers.append('Content-Type', 'application/json; charset=utf-8');
 
     return new Promise((resolve, reject) => {
-      fetch('/agent',
+      fetch('/organization',
         {
-          method: 'PUT',
-          body: JSON.stringify(agent),
+          method: 'POST',
+          body: JSON.stringify(organization),
           headers,
         }
       )
@@ -39,8 +38,8 @@ const usePutAgentService = () => {
 
   return {
     service,
-    publishAgent,
+    publishOrganization,
   };
 };
 
-export default usePutAgentService;
+export default usePostOrganizationService;

@@ -18,7 +18,7 @@ cp .env.example .env
 
 ### Test
 
-Apart from the client-driven e2e tests, the server has tests of its own. It requires a PostgreSQL development server. Here's how I start one with `docker`:
+The server has tests of its own, apart from the client-driven e2e tests. These tests require a PostgreSQL development server. Start one with `docker`:
 
 ```
 docker run --name dev-postgres -p 5432:5432 -d postgres
@@ -63,7 +63,7 @@ End-to-end tests depend on `cypress`. They are executed from the `src/identity-r
 
 #### In-browser tests:
 
-This will open an interface and allow you to watch your tests execute:
+Open an interface and watch your tests execute:
 
 ```
 npx cypress open
@@ -71,7 +71,7 @@ npx cypress open
 
 #### _Headless_ tests:
 
-`cypress` is executed in a container in this case, so first execution will be slow:
+Execute `cypress` in a container (first run will be slow):
 
 ```
 npm run test:headless
