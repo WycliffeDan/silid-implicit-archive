@@ -1,10 +1,11 @@
 // src/App.js
 // See: https://auth0.com/docs/quickstart/spa/react/01-login
 import React from 'react';
-import { BrowserRouter,HashRouter, Route } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Route, Switch } from 'react-router-dom';
 import Home from './routes/Home';
 import Agent from './routes/Agent';
 import Organization from './routes/Organization';
+import OrganizationInfo from './routes/OrganizationInfo';
 import Auth from './auth/Auth';
 import Callback from './callback/Callback';
 import { parseQuery } from './utils/parseQuery';
@@ -34,8 +35,11 @@ function App() {
           path="/"
           render={props => <Home auth={auth} {...props} />}
         />
-        <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
-        <PrivateRoute path="/organization" auth={auth} component={Organization} redirect="/" />
+        <Switch>
+          <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
+          <PrivateRoute path="/organization/:id" auth={auth} component={OrganizationInfo} redirect="/" />
+          <PrivateRoute path="/organization" auth={auth} component={Organization} redirect="/" />
+        </Switch>
       </HashRouter>
       <BrowserRouter>
         <Route
