@@ -45,9 +45,13 @@ context('Organization show', function() {
       });
     });
 
+    afterEach(() => {
+      cy.task('query', 'TRUNCATE TABLE "Organizations" CASCADE;');
+    });
+
     it('doesn\'t barf if organization doesn\'t exist', () => {
       cy.visit('/#/organization/333');
-      cy.contains('No such organization');
+      cy.get('#error-message').contains('No such organization');
     });
 
     context('creator agent visit', () => {
@@ -55,18 +59,11 @@ context('Organization show', function() {
       let organization;
       beforeEach(function() {
         cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
-
-          cy.log(JSON.stringify(org));
           organization = org.body;
-
           cy.get('#app-menu-button').click();
           cy.get('#organization-button').click();
           cy.contains('One Book Canada').click();
         });
-      });
-
-      afterEach(() => {
-        cy.task('query', 'TRUNCATE TABLE "Organizations" CASCADE;');
       });
 
       it('lands in the right spot', () => {
