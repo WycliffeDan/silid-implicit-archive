@@ -157,9 +157,9 @@ describe('organizationSpec', () => {
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(404)
             .end(function(err, res) {
-              if (err) done.fail(err);
+              if (err) return done.fail(err);
               scope.done();
               expect(res.body.message).toEqual('No such organization');
               done();

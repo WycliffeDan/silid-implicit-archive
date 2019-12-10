@@ -17,7 +17,7 @@ console.log(orgs);
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id } }).then(result => {
     if (!result) {
-      result = { message: 'No such organization' };
+      return res.status(404).json({ message: 'No such organization' });
     }
     res.json(result);
   }).catch(err => {
