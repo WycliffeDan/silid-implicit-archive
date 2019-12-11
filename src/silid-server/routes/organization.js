@@ -14,10 +14,15 @@ router.get('/', jwtAuth, function(req, res, next) {
 
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id },
-                                include: [ { model: models.Agent, as: 'creator' }, { model: models.Team, as: 'teams' } ] }).then(result => {
+                                include: [ 'creator', 'members', 'teams'] }).then(result => {
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }
+
+    if (!result.members.map(member => member.id).includes(req.agent.id)) {
+      return res.status(403).json({ message: 'You are not a member of that organization' });
+    }
+
     res.json(result);
   }).catch(err => {
     res.json(err);
