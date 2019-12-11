@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     hooks: {
       afterCreate: function(org, options) {
-        return org.addAgent(org.creatorId);
+        return org.addMember(org.creatorId);
       }
     }
   });
@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Organization.belongsToMany(models.Agent, {
+      as: 'members',
       through: 'agent_organization',
     });
 
