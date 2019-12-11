@@ -15,7 +15,7 @@ const nock = require('nock');
  * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
  */
 const _access = require('../fixtures/sample-auth0-access-token');
-const _identity = require('../fixtures/sample-auth0-identity-token');
+//const _identity = require('../fixtures/sample-auth0-identity-token');
 
 describe('organizationSpec', () => {
 
@@ -269,6 +269,23 @@ describe('organizationSpec', () => {
               done.fail(err);
             });
         });
+
+        it('populates the membership', done => {
+          request(app)
+            .get(`/organization/${organization.id}`)
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.members).toBeDefined();
+              expect(res.body.members.length).toEqual(1);
+              expect(res.body.members[0].id).toEqual(agent.id);
+              done();
+            });
+          });
       });
  
       describe('update', () => {
@@ -410,6 +427,23 @@ describe('organizationSpec', () => {
               }).catch(err => {
                 done.fail(err);
               });
+            });
+        });
+      });
+
+      describe('read', () => {
+        it('returns 403 on organization show', done => {
+          request(app)
+            .get(`/organization/${organization.id}`)
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${suspiciousToken}`)
+            .expect('Content-Type', /json/)
+            .expect(403)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.message).toEqual('You are not a member of that organization');
+              done();
             });
         });
       });
