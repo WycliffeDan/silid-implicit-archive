@@ -15,10 +15,20 @@ router.get('/', jwtAuth, function(req, res, next) {
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id },
                                 include: [ 'creator', 'members', 'teams'] }).then(result => {
+
+    console.log('organization');
+    console.log(result);
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }
 
+    console.log('agent');
+    console.log(req.agent);
+ 
+      console.log('members');
+    result.members.forEach(member => {
+      console.log(member);
+    });
     if (!result.members.map(member => member.id).includes(req.agent.id)) {
       return res.status(403).json({ message: 'You are not a member of that organization' });
     }
@@ -32,8 +42,27 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 router.post('/', jwtAuth, function(req, res, next) {
   delete req.body.token;
   req.body.creatorId = req.agent.id;
-  req.agent.createOrganization(req.body).then(result => {
-    res.status(201).json(result);
+
+  console.log("POStING");
+  console.log(req.body);
+
+  req.agent.createOrganization(req.body).then(org => {
+//  models.Organization.create(req.body).then(result => {
+    org.addMembers(req.body.members).then(() => {
+
+//    models.Organization.findOne({ id: org.id }).then(org => {
+  models.Organization.findOne({ where: { id: org.id },
+                                include: [ 'creator', 'members', 'teams'] }).then(org => {
+
+    console.log(org);
+
+    res.status(201).json(org);
+  }).catch(err => {
+    res.status(500).json(err);
+  });
+  }).catch(err => {
+    res.status(500).json(err);
+  });
   }).catch(err => {
     let status = 500;
     if (err instanceof models.Sequelize.UniqueConstraintError) {
