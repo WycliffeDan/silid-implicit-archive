@@ -183,6 +183,37 @@ describe('Organization', () => {
         });
       });
 
+      it('does not allow duplicate membership', done => {
+        models.Agent.create({ name: 'Some Other Guy', email: 'someotherguy@example.com' }).then(newAgent => {
+          org.addMember(newAgent).then(result => {
+            org.getMembers().then(result => {
+              expect(result.length).toEqual(2);
+              expect(result[0].id).toEqual(agent.id);
+              expect(result[1].id).toEqual(newAgent.id);
+              org.addMember(newAgent).then(result => {
+                org.getMembers().then(result => {
+                  expect(result.length).toEqual(2);
+                  expect(result[0].id).toEqual(agent.id);
+                  expect(result[1].id).toEqual(newAgent.id);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+
       it('removes agent if deleted', done => {
         org.addMember(agent.id).then(result => {
           org.getMembers().then(result => {
@@ -238,6 +269,31 @@ describe('Organization', () => {
           done.fail(err);
         });
       });
+
+      it('does not allow duplicated team membership', done => {
+        org.addTeam(team.id).then(result => {
+          org.getTeams().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(team.name);
+            org.addTeam(team.id).then(result => {
+              org.getTeams().then(result => {
+                expect(result.length).toEqual(1);
+                expect(result[0].name).toEqual(team.name);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
 
       it('removes team if deleted', done => {
         org.addTeam(team.id).then(result => {
