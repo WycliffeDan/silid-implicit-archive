@@ -90,12 +90,13 @@ context('Organization show', function() {
             memberAgent = results[0];
 
             // Note: this organization is being created by `agent` (not `memberAgent`) by virtue of `token` (not `memberToken`)
-            cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada', members: [memberAgent.id] } }).then((org) => {
+            cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
               organization = org.body;
-
-              cy.get('#app-menu-button').click();
-              cy.get('#organization-button').click();
-              cy.contains('One Book Canada').click();
+              cy.request({ url: '/organization',  method: 'PATCH', auth: { bearer: token }, body: { id: organization.id, memberId: memberAgent.id } }).then((res) => {
+                cy.get('#app-menu-button').click();
+                cy.get('#organization-button').click();
+                cy.contains('One Book Canada').click();
+              });
             });
           });
         });
