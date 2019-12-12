@@ -82,13 +82,15 @@ context('Organization show', function() {
       let memberAgent, memberToken, organization;
       beforeEach(function() {
         cy.login(this.anotherAgent);
+
+
         cy.visit('/#/').then(() => {
           memberToken = localStorage.getItem('accessToken');
           cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${memberToken}' LIMIT 1;`).then(([results, metadata]) => {
             memberAgent = results[0];
 
             // Note: this organization is being created by `agent` (not `memberAgent`) by virtue of `token` (not `memberToken`)
-            cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada', agent_organization: [memberAgent.id] } }).then((org) => {
+            cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada', members: [memberAgent.id] } }).then((org) => {
               organization = org.body;
 
               cy.get('#app-menu-button').click();
@@ -115,23 +117,31 @@ context('Organization show', function() {
       let nonMemberAgent, nonMemberToken, organization;
       beforeEach(function() {
         cy.login(this.anotherAgent);
+
         cy.visit('/#/').then(() => {
           nonMemberAgent = localStorage.getItem('accessToken');
+          cy.task('query', `SELECT * FROM "Agents"`).then(([results, metadata]) => {
+            cy.log('ALL AGENTS');
+            cy.log(JSON.stringify(results));
+
           cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${nonMemberAgent}' LIMIT 1;`).then(([results, metadata]) => {
             nonMemberAgent = results[0];
             cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
               organization = org.body;
             });
           });
+          });
         });
       });
 
-      it('lands in the right spot', () => {
-        cy.visit(`/#/organization/${organization.id}`);
-        cy.url().should('contain', '/#/organization');
-      });
+//      it('redirect and land in the right spot', () => {
+//        cy.visit(`/#/organization/${organization.id}`);
+//        cy.url().should('match', /\/#\/organization$/);
+//      });
  
       it('displays a friendly message', () => {
+        cy.visit(`/#/organization/${organization.id}`);
+        cy.wait(500);
         cy.get('h3').contains('You are not a member of that organization');
       });
     });
