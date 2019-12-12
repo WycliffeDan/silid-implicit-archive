@@ -34,20 +34,7 @@ router.post('/', jwtAuth, function(req, res, next) {
   req.body.creatorId = req.agent.id;
 
   req.agent.createOrganization(req.body).then(org => {
-//  models.Organization.create(req.body).then(result => {
-    org.addMembers(req.body.members).then(() => {
-
-//    models.Organization.findOne({ id: org.id }).then(org => {
-  models.Organization.findOne({ where: { id: org.id },
-                                include: [ 'creator', 'members', 'teams'] }).then(org => {
-
     res.status(201).json(org);
-  }).catch(err => {
-    res.status(500).json(err);
-  });
-  }).catch(err => {
-    res.status(500).json(err);
-  });
   }).catch(err => {
     let status = 500;
     if (err instanceof models.Sequelize.UniqueConstraintError) {
