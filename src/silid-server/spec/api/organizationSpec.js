@@ -289,49 +289,325 @@ describe('organizationSpec', () => {
       });
  
       describe('update', () => {
-        it('updates an existing record in the database', done => {
-          request(app)
-            .put('/organization')
-            .send({
-              id: organization.id,
-              name: 'Some Cool Guy'
-            })
-            .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${signedAccessToken}`)
-            .expect('Content-Type', /json/)
-            .expect(201)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              scope.done();
-              expect(res.body.name).toEqual('Some Cool Guy');
- 
-              models.Organization.findOne({ where: { id: organization.id }}).then(results => {
-                expect(results.name).toEqual('Some Cool Guy');
-                expect(results.email).toEqual(organization.email);
+
+        describe('PUT', () => {
+          it('updates an existing record in the database', done => {
+            request(app)
+              .put('/organization')
+              .send({
+                id: organization.id,
+                name: 'Some Cool Guy'
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${signedAccessToken}`)
+              .expect('Content-Type', /json/)
+              .expect(201)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.name).toEqual('Some Cool Guy');
+
+                models.Organization.findOne({ where: { id: organization.id }}).then(results => {
+                  expect(results.name).toEqual('Some Cool Guy');
+                  expect(results.email).toEqual(organization.email);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          });
+
+          it('doesn\'t barf if organization doesn\'t exist', done => {
+            request(app)
+              .put('/organization')
+              .send({
+                id: 111,
+                name: 'Some Guy'
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${signedAccessToken}`)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.message).toEqual('No such organization');
                 done();
+              });
+          });
+        });
+
+        /**
+         * The idempotent PUT is best used to change the properties of the organization.
+         * PATCH is used to modify associations (i.e., memberships and teams).
+         */
+        describe('PATCH', () => {
+          let anotherAgent;
+          beforeEach(done => {
+            models.Agent.create({ name: 'Some Other Guy', email: 'someotherguy@example.com' }).then(result => {
+              anotherAgent = result;
+              done();
+            }).catch(err => {
+              done.fail(err);
+            });
+          });
+
+          describe('agent membership', () => {
+            it('adds a member agent when agent provided isn\'t currently a member', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: organization.id,
+                  memberId: anotherAgent.id
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(201)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.name).toEqual('Added Some Other Guy to the organization');
+
+                  models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
+                    expect(results.members.length).toEqual(2);
+                    expect(results.members[1].name).toEqual(anotherAgent.name);
+                    expect(results.members[1].email).toEqual(anotherAgent.email);
+                    done();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
+                });
+            });
+
+            it('removes a member agent when agent provided is currently a member', done => {
+              organization.addMember(anotherAgent).then(result => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    memberId: anotherAgent.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.name).toEqual('Removed Some Other Guy from the organization');
+
+                    models.Organization.findOne({ where: { id: organization.id }}).then(results => {
+                      expect(results.members.length).toEqual(1);
+                      expect(results.members[0].name).toEqual(agent.name);
+                      expect(results.members[0].email).toEqual(agent.email);
+                      done();
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
               }).catch(err => {
                 done.fail(err);
               });
             });
-        });
 
-        it('doesn\'t barf if organization doesn\'t exist', done => {
-          request(app)
-            .put('/organization')
-            .send({
-              id: 111,
-              name: 'Some Guy' 
-            })
-            .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${signedAccessToken}`)
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              scope.done();
-              expect(res.body.message).toEqual('No such organization');
-              done();
+            it('doesn\'t barf if member agent doesn\'t exist', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: organization.id,
+                  memberId: 333
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(404)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.message).toEqual('No such agent');
+                  done();
+                });
             });
+
+            it('doesn\'t barf if organization doesn\'t exist', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: 111,
+                  memberId: anotherAgent.id
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(404)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.message).toEqual('No such organization');
+                  done();
+                });
+            });
+
+            it('doesn\'t allow a non-member agent to add a member', done => {
+              let unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+              anotherAgent.accessToken = `Bearer ${unauthorizedToken}`;
+              anotherAgent.save().then(() => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    memberId: anotherAgent.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${unauthorizedToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(403)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('You are not a member of this organization');
+                    done();
+                  });
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+          });
+
+          describe('team membership', () => {
+
+            let newTeam, newOrg;
+            beforeEach(done => {
+              anotherAgent.createOrganization({ name: 'International Association of Vigilante Crime Fighters', creatorId: anotherAgent.id }).then(result => {
+                newOrg = result;
+                newOrg.createTeam({ name: 'The A-Team', organizationId: newOrg.id }).then(result => {
+                  newTeam = result;
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+            });
+
+            it('adds a team when the organization isn\'t currently a participant', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: organization.id,
+                  teamId: newTeam.id
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(201)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.name).toEqual('Some Cool Guy');
+
+                  models.Organization.findOne({ where: { id: organization.id }, include: ['teams'] }).then(results => {
+                    expect(results.teams.length).toEqual(1);
+                    expect(results.teams[0].name).toEqual('The A-Team');
+                    done.fail();
+                  }).catch(err => {
+                    done.fail(err);
+                  });
+                });
+            });
+
+            it('removes a team when the organization is a current participant', done => {
+              organization.addTeam(newTeam).then(result => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    teamId: newTeam.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.name).toEqual('Some Cool Guy');
+
+                    models.Organization.findOne({ where: { id: organization.id }, include: ['teams'] }).then(results => {
+                      expect(results.teams.length).toEqual(0);
+                      done();
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+
+            it('doesn\'t barf if team doesn\'t exist', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: organization.id,
+                  teamId: 333
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.message).toEqual('No such team');
+                  done();
+                });
+            });
+
+            it('doesn\'t barf if organization doesn\'t exist', done => {
+              request(app)
+                .patch('/organization')
+                .send({
+                  id: organization.id,
+                  teamId: 333
+                })
+                .set('Accept', 'application/json')
+                .set('Authorization', `Bearer ${signedAccessToken}`)
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) done.fail(err);
+                  scope.done();
+                  expect(res.body.message).toEqual('No such organization');
+                  done();
+                });
+            });
+
+            it('doesn\'t allow a non-member agent to add a team', done => {
+              let unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+              anotherAgent.accessToken = `Bearer ${unauthorizedToken}`;
+              anotherAgent.save().then(() => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    teamId: newTeam.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${unauthorizedToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(403)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('You are not a member of this organization');
+                    done();
+                  });
+              }).catch(err => {
+                done.fail(err);
+              });
+            });
+          });
         });
       });
 
@@ -388,46 +664,92 @@ describe('organizationSpec', () => {
       });
 
       describe('update', () => {
-        it('returns 401', done => {
-          request(app)
-            .put('/organization')
-            .send({
-              id: organization.id,
-              name: 'Some Cool Guy'
-            })
-            .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${suspiciousToken}`)
-            .expect('Content-Type', /json/)
-            .expect(401)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              scope.done();
-              expect(res.body.message).toEqual('Unauthorized: Invalid token');
-              done();
-            });
+        describe('PUT', () => {
+          it('returns 401', done => {
+            request(app)
+              .put('/organization')
+              .send({
+                id: organization.id,
+                name: 'Some Cool Guy'
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${suspiciousToken}`)
+              .expect('Content-Type', /json/)
+              .expect(403)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.message).toEqual('Unauthorized: Invalid token');
+                done();
+              });
+          });
+
+          it('does not change the record in the database', done => {
+            request(app)
+              .put('/organization')
+              .send({
+                id: organization.id,
+                name: 'Some Cool Guy'
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${suspiciousToken}`)
+              .expect('Content-Type', /json/)
+              .expect(403)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                models.Organization.findOne({ where: { id: organization.id }}).then(results => {
+                  expect(results.name).toEqual(organization.name);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          });
         });
 
-        it('does not change the record in the database', done => {
-          request(app)
-            .put('/organization')
-            .send({
-              id: organization.id,
-              name: 'Some Cool Guy'
-            })
-            .set('Accept', 'application/json')
-            .set('Authorization', `Bearer ${suspiciousToken}`)
-            .expect('Content-Type', /json/)
-            .expect(401)
-            .end(function(err, res) {
-              if (err) done.fail(err);
-              scope.done();
-              models.Organization.findOne({ where: { id: organization.id }}).then(results => {
-                expect(results.name).toEqual(organization.name);
+        describe('PATCH', () => {
+          it('returns 403', done => {
+            request(app)
+              .patch('/organization')
+              .send({
+                id: organization.id,
+                memberId: 333
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${suspiciousToken}`)
+              .expect('Content-Type', /json/)
+              .expect(403)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                expect(res.body.message).toEqual('You are not a member of this organization');
                 done();
-              }).catch(err => {
-                done.fail(err);
               });
-            });
+          });
+
+          it('does not change the record in the database', done => {
+            request(app)
+              .patch('/organization')
+              .send({
+                id: organization.id,
+                memberId: 333
+              })
+              .set('Accept', 'application/json')
+              .set('Authorization', `Bearer ${suspiciousToken}`)
+              .expect('Content-Type', /json/)
+              .expect(403)
+              .end(function(err, res) {
+                if (err) done.fail(err);
+                scope.done();
+                models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
+                  expect(results.members.length).toEqual(1);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+          });
         });
       });
 
