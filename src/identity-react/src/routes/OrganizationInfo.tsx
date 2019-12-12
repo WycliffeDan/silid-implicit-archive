@@ -17,6 +17,7 @@ import Button from '@material-ui/core/Button';
 //
 //import useGetOrganizationInfoService, { OrganizationInfos } from '../services/useGetOrganizationInfoService';
 import { Organization } from '../types/Organization';
+import { Agent } from '../types/Agent';
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 //import usePostOrganizationInfoService, {
 //  PostOrganizationInfo,
@@ -43,6 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const OrganizationInfo = (props: any) => {
   const [formVisible, toggleFormVisible] = useState(false);
   const [orgInfo, setOrgInfo] = useState<Organization>({} as Organization);
+  const [agentProfile, setAgentProfile] = useState<Agent>(JSON.parse(localStorage.getItem('profile') || '{}') as Agent);
 
   const classes = useStyles();
 
@@ -93,9 +95,11 @@ const OrganizationInfo = (props: any) => {
                 <React.Fragment>
                   {orgInfo.name} 
                 </React.Fragment>
-                <Button id="edit-organization" variant="contained" color="secondary">
-                  Edit
-                </Button>
+                {orgInfo.creator && (agentProfile.email === orgInfo.creator.email) ?
+                  <Button id="edit-organization" variant="contained" color="secondary">
+                    Edit
+                  </Button>
+                : ''}
               </React.Fragment>
             : ''}
           </Typography>
