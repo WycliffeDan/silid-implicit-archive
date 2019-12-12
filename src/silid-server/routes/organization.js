@@ -15,20 +15,10 @@ router.get('/', jwtAuth, function(req, res, next) {
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id },
                                 include: [ 'creator', 'members', 'teams'] }).then(result => {
-
-    console.log('organization');
-    console.log(result);
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }
 
-    console.log('agent');
-    console.log(req.agent);
- 
-      console.log('members');
-    result.members.forEach(member => {
-      console.log(member);
-    });
     if (!result.members.map(member => member.id).includes(req.agent.id)) {
       return res.status(403).json({ message: 'You are not a member of that organization' });
     }
@@ -43,9 +33,6 @@ router.post('/', jwtAuth, function(req, res, next) {
   delete req.body.token;
   req.body.creatorId = req.agent.id;
 
-  console.log("POStING");
-  console.log(req.body);
-
   req.agent.createOrganization(req.body).then(org => {
 //  models.Organization.create(req.body).then(result => {
     org.addMembers(req.body.members).then(() => {
@@ -53,8 +40,6 @@ router.post('/', jwtAuth, function(req, res, next) {
 //    models.Organization.findOne({ id: org.id }).then(org => {
   models.Organization.findOne({ where: { id: org.id },
                                 include: [ 'creator', 'members', 'teams'] }).then(org => {
-
-    console.log(org);
 
     res.status(201).json(org);
   }).catch(err => {
@@ -80,7 +65,7 @@ router.put('/', jwtAuth, function(req, res, next) {
 
     organization.getCreator().then(creator => {
       if (req.agent.email !== creator.email) {
-        return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+        return res.status(403).json( { message: 'Unauthorized: Invalid token' });
       }
   
       for (let key in req.body) {
@@ -100,6 +85,71 @@ router.put('/', jwtAuth, function(req, res, next) {
     res.json(err);
   });
 });
+
+/**
+ * PATCH is used to modify associations (i.e., memberships and teams).
+ * cf., PUT
+ */
+router.patch('/', jwtAuth, function(req, res, next) {
+  models.Organization.findOne({ where: { id: req.body.id },
+                                include: ['members', 'teams'] }).then(organization => {
+    if (!organization) {
+      return res.status(404).json( { message: 'No such organization' });
+    }
+
+    let members = organization.members.map(member => member.id);
+    if (!members.includes(req.agent.id)) {
+      return res.status(403).json( { message: 'You are not a member of this organization' });
+    }
+
+    // Agent membership
+    if (req.body.memberId) {
+      const index = members.indexOf(req.body.memberId);
+      // Delete
+      if (index > -1) {
+        members.splice(index, 1);
+      }
+      // Add
+      else {
+        members.push(req.body.memberId);
+      }
+    }
+
+    // Team
+    let teams = organization.teams.map(team => team.id);
+    if (req.body.teamId) {
+      const index = teams.indexOf(req.body.teamId);
+      // Delete
+      if (index > -1) {
+        teams.splice(index, 1);
+      }
+      // Add
+      else {
+        teams.push(req.body.teamId);
+      }
+    }
+
+    Promise.all([ organization.setMembers(members), organization.setTeams(teams) ]).then(results => {
+      res.status(201).json({ message: 'Update successful' });
+    }).catch(err => {
+      let status = 500;
+      if (err instanceof models.Sequelize.ForeignKeyConstraintError) {
+        status = 404;
+        if (err.parent.table === 'agent_organization') {
+          err = { message: 'No such agent' }
+        }
+        else if (err.parent.table === 'organization_team') {
+          err = { message: 'No such team' }
+        }
+      }
+      res.status(status).json(err);
+    });
+  }).catch(err => {
+    res.status(500).json(err);
+  });
+});
+
+
 
 router.delete('/', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.body.id } }).then(organization => {

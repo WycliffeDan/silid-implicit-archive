@@ -367,7 +367,7 @@ describe('organizationSpec', () => {
                 .end(function(err, res) {
                   if (err) done.fail(err);
                   scope.done();
-                  expect(res.body.name).toEqual('Added Some Other Guy to the organization');
+                  expect(res.body.message).toEqual('Update successful');
 
                   models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
                     expect(results.members.length).toEqual(2);
@@ -395,9 +395,9 @@ describe('organizationSpec', () => {
                   .end(function(err, res) {
                     if (err) done.fail(err);
                     scope.done();
-                    expect(res.body.name).toEqual('Removed Some Other Guy from the organization');
+                    expect(res.body.message).toEqual('Update successful');
 
-                    models.Organization.findOne({ where: { id: organization.id }}).then(results => {
+                    models.Organization.findOne({ where: { id: organization.id }, include: ['members']}).then(results => {
                       expect(results.members.length).toEqual(1);
                       expect(results.members[0].name).toEqual(agent.name);
                       expect(results.members[0].email).toEqual(agent.email);
@@ -504,12 +504,12 @@ describe('organizationSpec', () => {
                 .end(function(err, res) {
                   if (err) done.fail(err);
                   scope.done();
-                  expect(res.body.name).toEqual('Some Cool Guy');
+                  expect(res.body.message).toEqual('Update successful');
 
                   models.Organization.findOne({ where: { id: organization.id }, include: ['teams'] }).then(results => {
                     expect(results.teams.length).toEqual(1);
                     expect(results.teams[0].name).toEqual('The A-Team');
-                    done.fail();
+                    done();
                   }).catch(err => {
                     done.fail(err);
                   });
@@ -531,7 +531,7 @@ describe('organizationSpec', () => {
                   .end(function(err, res) {
                     if (err) done.fail(err);
                     scope.done();
-                    expect(res.body.name).toEqual('Some Cool Guy');
+                    expect(res.body.message).toEqual('Update successful');
 
                     models.Organization.findOne({ where: { id: organization.id }, include: ['teams'] }).then(results => {
                       expect(results.teams.length).toEqual(0);
@@ -555,7 +555,7 @@ describe('organizationSpec', () => {
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${signedAccessToken}`)
                 .expect('Content-Type', /json/)
-                .expect(200)
+                .expect(404)
                 .end(function(err, res) {
                   if (err) done.fail(err);
                   scope.done();
@@ -568,13 +568,13 @@ describe('organizationSpec', () => {
               request(app)
                 .patch('/organization')
                 .send({
-                  id: organization.id,
-                  teamId: 333
+                  id: 333,
+                  teamId: newTeam
                 })
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${signedAccessToken}`)
                 .expect('Content-Type', /json/)
-                .expect(200)
+                .expect(404)
                 .end(function(err, res) {
                   if (err) done.fail(err);
                   scope.done();
