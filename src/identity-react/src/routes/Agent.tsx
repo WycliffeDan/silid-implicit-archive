@@ -69,24 +69,13 @@ const Agent = () => {
   const classes = useStyles();
   const service = useGetAgentService();
 
-//  const profile = JSON.parse(localStorage.getItem('profile')!);
-//  const initialStarshipState: PostAgent = {
-//    name: '',
-//    email: '',
-//    // passengers: '',
-//    // cost_in_credits: ''
-//  };
-//  const [starship, setStarship] = useState<PostAgent>(initialStarshipState);
-//  const { service, publishAgent } = usePostAgentService();
   let { publishAgent } = usePutAgentService();
-
 
   useEffect(() => {
     if (service.status === 'loaded') {
       setFormData(service.payload);
     }
   }, [service.status]);
-
 
   const handleSubmit = (evt:React.FormEvent<EventTarget>) => {
     evt.preventDefault();
@@ -174,113 +163,6 @@ const Agent = () => {
       </Card>
     </div>
   )    
-//          {/* {JSON.stringify(profile)} */}
-//          {/*<form onSubmit={handleFormSubmit}>
-//            <TextField
-//              id="standard-number"
-//              label="First Name"
-//              type="string"
-//              className={classes.textField}
-//              InputLabelProps={{
-//                shrink: true,
-//              }}
-//              margin="normal"
-//              value={profile.given_name}
-//              onChange={handleChange}
-//            />
-//            <TextField
-//              id="standard-number"
-//              label="Last Name"
-//              type="string"
-//              className={classes.textField}
-//              InputLabelProps={{
-//                shrink: true,
-//              }}
-//              margin="normal"
-//              value={profile.family_name}
-//              onChange={handleChange}
-//            />
-//            <TextField
-//              id="standard-number"
-//              label="Display Name"
-//              type="string"
-//              className={classes.textField}
-//              InputLabelProps={{
-//                shrink: true,
-//              }}
-//              margin="normal"
-//              value={profile.nickname}
-//              onChange={handleChange}
-//            />
-//            <TextField
-//              id="standard-number"
-//              label="Email"
-//              type="string"
-//              className={classes.textField}
-//              InputLabelProps={{
-//                shrink: true,
-//              }}
-//              margin="normal"
-//              value={profile.email}
-//              onChange={handleChange}
-//            />
-//            <Button
-//              variant="contained"
-//              color="primary"
-//              size="large"
-//              className={classes.button}
-//              startIcon={<SaveIcon />}
-//              type="submit"
-//            >
-//              Save
-//            </Button>
-//            {service.status === 'loading' && <div>Sending...</div>}
-//            {service.status === 'loaded' && (
-//              <div className={classes.loaded}>Data saved!</div>
-//            )}
-//            {service.status === 'error' && (
-//              <div className={classes.error}>
-//                There was an error in saving your data.
-//              </div>
-//            )}
-//          </form>
-//          <br></br> */}
-//          {/* {service.status === 'loading' && <div>Loading...</div>}
-//            {service.status === 'loaded' &&
-//              service.payload.results.map(starship => (
-//                <div key={starship.url}>
-//                  <TextField
-//                    id="standard-number"
-//                    label="Name"
-//                    type="string"
-//                    className={classes.textField}
-//                    InputLabelProps={{
-//                      shrink: true,
-//                    }}
-//                    margin="normal"
-//                    value={starship.name}
-//                  />
-//                  <br></br>
-//                  <TextField
-//                    id="standard-number"
-//                    label="Model"
-//                    type="string"
-//                    className={classes.textField}
-//                    InputLabelProps={{
-//                      shrink: true,
-//                    }}
-//                    margin="normal"
-//                    value={starship.model}
-//                  />
-//                  <br></br>
-//                  <TextField
-//                    id="standard-number"
-//                    label="Passengers"
-//                    type="string"
-//                    className={classes.textField}
-//                    InputLabelProps={{
-//                      shrink: true, */}
-//
 };
 
 export default Agent;

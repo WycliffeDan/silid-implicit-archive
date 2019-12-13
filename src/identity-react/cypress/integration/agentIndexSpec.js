@@ -47,7 +47,8 @@ context('Agent', function() {
       it('displays agent social profile info in form', function() {
         cy.get('h3').contains('Profile');
         cy.get('input[name="name"][type="text"]').should('have.value', this.profile.name);
-        cy.get('input[name="email"][type="email"]').should('have.value', this.profile.email);
+        expect(JSON.parse(localStorage.getItem('profile')).email).to.be.defined;
+        cy.get('input[name="email"][type="email"]').should('have.value', JSON.parse(localStorage.getItem('profile')).email);
         cy.get('button[type="submit"]').should('exist');
       });
 

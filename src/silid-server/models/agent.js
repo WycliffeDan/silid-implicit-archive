@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Agent.belongsToMany(models.Team, {
+      as: 'teams',
       through: 'agent_team'
     });
   };

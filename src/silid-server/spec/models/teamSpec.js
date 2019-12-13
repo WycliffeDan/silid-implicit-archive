@@ -86,6 +86,27 @@ describe('Team', () => {
           done();
         });
       });
+
+      it('includes creator organization in membership', done => {
+        team = new Team(_valid);
+        team.save().then(obj => {
+          obj.getOrganizations().then(orgs => {
+            expect(orgs.length).toEqual(1);
+            obj.getOrganization().then(creator => {
+              expect(orgs[0].id).toEqual(creator.id);
+              done();
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+
     });
 
     describe('name', () => {

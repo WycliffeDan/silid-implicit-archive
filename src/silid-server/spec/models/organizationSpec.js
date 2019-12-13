@@ -46,7 +46,7 @@ describe('Organization', () => {
       it('includes creator agent as a member', done => {
         organization = new Organization(_valid);
         organization.save().then(obj => {
-          obj.getAgents().then(members => {
+          obj.getMembers().then(members => {
             expect(members.length).toEqual(1);
             obj.getCreator().then(creator => {
               expect(members[0].id).toEqual(creator.id);
@@ -166,8 +166,8 @@ describe('Organization', () => {
 
       it('has many', done => {
         models.Agent.create({ name: 'Some Other Guy', email: 'someotherguy@example.com' }).then(newAgent => {
-          org.addAgent(newAgent).then(result => {
-            org.getAgents().then(result => {
+          org.addMember(newAgent).then(result => {
+            org.getMembers().then(result => {
               expect(result.length).toEqual(2);
               expect(result[0].id).toEqual(agent.id);
               expect(result[1].id).toEqual(newAgent.id);
@@ -183,13 +183,44 @@ describe('Organization', () => {
         });
       });
 
+      it('does not allow duplicate membership', done => {
+        models.Agent.create({ name: 'Some Other Guy', email: 'someotherguy@example.com' }).then(newAgent => {
+          org.addMember(newAgent).then(result => {
+            org.getMembers().then(result => {
+              expect(result.length).toEqual(2);
+              expect(result[0].id).toEqual(agent.id);
+              expect(result[1].id).toEqual(newAgent.id);
+              org.addMember(newAgent).then(result => {
+                org.getMembers().then(result => {
+                  expect(result.length).toEqual(2);
+                  expect(result[0].id).toEqual(agent.id);
+                  expect(result[1].id).toEqual(newAgent.id);
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
+
       it('removes agent if deleted', done => {
-        org.addAgent(agent.id).then(result => {
-          org.getAgents().then(result => {
+        org.addMember(agent.id).then(result => {
+          org.getMembers().then(result => {
             expect(result.length).toEqual(1);
             expect(result[0].name).toEqual(agent.name);
             agent.destroy().then(result => {
-              org.getAgents().then(result => {
+              org.getMembers().then(result => {
                 expect(result.length).toEqual(0);
                 done();
               }).catch(err => {
@@ -238,6 +269,31 @@ describe('Organization', () => {
           done.fail(err);
         });
       });
+
+      it('does not allow duplicated team membership', done => {
+        org.addTeam(team.id).then(result => {
+          org.getTeams().then(result => {
+            expect(result.length).toEqual(1);
+            expect(result[0].name).toEqual(team.name);
+            org.addTeam(team.id).then(result => {
+              org.getTeams().then(result => {
+                expect(result.length).toEqual(1);
+                expect(result[0].name).toEqual(team.name);
+                done();
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
+          }).catch(err => {
+            done.fail(err);
+          });
+        }).catch(err => {
+          done.fail(err);
+        });
+      });
+
 
       it('removes team if deleted', done => {
         org.addTeam(team.id).then(result => {

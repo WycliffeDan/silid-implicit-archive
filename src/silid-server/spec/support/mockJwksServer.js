@@ -30,9 +30,15 @@ const jwt = require('jsonwebtoken');
  *
  * https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
  */
-const _access = require('../fixtures/sample-auth0-access-token');
-_access.iss = `http://${process.env.AUTH0_DOMAIN}/`;
+//const _access = require('../fixtures/sample-auth0-access-token');
+//_access.iss = `http://${process.env.AUTH0_DOMAIN}/`;
 const _identity = require('../fixtures/sample-auth0-identity-token');
+
+/**
+ * Allows multiple identities
+ */
+const identityDb = {};
+
 
 /**
  * Crypto stuff
@@ -71,10 +77,6 @@ jwkPub.use = 'sig';
 jwkPub.alg = 'RS256';
 
 keystore.add(jwkPub, 'pkcs8').then(function(result) {
-  const signedAccessToken = jwt.sign(_access, prv, { algorithm: 'RS256', header: { kid: result.kid } });
-
-  console.log('Signed access token:');
-  console.log(signedAccessToken);
 
   /**
    * Fake JWKS server
@@ -100,19 +102,12 @@ keystore.add(jwkPub, 'pkcs8').then(function(result) {
 
     server.route({
       method: 'GET',
-      path: '/access',
-      handler: (request, h) => {
-        console.log('/access');
-        return signedAccessToken;
-      }
-    });
-  
-    server.route({
-      method: 'GET',
       path: '/userinfo',
       handler: (request, h) => {
         console.log('/userinfo');
-        return _identity;
+        const decoded = jwt.verify(request.headers.authorization.split(' ')[1], prv, { algorithms: ['RS256'] });//, function(err, decoded) {
+        console.log(decoded);
+        return { ..._identity, email: `agent${identityDb[decoded.sub]}@example.com` };
       }
     });
 
@@ -121,8 +116,14 @@ keystore.add(jwkPub, 'pkcs8').then(function(result) {
       path: '/sign',
       handler: (request, h) => {
         console.log('/sign');
-        console.log(request.payload);
-        return jwt.sign(request.payload.accessToken, prv, { algorithm: 'RS256', header: { kid: result.kid } });;
+        const signed = jwt.sign(request.payload.accessToken, prv, { algorithm: 'RS256', header: { kid: result.kid } });
+
+        // Add agent to identity "database"
+        if(!identityDb[request.payload.accessToken.sub]) {
+          identityDb[request.payload.accessToken.sub] = Object.keys(identityDb).length + 1;
+        }
+
+        return signed;
       }
     });
 

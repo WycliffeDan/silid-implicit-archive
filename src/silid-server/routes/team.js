@@ -22,7 +22,7 @@ router.get('/:id', jwtAuth, function(req, res, next) {
 router.post('/', jwtAuth, function(req, res, next) {
   delete req.body.token;
   models.Organization.findOne({ where: { id: req.body.organizationId } }).then(organization => {
-    organization.getAgents({attributes: ['email']}).then(agents => {
+    organization.getMembers({attributes: ['email']}).then(agents => {
       // 2019-11-1 https://github.com/sequelize/sequelize/issues/6950#issuecomment-373937803
       // Sequelize doesn't return a flat array
       agents = agents.map(agent => agent.email);
@@ -60,7 +60,7 @@ router.put('/', jwtAuth, function(req, res, next) {
     }
     team.getOrganization().then(organization => {
       
-      organization.getAgents({attributes: ['email']}).then(agents => {
+      organization.getMembers({attributes: ['email']}).then(agents => {
         agents = agents.map(agent => agent.email);
         organization.getCreator().then(creator => {
 
