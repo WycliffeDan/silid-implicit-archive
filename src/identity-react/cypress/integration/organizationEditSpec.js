@@ -39,23 +39,37 @@ context('Organization edit', function() {
         cy.get('form#edit-organization-form').should('exist');
       });
   
-      it('displays the organization info in form', function() {
+      it('displays the organization info in form', () => {
         cy.get('button#edit-organization').click();
         cy.get('input[name="name"][type="text"]').should('have.value', organization.name);
         cy.get('button[type="submit"]').should('exist');
+        cy.get('button[type="submit"]').should('be.disabled');
+      });
+
+      it('hides itself', function() {
+        cy.get('button#edit-organization').click();
+        cy.get('button#edit-organization').should('not.exist');
+      });
+
+      it('hides add-agent and add-team buttons', function() {
+        cy.get('button#add-agent').should('exist');
+        cy.get('button#add-team').should('exist');
+        cy.get('button#edit-organization').click();
+        cy.get('button#add-agent').should('not.exist');
+        cy.get('button#add-team').should('not.exist');
+      });
+
+      it('allows changes to the name field in the organization edit form', function() {
+        cy.get('button#edit-organization').click();
+        cy.get('input[name="name"][type="text"]').should('have.value', organization.name);
+        cy.get('input[name="name"][type="text"]').clear().type('Two Testaments Canada');
+        cy.get('input[name="name"][type="text"]').should('have.value', 'Two Testaments Canada');
       });
     });
 
     describe('Cancel button', () => {
       beforeEach(() => {
         cy.get('button#edit-organization').click();
-      });
-
-      it('displays on form change', () => {
-        cy.get('input[name="name"][type="text"]').should('have.value', organization.name);
-        cy.get('button#cancel-changes').should('not.exist');
-        cy.get('input[name="name"][type="text"]').clear().type('Two Testaments Canada');
-        cy.get('button#cancel-changes').should('exist');
       });
 
       it('resets changes to the form', () => {
@@ -78,6 +92,24 @@ context('Organization edit', function() {
         cy.get('button#cancel-changes').click();
         cy.get('form#edit-organization-form').should('not.exist');
       });
+
+      it('reveals the edit button', function() {
+        cy.get('button#edit-organization').should('not.exist');
+        cy.get('button#cancel-changes').click();
+        cy.get('button#edit-organization').should('exist');
+      });
+    });
+
+    describe('Save button', () => {
+      beforeEach(() => {
+        cy.get('button#edit-organization').click();
+      });
+
+      it('is enabled on form change', function() {
+        cy.get('button[type="submit"]').should('be.disabled');
+        cy.get('input[name="name"][type="text"]').clear().type('Two Testaments Canada');
+        cy.get('button[type="submit"]').should('be.enabled');
+      });
     });
 
     describe('unsuccessful changes', () => {
@@ -85,12 +117,22 @@ context('Organization edit', function() {
         cy.get('button#edit-organization').click();
       });
 
-
-      it('does not allow an empty field', () => {
+      it('does not allow an empty name field', () => {
         cy.get('input[name="name"][type="text"]:invalid').should('have.length', 0)
         cy.get('input[name="name"][type="text"]').should('have.value', organization.name);
         cy.get('input[name="name"][type="text"]').clear();
         cy.get('input[name="name"][type="text"]').should('have.value', '');
+        cy.get('button[type="submit"]').click();
+        cy.get('input[name="name"][type="text"]:invalid').should('have.length', 1)
+        cy.get('input[name="name"][type="text"]:invalid').then($input => {
+          expect($input[0].validationMessage).to.eq('name required')
+        });
+      });
+
+      it('does not allow a blank name field', () => {
+        cy.get('input[name="name"][type="text"]:invalid').should('have.length', 0)
+        cy.get('input[name="name"][type="text"]').should('have.value', organization.name);
+        cy.get('input[name="name"][type="text"]').clear().type('  ');
         cy.get('button[type="submit"]').click();
         cy.get('input[name="name"][type="text"]:invalid').should('have.length', 1)
         cy.get('input[name="name"][type="text"]:invalid').then($input => {
