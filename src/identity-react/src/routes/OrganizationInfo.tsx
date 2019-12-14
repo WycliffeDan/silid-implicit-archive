@@ -93,7 +93,7 @@ const OrganizationInfo = (props: any) => {
       setPrevState(s);
     }
     const f = { ...orgInfo };
-    f[evt.target.name] = evt.target.value.trimStart();
+    f[evt.target.name] = evt.target.value.trimLeft();
     setOrgInfo(f);
   }
 
