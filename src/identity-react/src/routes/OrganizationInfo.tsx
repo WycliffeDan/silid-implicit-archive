@@ -113,53 +113,57 @@ const OrganizationInfo = (props: any) => {
                 <React.Fragment>
                   {orgInfo.name} 
                 </React.Fragment>
-                {orgInfo.creator && !editFormVisible && (agentProfile.email === orgInfo.creator.email) ?
+                {orgInfo.creator && (agentProfile.email === orgInfo.creator.email) ?
                   <React.Fragment>
-                    <Button id="edit-organization" variant="contained" color="secondary" onClick={() => setEditFormVisible(true)}>
-                      Edit
-                    </Button>
+                    {!editFormVisible ?
+                      <Button id="edit-organization" variant="contained" color="secondary" onClick={() => setEditFormVisible(true)}>
+                        Edit
+                      </Button>
+                    :
+                      <form id="edit-organization-form" onSubmit={handleSubmit}>
+                        <input type="hidden" name="id" value={orgInfo.id} />
+                        <TextField
+                          id="name-input"
+                          label="Name"
+                          type="text"
+                          className={classes.textField}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          margin="normal"
+                          name="name"
+                          required
+                          value={orgInfo.name}
+                          onChange={onChange}
+                          onInvalid={customMessage}
+                        />
+                        <Button id="cancel-changes"
+                          variant="contained" color="secondary"
+                          onClick={() => {
+                            setOrgInfo({ ...orgInfo, ...prevState });
+                            setEditFormVisible(false);
+                          }}>
+                            Cancel
+                        </Button>
+                        <Button id="save-organization-button" type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
+                          Save
+                        </Button>
+                      </form>
+                    }
+                  </React.Fragment>
+                : '' }
+                {!editFormVisible ?
                     <Typography variant="body2" color="textSecondary" component="p">
                       <React.Fragment>
                         <Fab id="add-agent" color="secondary" aria-label="add-agent" className={classes.margin}>
-                         <AddIcon onClick={() => setAgentFormVisible(true)} />
+                          <AddIcon onClick={() => setAgentFormVisible(true)} />
                         </Fab>
                         <Fab id="add-team" color="secondary" aria-label="add-team" className={classes.margin}>
-                         <AddIcon onClick={() => setTeamFormVisible(true)} />
+                          <AddIcon onClick={() => setTeamFormVisible(true)} />
                         </Fab>
                       </React.Fragment>
                     </Typography>
-                  </React.Fragment>
-                : 
-                  <form id="edit-organization-form" onSubmit={handleSubmit}>
-                    <input type="hidden" name="id" value={orgInfo.id} />
-                    <TextField
-                      id="name-input"
-                      label="Name"
-                      type="text"
-                      className={classes.textField}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      margin="normal"
-                      name="name"
-                      required
-                      value={orgInfo.name}
-                      onChange={onChange}
-                      onInvalid={customMessage}
-                    />
-                    <Button id="cancel-changes"
-                      variant="contained" color="secondary"
-                      onClick={() => {
-                        setOrgInfo({ ...orgInfo, ...prevState });
-                        setEditFormVisible(false);
-                      }}>
-                        Cancel
-                    </Button>
-                    <Button id="save-organization-button" type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
-                      Save
-                    </Button>
-                  </form>
-                }
+                : ''}
               </React.Fragment>
             : ''}
           </Typography>

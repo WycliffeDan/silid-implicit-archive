@@ -73,6 +73,7 @@ context('Organization show', function() {
       it('displays common Organization interface elements', function() {
         cy.get('h3').contains('One Book Canada');
         cy.get('button#add-team').should('exist');
+        cy.get('button#add-agent').should('exist');
         cy.get('button#edit-organization').should('exist');
       });
     });
@@ -108,8 +109,10 @@ context('Organization show', function() {
 
       it('displays common Organization interface elements', function() {
         cy.get('h3').contains('One Book Canada');
-        cy.get('button#add-team').should('exist');
+        cy.get('#edit-organization-form').should('not.exist');
         cy.get('button#edit-organization').should('not.exist');
+        cy.get('button#add-team').should('exist');
+        cy.get('button#add-agent').should('exist');
       });
     });
 
@@ -122,15 +125,12 @@ context('Organization show', function() {
         cy.visit('/#/').then(() => {
           nonMemberAgent = localStorage.getItem('accessToken');
           cy.task('query', `SELECT * FROM "Agents"`).then(([results, metadata]) => {
-            cy.log('ALL AGENTS');
-            cy.log(JSON.stringify(results));
-
-          cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${nonMemberAgent}' LIMIT 1;`).then(([results, metadata]) => {
-            nonMemberAgent = results[0];
-            cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
-              organization = org.body;
+            cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${nonMemberAgent}' LIMIT 1;`).then(([results, metadata]) => {
+              nonMemberAgent = results[0];
+              cy.request({ url: '/organization',  method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
+                organization = org.body;
+              });
             });
-          });
           });
         });
       });
