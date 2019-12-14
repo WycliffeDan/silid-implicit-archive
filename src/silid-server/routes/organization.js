@@ -66,10 +66,10 @@ router.put('/', jwtAuth, function(req, res, next) {
         res.status(500).json(err);
       });
     }).catch(err => {
-      res.json(err);
+      res.status(500).json(err);
     });
   }).catch(err => {
-    res.json(err);
+    res.status(500).json(err);
   });
 });
 

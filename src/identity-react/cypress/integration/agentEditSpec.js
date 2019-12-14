@@ -22,7 +22,7 @@ context('Agent', function() {
         cy.get('#app-menu-button').click();
         cy.contains('Personal Info').click().then(() => {
           token = localStorage.getItem('accessToken');
-          cy.wait(500); // <--- There has to be a better way!!! Cypress is going to to quick for the database
+          cy.wait(500); // <--- There has to be a better way!!! Cypress is going too quick for the database
         });
       });
 
