@@ -120,35 +120,42 @@ const OrganizationInfo = (props: any) => {
                         Edit
                       </Button>
                     :
-                      <form id="edit-organization-form" onSubmit={handleSubmit}>
-                        <input type="hidden" name="id" value={orgInfo.id} />
-                        <TextField
-                          id="name-input"
-                          label="Name"
-                          type="text"
-                          className={classes.textField}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          margin="normal"
-                          name="name"
-                          required
-                          value={orgInfo.name}
-                          onChange={onChange}
-                          onInvalid={customMessage}
-                        />
-                        <Button id="cancel-changes"
-                          variant="contained" color="secondary"
-                          onClick={() => {
-                            setOrgInfo({ ...orgInfo, ...prevState });
-                            setEditFormVisible(false);
-                          }}>
-                            Cancel
+                      <React.Fragment>
+                        <form id="edit-organization-form" onSubmit={handleSubmit}>
+                          <input type="hidden" name="id" value={orgInfo.id} />
+                          <TextField
+                            id="name-input"
+                            label="Name"
+                            type="text"
+                            className={classes.textField}
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            margin="normal"
+                            name="name"
+                            required
+                            value={orgInfo.name}
+                            onChange={onChange}
+                            onInvalid={customMessage}
+                          />
+                          <Button id="cancel-changes"
+                            variant="contained" color="secondary"
+                            onClick={() => {
+                              setOrgInfo({ ...orgInfo, ...prevState });
+                              setEditFormVisible(false);
+                            }}>
+                              Cancel
+                          </Button>
+                          <Button id="save-organization-button"
+                                  type="submit" variant="contained" color="primary"
+                                  disabled={!Object.keys(prevState).length}>
+                            Save
+                          </Button>
+                        </form>
+                        <Button id="delete-organization" variant="contained" color="secondary">
+                          Delete
                         </Button>
-                        <Button id="save-organization-button" type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
-                          Save
-                        </Button>
-                      </form>
+                      </React.Fragment>
                     }
                   </React.Fragment>
                 : '' }

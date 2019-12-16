@@ -65,6 +65,11 @@ context('Organization edit', function() {
         cy.get('input[name="name"][type="text"]').clear().type('Two Testaments Canada');
         cy.get('input[name="name"][type="text"]').should('have.value', 'Two Testaments Canada');
       });
+
+      it('shows the Delete button', () => {
+        cy.get('button#edit-organization').click();
+        cy.get('button#delete-organization').should('exist');
+      });
     });
 
     describe('Cancel button', () => {
@@ -97,6 +102,11 @@ context('Organization edit', function() {
         cy.get('button#edit-organization').should('not.exist');
         cy.get('button#cancel-changes').click();
         cy.get('button#edit-organization').should('exist');
+      });
+
+      it('hides the Delete button', () => {
+        cy.get('button#cancel-changes').click();
+        cy.get('button#delete-organization').should('not.exist');
       });
     });
 
