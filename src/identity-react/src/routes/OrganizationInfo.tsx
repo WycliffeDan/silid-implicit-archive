@@ -23,6 +23,11 @@ import usePutOrganizationService, {
   PutOrganization,
 } from '../services/usePutOrganizationService';
 
+import useDeleteOrganizationService, {
+  DeleteOrganization,
+} from '../services/useDeleteOrganizationService';
+
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     margin: {
@@ -58,6 +63,7 @@ const OrganizationInfo = (props: any) => {
 
   const service = useGetOrganizationInfoService(props.match.params.id);
   let { publishOrganization } = usePutOrganizationService();
+  let { deleteOrganization } = useDeleteOrganizationService();
 
   useEffect(() => {
     if (service.status === 'loaded') {
@@ -86,7 +92,11 @@ const OrganizationInfo = (props: any) => {
     if (orgInfo.members.length > 1 || orgInfo.teams.length) {
       return window.alert('Remove all members and teams before deleting organization');
     }
-    window.confirm('Are you sure you want to delete this organization?');
+    if (window.confirm('Are you sure you want to delete this organization?')) {
+      deleteOrganization({id: orgInfo.id}).then(results => {
+
+      });
+    }
   }
 
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +113,6 @@ const OrganizationInfo = (props: any) => {
     f[evt.target.name] = evt.target.value.trimLeft();
     setOrgInfo(f);
   }
-
 
 //  function ListItemLink(props:any) {
 //    return <ListItem className='organization-list-item' button component="a" {...props} />;
