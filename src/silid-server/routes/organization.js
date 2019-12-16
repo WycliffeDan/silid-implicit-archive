@@ -23,7 +23,7 @@ router.get('/:id', jwtAuth, function(req, res, next) {
       return res.status(403).json({ message: 'You are not a member of that organization' });
     }
 
-    res.json(result);
+    res.status(200).json(result);
   }).catch(err => {
     res.json(err);
   });
