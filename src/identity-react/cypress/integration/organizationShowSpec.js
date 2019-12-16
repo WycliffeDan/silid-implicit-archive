@@ -75,6 +75,7 @@ context('Organization show', function() {
         cy.get('button#add-team').should('exist');
         cy.get('button#add-agent').should('exist');
         cy.get('button#edit-organization').should('exist');
+        cy.get('button#delete-organization').should('exist');
       });
     });
 
