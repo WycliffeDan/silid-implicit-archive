@@ -82,6 +82,13 @@ const OrganizationInfo = (props: any) => {
     });
   }
 
+  const handleDelete = (evt:any) => {
+    if (orgInfo.members.length > 1 || orgInfo.teams.length) {
+      return window.alert('Remove all members and teams before deleting organization');
+    }
+    window.confirm('Are you sure you want to delete this organization?');
+  }
+
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
     evt.target.setCustomValidity(`${evt.target.name} required`);
   }
@@ -152,7 +159,7 @@ const OrganizationInfo = (props: any) => {
                             Save
                           </Button>
                         </form>
-                        <Button id="delete-organization" variant="contained" color="secondary">
+                        <Button id="delete-organization" variant="contained" color="secondary" onClick={handleDelete}>
                           Delete
                         </Button>
                       </React.Fragment>

@@ -18,13 +18,14 @@ context('Organization delete', function() {
     let token, agent, organization;
     beforeEach(function() {
       cy.login(this.agent);
-      cy.visit('/#/').then(() => {
+      cy.visit('/').then(() => {
         token = localStorage.getItem('accessToken');
         cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {
           agent = results[0];
-  
+
           cy.request({ url: '/organization', method: 'POST', auth: { bearer: token }, body: { name: 'One Book Canada' } }).then((org) => {
             organization = org.body;
+
             cy.get('#app-menu-button').click();
             cy.get('#organization-button').click();
             cy.contains('One Book Canada').click();
@@ -44,10 +45,12 @@ context('Organization delete', function() {
 
               cy.request({ url: '/organization',  method: 'PATCH', auth: { bearer: token }, body: { id: organization.id, memberId: memberAgent.id } }).then((res) => {
                 cy.login(this.agent);
-                cy.visit('/#/').then(() => {
+                cy.visit('/').then(() => {
                   cy.get('#app-menu-button').click();
                   cy.get('#organization-button').click();
                   cy.contains('One Book Canada').click();
+                  cy.wait(500);
+                  cy.get('button#edit-organization').click();
                 });
               });
             });
@@ -66,14 +69,12 @@ context('Organization delete', function() {
       context('member teams exist', () => {
         beforeEach(() => {
           cy.request({ url: '/team',  method: 'POST', auth: { bearer: token }, body: { organizationId: organization.id, name: 'Omega Squadron' } }).then(res => {
-            const team = res.body;
-
-            cy.request({ url: '/organization',  method: 'PATCH', auth: { bearer: token }, body: { id: organization.id, teamId: team.id } }).then(res => {
-              cy.visit('/#/').then(() => {
-                cy.get('#app-menu-button').click();
-                cy.get('#organization-button').click();
-                cy.contains('One Book Canada').click();
-              });
+            cy.visit('/').then(() => {
+              cy.get('#app-menu-button').click();
+              cy.get('#organization-button').click();
+              cy.contains('One Book Canada').click();
+              cy.wait(500);
+              cy.get('button#edit-organization').click();
             });
           });
         });
@@ -92,12 +93,14 @@ context('Organization delete', function() {
           cy.task('query', `SELECT * FROM "organization_team";`).then(([results, metadata]) => {
             expect(results.length).to.eq(0);
             cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
-              expect(results.length).to.eq(0);
-              cy.visit('/#/').then(() => {
+              expect(results.length).to.eq(1);
+              expect(results[0].AgentId).to.eq(agent.id);
+              cy.visit('/').then(() => {
                 cy.get('#app-menu-button').click();
                 cy.get('#organization-button').click();
                 cy.contains('One Book Canada').click();
                 cy.wait(500);
+                cy.get('button#edit-organization').click();
               });
             });
           });
@@ -107,14 +110,14 @@ context('Organization delete', function() {
           cy.on('window:confirm', (str) => {
             expect(str).to.eq('Are you sure you want to delete this organization?');
             done();
-          }); 
+          });
           cy.get('button#delete-organization').click();
         });
 
         it('lands in the proper place', () => {
           cy.on('window:confirm', (str) => {
             return true;
-          }); 
+          });
           cy.get('button#delete-organization').click();
           cy.url().should('match', /\/#\/organization$/);
         });
@@ -122,7 +125,7 @@ context('Organization delete', function() {
         it('removes record from the database', () => {
           cy.on('window:confirm', (str) => {
             return true;
-          }); 
+          });
           cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
             expect(results.length).to.eq(1);
             cy.get('button#delete-organization').click();
@@ -135,7 +138,7 @@ context('Organization delete', function() {
         it('renders the interface correctly on completion with success message', () => {
           cy.on('window:confirm', (str) => {
             return true;
-          }); 
+          });
           cy.get('button#delete-organization').click();
           cy.get('#organization-list').should('not.exist');
         });
