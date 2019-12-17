@@ -286,6 +286,21 @@ describe('organizationSpec', () => {
               done();
             });
           });
+
+        it('omits agent tokens in populated membership', done => {
+          request(app)
+            .get(`/organization/${organization.id}`)
+            .set('Accept', 'application/json')
+            .set('Authorization', `Bearer ${signedAccessToken}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) done.fail(err);
+              scope.done();
+              expect(res.body.members[0].accessToken).toBeUndefined();
+              done();
+            });
+          });
       });
  
       describe('update', () => {
