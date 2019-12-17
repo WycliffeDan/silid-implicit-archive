@@ -7,6 +7,8 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
+import GroupIcon from '@material-ui/icons/Group';
 //import List from '@material-ui/core/List';
 //import ListItem from '@material-ui/core/ListItem';
 //import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -138,7 +140,7 @@ const OrganizationInfo = (props: any) => {
                 {orgInfo.creator && (agentProfile.email === orgInfo.creator.email) ?
                   <React.Fragment>
                     {!editFormVisible ?
-                      <Button id="edit-organization" variant="contained" color="secondary" onClick={() => setEditFormVisible(true)}>
+                      <Button id="edit-organization" variant="contained" color="primary" onClick={() => setEditFormVisible(true)}>
                         Edit
                       </Button>
                     :
@@ -184,11 +186,11 @@ const OrganizationInfo = (props: any) => {
                 {!editFormVisible ?
                     <Typography variant="body2" color="textSecondary" component="p">
                       <React.Fragment>
-                        <Fab id="add-agent" color="secondary" aria-label="add-agent" className={classes.margin}>
-                          <AddIcon onClick={() => setAgentFormVisible(true)} />
+                        <Fab id="add-agent" color="primary" aria-label="add-agent" className={classes.margin}>
+                          <PersonAddIcon onClick={() => setAgentFormVisible(true)} />
                         </Fab>
-                        <Fab id="add-team" color="secondary" aria-label="add-team" className={classes.margin}>
-                          <AddIcon onClick={() => setTeamFormVisible(true)} />
+                        <Fab id="add-team" color="primary" aria-label="add-team" className={classes.margin}>
+                          <GroupIcon onClick={() => setTeamFormVisible(true)} />
                         </Fab>
                       </React.Fragment>
                     </Typography>
