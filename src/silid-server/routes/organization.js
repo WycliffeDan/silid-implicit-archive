@@ -14,7 +14,9 @@ router.get('/', jwtAuth, function(req, res, next) {
 
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id },
-                                include: [ 'creator', 'members', 'teams'] }).then(result => {
+                                include: [ 'creator',
+                                           { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
+                                           'teams'] }).then(result => {
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }
@@ -23,7 +25,7 @@ router.get('/:id', jwtAuth, function(req, res, next) {
       return res.status(403).json({ message: 'You are not a member of that organization' });
     }
 
-    res.json(result);
+    res.status(200).json(result);
   }).catch(err => {
     res.json(err);
   });

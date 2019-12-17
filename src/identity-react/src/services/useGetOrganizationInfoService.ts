@@ -14,8 +14,6 @@ const useOrganizationInfoService = (id: number) => {
       .then(response => response.json())
       .then(response => {
         if (response.message) {
-          console.log('SUCCESS');
-          console.log(response);
           setResult({ status: 'error', error: response.message })
         }
         else {
