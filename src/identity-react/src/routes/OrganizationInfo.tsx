@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Redirect } from 'react-router-dom';
 import TextField from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -51,15 +52,16 @@ export interface PrevState {
 }
 
 const OrganizationInfo = (props: any) => {
+  const classes = useStyles();
+
   const [teamFormVisible, setTeamFormVisible] = useState(false);
   const [editFormVisible, setEditFormVisible] = useState(false);
   const [agentFormVisible, setAgentFormVisible] = useState(false);
   const [prevState, setPrevState] = useState<PrevState>({});
+  const [toOrganization, setToOrganization] = useState(false);
 
   const [orgInfo, setOrgInfo] = useState<Organization>({} as Organization);
   const [agentProfile, setAgentProfile] = useState<Agent>(JSON.parse(localStorage.getItem('profile') || '{}') as Agent);
-
-  const classes = useStyles();
 
   const service = useGetOrganizationInfoService(props.match.params.id);
   let { publishOrganization } = usePutOrganizationService();
@@ -94,7 +96,7 @@ const OrganizationInfo = (props: any) => {
     }
     if (window.confirm('Are you sure you want to delete this organization?')) {
       deleteOrganization({id: orgInfo.id}).then(results => {
-
+        setToOrganization(true);
       });
     }
   }
@@ -117,6 +119,10 @@ const OrganizationInfo = (props: any) => {
 //  function ListItemLink(props:any) {
 //    return <ListItem className='organization-list-item' button component="a" {...props} />;
 //  }
+
+  if (toOrganization) {
+    return <Redirect to={{ pathname: '/organization', state: 'Organization deleted' }} />
+  }
 
   return (
     <div className="organization">

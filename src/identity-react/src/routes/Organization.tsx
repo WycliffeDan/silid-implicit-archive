@@ -14,6 +14,7 @@ import Button from '@material-ui/core/Button';
 // Remove this junk later
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import MailIcon from '@material-ui/icons/Mail';
+import Flash from '../components/Flash';
 
 import useGetOrganizationService, { Organizations } from '../services/useGetOrganizationService';
 import usePostOrganizationService, {
@@ -38,7 +39,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const Organization = () => {
+const Organization = (props: any) => {
   const [formVisible, toggleFormVisible] = useState(false);
   const [orgList, setOrgList] = useState<Organizations>({ results: [] } as Organizations);
 
@@ -85,7 +86,7 @@ const Organization = () => {
           <Typography variant="h5" component="h3">
             Organizations
           </Typography>
-
+          { props.location.state ? <Flash message={props.location.state} variant="success" /> : '' }
           { formVisible ?
             <form id="add-organization-form" onSubmit={handleSubmit}>
               <TextField

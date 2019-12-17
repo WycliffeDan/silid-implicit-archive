@@ -141,6 +141,7 @@ context('Organization delete', function() {
           });
           cy.get('button#delete-organization').click();
           cy.get('#organization-list').should('not.exist');
+          cy.contains('Organization deleted');
         });
       });
     });
