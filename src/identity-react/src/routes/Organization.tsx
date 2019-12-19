@@ -13,13 +13,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Button from '@material-ui/core/Button';
 // Remove this junk later
 import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
 import Flash from '../components/Flash';
 
 import useGetOrganizationService, { Organizations } from '../services/useGetOrganizationService';
-import usePostOrganizationService, {
-  PostOrganization,
-} from '../services/usePostOrganizationService';
+import usePostOrganizationService from '../services/usePostOrganizationService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
