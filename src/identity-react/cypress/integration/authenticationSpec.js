@@ -11,23 +11,21 @@ context('Authentication', function() {
 
   describe('/callback', () => {
 
-    let accessToken;
+    let accessToken, state, idToken;
     beforeEach(function() {
-      // Need a legitmate accessToken...
+      // Need a legitmate accessToken/idToken...
       cy.login(this.agent);
-      cy.visit('/');
-      accessToken = localStorage.getItem('accessToken');
+      cy.visit('/').then(() => {
+        accessToken = localStorage.getItem('accessToken');
+        idToken = localStorage.getItem('idToken');
+  
+  cy.log('accessToken');
+  cy.log(accessToken);
+        cy.logout();
 
-cy.log('accessToken');
-cy.log(accessToken);
-      // Logout. Blah
-      cy.logout();
-//
-////      cy.visit('/');
-//      // CSRF prevention requires state to match
-//      localStorage.setItem('state', 'abc123');
-      localStorage.setItem('auth0-authorize', 'abc123');
-
+        // CSRF prevention requires state to match
+        state = 'abc123';
+      });
     });
 
     it('sets the required values in localStorage', () => {
@@ -39,7 +37,7 @@ cy.log('TESTING');
 //      expect(localStorage.getItem('expiresAt')).to.be.null;
 //      expect(localStorage.getItem('profile')).to.be.null;
 
-      cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${localStorage.getItem('auth0-authorize')}&id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlEwWkROVVJHUWpaRFJrVkVPRFkwUmtNelFqWkNOREF4TWtRNFJqZERRVGszTURReE1EZEJRUSJ9.eyJnaXZlbl9uYW1lIjoiRGFuaWVsIiwiZmFtaWx5X25hbWUiOiJCaWR1bG9jayIsIm5pY2tuYW1lIjoiZGFuaWVsX2JpZHVsb2NrIiwibmFtZSI6IkRhbmllbCBCaWR1bG9jayIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vLUpmb0dNZkh6NkFFL0FBQUFBQUFBQUFJL0FBQUFBQUFBQUFBL0FDSGkzcmZJTkx0QW55VGdCcWY0N0R1TkRraWJZQUhvaEEvcGhvdG8uanBnIiwibG9jYWxlIjoiZW4iLCJ1cGRhdGVkX2F0IjoiMjAxOS0xMi0xOVQxNToyNTowNi45NDBaIiwiZW1haWwiOiJkYW5pZWxfYmlkdWxvY2tAc2lsLm9yZyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczovL3NpbGlkLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDExNzU1MDQzMDIwMDQ0MTI4MzgxMCIsImF1ZCI6InRqcmw4YU9RRXg5QXRRaEZmZnVXbXZQNmJjSE03blhCIiwiaWF0IjoxNTc2NzY5MTA2LCJleHAiOjE1NzY4MDUxMDYsImF0X2hhc2giOiJfTW1QNXRaVVFZYy1jdHJuQ2IzWkJRIiwibm9uY2UiOiJKOGJ0RlQuc0gufjl2QXFWRk1ya2dvdzRzTVpUc0h-MCJ9.QNvvZm18apt6aYV_5bHUgKkz-chFIR8YoQ_uPMBwMW0GDOFgOumef_93mAGQxxko3Cs5gaRjW16m2yC5OoMw5F4MR9iWhTGzNbWx5hJW6zLocFC9Co5C62yIdcXRC-PHXeGZ73DY7nh5zQwQuerXkwI30GBlPhA2D_kbomEVLFhp91nua9yVBue_05XCVTbmWbb8C_ewbDYztxvA-y_7vfpoh3OnAOMXAtNUgJZ7h9DkTsmQrhj9MgPvFEFQnIbcfqGXqHn2btlY_57I9RjwRqfovaSTgsk50JenYVgveQ-aBWBnTUa1IcP-39sPC_PGh6FHCv2cYMzgg0U63qgu-A`).then(() => {
+      cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`).then(() => {
 
 //        expect(localStorage.getItem('profile')).to.not.be.null;
 //        expect(localStorage.getItem('isLoggedIn')).to.not.be.null;
@@ -47,19 +45,31 @@ cy.log('TESTING');
 //        expect(localStorage.getItem('idToken')).to.be.not.null;
 //        expect(localStorage.getItem('expiresAt')).to.not.be.null;
 //        expect(localStorage.getItem('profile')).to.not.be.null;
-      });;
+      });
     });
 
-    context('successful authentication', () => {
-
+    context('unsuccessful authentication', () => {
       beforeEach(() => {
-
-        cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${localStorage.getItem('state')}&id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlEwWkROVVJHUWpaRFJrVkVPRFkwUmtNelFqWkNOREF4TWtRNFJqZERRVGszTURReE1EZEJRUSJ9.eyJnaXZlbl9uYW1lIjoiRGFuaWVsIiwiZmFtaWx5X25hbWUiOiJCaWR1bG9jayIsIm5pY2tuYW1lIjoiZGFuaWVsX2JpZHVsb2NrIiwibmFtZSI6IkRhbmllbCBCaWR1bG9jayIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vLUpmb0dNZkh6NkFFL0FBQUFBQUFBQUFJL0FBQUFBQUFBQUFBL0FDSGkzcmZJTkx0QW55VGdCcWY0N0R1TkRraWJZQUhvaEEvcGhvdG8uanBnIiwibG9jYWxlIjoiZW4iLCJ1cGRhdGVkX2F0IjoiMjAxOS0xMi0xOVQxNToyNTowNi45NDBaIiwiZW1haWwiOiJkYW5pZWxfYmlkdWxvY2tAc2lsLm9yZyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczovL3NpbGlkLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDExNzU1MDQzMDIwMDQ0MTI4MzgxMCIsImF1ZCI6InRqcmw4YU9RRXg5QXRRaEZmZnVXbXZQNmJjSE03blhCIiwiaWF0IjoxNTc2NzY5MTA2LCJleHAiOjE1NzY4MDUxMDYsImF0X2hhc2giOiJfTW1QNXRaVVFZYy1jdHJuQ2IzWkJRIiwibm9uY2UiOiJKOGJ0RlQuc0gufjl2QXFWRk1ya2dvdzRzTVpUc0h-MCJ9.QNvvZm18apt6aYV_5bHUgKkz-chFIR8YoQ_uPMBwMW0GDOFgOumef_93mAGQxxko3Cs5gaRjW16m2yC5OoMw5F4MR9iWhTGzNbWx5hJW6zLocFC9Co5C62yIdcXRC-PHXeGZ73DY7nh5zQwQuerXkwI30GBlPhA2D_kbomEVLFhp91nua9yVBue_05XCVTbmWbb8C_ewbDYztxvA-y_7vfpoh3OnAOMXAtNUgJZ7h9DkTsmQrhj9MgPvFEFQnIbcfqGXqHn2btlY_57I9RjwRqfovaSTgsk50JenYVgveQ-aBWBnTUa1IcP-39sPC_PGh6FHCv2cYMzgg0U63qgu-A`);
-
+        cy.visit(`/callback#/access_token=INVALID_TOKEN&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`);
       });
 
       it('lands in the right place', () => {
-        cy.url().should('match', '/#/');
+        cy.url().should('match', /^\/#\/$/);
+      });
+  
+      it('renders the interface', () => {
+        cy.get('#login-button').contains('Login');
+        cy.get('h3').contains('Invalid token');
+      });
+    });
+
+    context('successful authentication', () => {
+      beforeEach(() => {
+        cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`);
+      });
+
+      it('lands in the right place', () => {
+        cy.url().should('match', /^\/#\/$/);
       });
   
       it('renders the interface', () => {
