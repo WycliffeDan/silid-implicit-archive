@@ -1,6 +1,7 @@
 // src/App.js
 // See: https://auth0.com/docs/quickstart/spa/react/01-login
 import React from 'react';
+import { Redirect } from 'react-router-dom';
 import { BrowserRouter, HashRouter, Route, Switch } from 'react-router-dom';
 import Home from './routes/Home';
 import Agent from './routes/Agent';
@@ -22,7 +23,15 @@ const handleAuthentication = (props: any) => {
     }
   }
   if (/access_token|id_token|error/.test(location.hash)) {
-    auth.handleAuthentication();
+    auth.handleAuthentication().then(res => {
+      console.log('res');
+      console.log(res);
+      return <Redirect to='/' />;
+    }).catch(err => {
+      console.log('err');
+      console.log(err);
+      return <Redirect to='/' />;
+    });
   }
 };
 
