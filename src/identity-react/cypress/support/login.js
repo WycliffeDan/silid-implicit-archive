@@ -25,3 +25,22 @@ Cypress.Commands.add('login', function(token) {
     });
   });
 });
+
+
+Cypress.Commands.add('logout', function() {
+  Cypress.log({
+    name: 'logout',
+  });
+
+  cy.visit('/', {
+    onBeforeLoad: (win) => {
+      win.localStorage.removeItem('isLoggedIn');
+      win.localStorage.removeItem('accessToken');
+      win.localStorage.removeItem('idToken');
+      win.localStorage.removeItem('expiresAt');
+      win.localStorage.removeItem('profile');
+    },
+  });
+});
+
+
