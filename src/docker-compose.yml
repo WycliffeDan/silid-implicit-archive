@@ -14,9 +14,12 @@ services:
       - "3001:3001"
     command: npm run dev
     volumes:
-      - .:/app/
+      - ./silid-server:/app/
       - /app/node_modules
-
+    environment:
+      - VIRTUAL_HOST=api.chocobuttons.com
+      - LETSENCRYPT_HOST=api.chocobuttons.com
+      - LETSENCRYPT_EMAIL=daniel@capitolhill.ca
   postgres:
     image: postgres
     ports:
@@ -25,7 +28,6 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: silid_development
-
   client:
     build: ./identity-react
     environment:
@@ -39,4 +41,12 @@ services:
       - ./identity-react/public:/srv/app/client/public
     links:
       - app
-    command: npm run start
+    environment:
+      - VIRTUAL_HOST=chocobuttons.com
+      - LETSENCRYPT_HOST=chocobuttons.com
+      - LETSENCRYPT_EMAIL=daniel@capitolhill.ca
+networks:
+  default:
+    external:
+      name: nginx-proxy
+
