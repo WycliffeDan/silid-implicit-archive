@@ -5,17 +5,10 @@ import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 
-import SaveIcon from '@material-ui/icons/Save';
 import Button from '@material-ui/core/Button';
 import useGetAgentService from '../services/useGetAgentService';
 
-import usePostAgentService, {
-  PostAgent,
-} from '../services/usePostAgentService';
-
-import usePutAgentService, {
-  PutAgent,
-} from '../services/usePutAgentService';
+import usePutAgentService from '../services/usePutAgentService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

@@ -87,7 +87,10 @@ keystore.add(jwkPub, 'pkcs8').then(function(result) {
   
     const server = Hapi.server({
       port: 3002,
-      host: '0.0.0.0'
+      host: '0.0.0.0',
+      routes: {
+        cors: true
+      }
     });
   
     server.route({

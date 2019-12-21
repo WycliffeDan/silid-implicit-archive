@@ -128,9 +128,11 @@ context('Organization delete', function() {
           });
           cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
             expect(results.length).to.eq(1);
-            cy.get('button#delete-organization').click();
-            cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
-              expect(results.length).to.eq(0);
+            cy.get('button#delete-organization').click().then(() => {
+              cy.wait(500);
+              cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
+                expect(results.length).to.eq(0);
+              });
             });
           });
         });

@@ -1,6 +1,7 @@
 // src/App.js
 // See: https://auth0.com/docs/quickstart/spa/react/01-login
-import React from 'react';
+import React, { useState } from 'react';
+import { Redirect } from 'react-router-dom';
 import { BrowserRouter, HashRouter, Route, Switch } from 'react-router-dom';
 import Home from './routes/Home';
 import Agent from './routes/Agent';
@@ -13,27 +14,33 @@ import PrivateRoute from './components/PrivateRoute';
 
 const auth = new Auth();
 
-const handleAuthentication = (props: any) => {
-  const { location } = props;
-  if (location.search !== '') {
-    const params = parseQuery(location.search);
-    if (params.inviteId && typeof params.inviteId === 'string') {
-      localStorage.setItem('inviteId', params.inviteId);
-    }
-  }
-  if (/access_token|id_token|error/.test(location.hash)) {
-    auth.handleAuthentication();
-  }
-};
-
-
 function App() {
+  const [message, setMessage] = useState('');
+
+  const handleAuthentication = (props: any) => {
+    const { location } = props;
+    if (location.search !== '') {
+      const params = parseQuery(location.search);
+      if (params.inviteId && typeof params.inviteId === 'string') {
+        localStorage.setItem('inviteId', params.inviteId);
+      }
+    }
+    if (/access_token|id_token|error/.test(location.hash)) {
+      auth.handleAuthentication().then(res => {
+        console.log(res);
+      }).catch(err => {
+        console.log(err);
+        setMessage('Something went terribly wrong');
+      });
+    }
+  };
+
   return (
     <div className="App">
       <HashRouter>
         <Route
           path="/"
-          render={props => <Home auth={auth} {...props} />}
+          render={props => <Home auth={auth} message={message} {...props} />}
         />
         <Switch>
           <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor')
 const db = require('./database');
 
@@ -22,6 +23,10 @@ module.exports = (on, config) => {
       return db.sequelize.query(queryStr);
     },
   });
+
+  config.env = {...config.env, ...process.env};
+
+  return config;
 }
 
 
