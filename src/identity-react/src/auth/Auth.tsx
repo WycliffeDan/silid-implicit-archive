@@ -74,7 +74,7 @@ export default class Auth {
       this.auth0.parseHash(options, (err, authResult) => {
         if (err) return reject(err);
         if (!authResult || !authResult.idTokenPayload) {
-          reject(err);
+          return reject(err);
         }
         this.setSession(authResult);
         resolve();

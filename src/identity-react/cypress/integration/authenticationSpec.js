@@ -50,16 +50,13 @@ context('Authentication', function() {
 
     context('unsuccessful authentication', () => {
       beforeEach(() => {
-        cy.visit(`/callback#/access_token=INVALID_TOKEN&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`);
+        cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=BAD_STATE_CREATES_ERROR&id_token=${idToken}`);
       });
 
-      it('lands in the right place', () => {
-        cy.url().should('match', /\/#\/$/);
-      });
-  
       it('renders the interface', () => {
-        cy.get('#login-button').contains('Login');
-        cy.get('h3').contains('Invalid token');
+        cy.get('#login-button').should('exist');
+        cy.get('#logout-button').should('not.exist');
+        cy.get('h3').contains('Something went terribly wrong');
       });
     });
 

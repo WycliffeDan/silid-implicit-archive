@@ -11,9 +11,9 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Button from '@material-ui/core/Button';
+import Flash from '../components/Flash';
 // Remove this junk later
 import InboxIcon from '@material-ui/icons/MoveToInbox';
-import Flash from '../components/Flash';
 
 import useGetOrganizationService, { Organizations } from '../services/useGetOrganizationService';
 import usePostOrganizationService from '../services/usePostOrganizationService';
