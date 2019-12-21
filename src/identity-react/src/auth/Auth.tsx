@@ -12,7 +12,8 @@ import history from '../history';
  * so the regular Javascript file is being imported.
  */
 //import auth0 from 'auth0-js';
-import auth0 from '../../node_modules/auth0-js/src';
+//import auth0 from '../../node_modules/auth0-js/src';
+import auth0 from '../../node_modules/auth0-js/dist/auth0.min.js';
 
 import { AUTH_CONFIG } from './auth0-variables';
 
