@@ -19,8 +19,6 @@ context('Authentication', function() {
         accessToken = localStorage.getItem('accessToken');
         idToken = localStorage.getItem('idToken');
   
-  cy.log('accessToken');
-  cy.log(accessToken);
         cy.logout();
 
         // CSRF prevention requires state to match
@@ -29,22 +27,24 @@ context('Authentication', function() {
     });
 
     it('sets the required values in localStorage', () => {
-cy.log('TESTING');
-//      expect(localStorage.getItem('profile')).to.be.null;
-//      expect(localStorage.getItem('isLoggedIn')).to.be.null;
+      expect(localStorage.getItem('profile')).to.be.null;
+      expect(localStorage.getItem('isLoggedIn')).to.be.null;
       expect(localStorage.getItem('accessToken')).to.be.null;
-//      expect(localStorage.getItem('idToken')).to.be.null;
-//      expect(localStorage.getItem('expiresAt')).to.be.null;
-//      expect(localStorage.getItem('profile')).to.be.null;
+      expect(localStorage.getItem('idToken')).to.be.null;
+      expect(localStorage.getItem('expiresAt')).to.be.null;
+      expect(localStorage.getItem('profile')).to.be.null;
 
       cy.visit(`/callback#/access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`).then(() => {
 
-//        expect(localStorage.getItem('profile')).to.not.be.null;
-//        expect(localStorage.getItem('isLoggedIn')).to.not.be.null;
-        expect(localStorage.getItem('accessToken')).to.not.be.null;
-//        expect(localStorage.getItem('idToken')).to.be.not.null;
-//        expect(localStorage.getItem('expiresAt')).to.not.be.null;
-//        expect(localStorage.getItem('profile')).to.not.be.null;
+        // This gives the app time to load before subsequent tests are executed
+        cy.visit('/').then(() => {
+          expect(localStorage.getItem('profile')).to.not.be.null;
+          expect(localStorage.getItem('isLoggedIn')).to.not.be.null;
+          expect(localStorage.getItem('accessToken')).to.not.be.null;
+          expect(localStorage.getItem('idToken')).to.be.not.null;
+          expect(localStorage.getItem('expiresAt')).to.not.be.null;
+          expect(localStorage.getItem('profile')).to.not.be.null;
+        });
       });
     });
 
@@ -54,7 +54,7 @@ cy.log('TESTING');
       });
 
       it('lands in the right place', () => {
-        cy.url().should('match', /^\/#\/$/);
+        cy.url().should('match', /\/#\/$/);
       });
   
       it('renders the interface', () => {
@@ -69,7 +69,7 @@ cy.log('TESTING');
       });
 
       it('lands in the right place', () => {
-        cy.url().should('match', /^\/#\/$/);
+        cy.url().should('match', /\/#\/$/);
       });
   
       it('renders the interface', () => {
