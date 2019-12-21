@@ -6,7 +6,6 @@ import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Fab from '@material-ui/core/Fab';
-import AddIcon from '@material-ui/icons/Add';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import GroupIcon from '@material-ui/icons/Group';
 //import List from '@material-ui/core/List';
@@ -22,13 +21,9 @@ import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 
-import usePutOrganizationService, {
-  PutOrganization,
-} from '../services/usePutOrganizationService';
+import usePutOrganizationService from '../services/usePutOrganizationService';
 
-import useDeleteOrganizationService, {
-  DeleteOrganization,
-} from '../services/useDeleteOrganizationService';
+import useDeleteOrganizationService from '../services/useDeleteOrganizationService';
 
 
 const useStyles = makeStyles((theme: Theme) =>
