@@ -12,5 +12,5 @@ RUN npm run build
 
 EXPOSE 3000
 
-CMD ./node_modules/.bin/http-server ./build --port 3000
+CMD ./node_modules/.bin/http-server ./build --port 3000 --proxy http://localhost:3000?
 
