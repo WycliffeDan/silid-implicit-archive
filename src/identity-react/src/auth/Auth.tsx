@@ -71,7 +71,7 @@ export default class Auth {
         options.state = 'abc123';
       }
 
-      options.hash = window.location.hash.replace(/^#\/callback/, '');
+//      options.hash = window.location.hash.replace(/^#\/?callback/, '');
 
       this.auth0.parseHash(options, (err, authResult) => {
         if (err) return reject(err);

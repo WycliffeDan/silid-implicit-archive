@@ -34,7 +34,7 @@ context('Authentication', function() {
       expect(localStorage.getItem('expiresAt')).to.be.null;
       expect(localStorage.getItem('profile')).to.be.null;
 
-      cy.visit(`/#/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`).then(() => {
+      cy.visit(`/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`).then(() => {
 
         // This gives the app time to load before subsequent tests are executed
         cy.visit('/').then(() => {
@@ -50,7 +50,7 @@ context('Authentication', function() {
 
     context('unsuccessful authentication', () => {
       beforeEach(() => {
-        cy.visit(`/#/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=BAD_STATE_CREATES_ERROR&id_token=${idToken}`);
+        cy.visit(`/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=BAD_STATE_CREATES_ERROR&id_token=${idToken}`);
       });
 
       it('renders the interface', () => {
@@ -62,7 +62,7 @@ context('Authentication', function() {
 
     context('successful authentication', () => {
       beforeEach(() => {
-        cy.visit(`/#/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`);
+        cy.visit(`/callback#access_token=${accessToken}&scope=openid%20profile%20email&expires_in=7200&token_type=Bearer&state=${state}&id_token=${idToken}`);
       });
 
       it('lands in the right place', () => {
