@@ -18,6 +18,11 @@ const jwksRsa = require('jwks-rsa');
 
 var app = express();
 
+/**
+ * SPA client route
+ */
+app.use('/', indexRouter);
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -52,7 +57,6 @@ app.use(checkJwt);
 /**
  * Routes
  */
-app.use('/', indexRouter);
 app.use('/agent', agentRouter);
 app.use('/organization', organizationRouter);
 app.use('/team', teamRouter);
