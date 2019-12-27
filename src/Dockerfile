@@ -27,7 +27,7 @@ COPY ./silid-server .
 
 
 # Copy client build
-RUN cp -R /srv/app/client/build/* /app/public/
+RUN cp -R /srv/app/client/build /app/build
 
 EXPOSE 3001
 
