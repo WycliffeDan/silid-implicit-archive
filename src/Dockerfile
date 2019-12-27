@@ -31,5 +31,5 @@ RUN cp -R /srv/app/client/build/* /app/build
 
 EXPOSE 3001
 
-CMD npm start
+CMD NODE_ENV=staging npm start 
 
