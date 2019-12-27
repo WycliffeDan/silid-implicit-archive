@@ -6,13 +6,9 @@ services:
     build: .
     depends_on:
       - postgres
-    environment:
-      DATABASE_URL: postgres://user:pass@postgres:5432/db
-      NODE_ENV: production
-      PORT: 3001
     ports:
       - "3001:3001"
-    command: npm run dev
+#    command: npm start
     volumes:
       - ./silid-server:/app/
       - /app/node_modules
@@ -20,6 +16,9 @@ services:
       - VIRTUAL_HOST=chocobuttons.com
       - LETSENCRYPT_HOST=chocobuttons.com
       - LETSENCRYPT_EMAIL=daniel@capitolhill.ca
+      - DATABASE_URL=postgres://user:pass@postgres:5432/db
+      - NODE_ENV=staging
+      - PORT=3001
   postgres:
     image: postgres
     ports:
@@ -27,7 +26,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
-      POSTGRES_DB: silid_production
+      POSTGRES_DB: silid_staging
 networks:
   default:
     external:
