@@ -115,7 +115,7 @@ npm install
 In `./src`
 
 ```
-docker-compose up -d
+docker-compose -f docker-compose.staging.yml up -d
 ```
 
 ### Database
@@ -123,5 +123,5 @@ docker-compose up -d
 In `./src/silid-server/`:
 
 ```
-docker-compose exec app node config/seed.js
+docker-compose -f docker-compose.staging.yml exec app node config/seed.js
 ```
