@@ -87,7 +87,6 @@ In `./src/identity-react/`, configure `.env`:
 REACT_APP_DOMAIN=silid.auth0.com
 REACT_APP_CLIENT_ID=tjrl8aOQEx9AtQhFffuWmvP6bcHM7nXB
 REACT_APP_CALLBACK_URL=https://example.com/callback
-REACT_APP_API_URL=https://example.com/
 ```
 
 Install dependencies:
