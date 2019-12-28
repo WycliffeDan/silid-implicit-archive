@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./app.js",
+    "start": "node ./bin/www",
     "local": "node ./bin/www",
     "deploy": "serverless deploy -v",
     "dev": "nodemon ./bin/www",
