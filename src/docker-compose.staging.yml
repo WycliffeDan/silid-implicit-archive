@@ -27,6 +27,10 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: silid_staging
+    volumes:
+      - silid_postgres_data:/var/lib/postgresql/data
+volumes:
+  silid_postgres_data:
 networks:
   default:
     external:
