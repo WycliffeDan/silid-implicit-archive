@@ -57,6 +57,8 @@ The `silid-server`/mock server combo are containerized. In a separate shell, fro
 docker-compose -f docker-compose.e2e.yml up --build
 ```
 
+Sometimes the database doesn't start on time during the first build. If `stdout` suggests this is the case, restart the server.
+
 ### Execute e2e tests 
 
 End-to-end tests depend on `cypress`. They are executed from the `src/identity-react` project directory. Tests may be executed in your preferred browser, or _headlessly_, as may be appropriate in a staging environment.
