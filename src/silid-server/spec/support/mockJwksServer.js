@@ -1,5 +1,5 @@
 'use strict';
-require('dotenv-flow').config();
+require('dotenv').config();
 
 
 if (process.env.NODE_ENV === 'e2e') {
