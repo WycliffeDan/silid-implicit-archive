@@ -61,4 +61,23 @@ function App() {
   );
 }
 
+//      <HashRouter>
+//        <Route
+//          path="/"
+//          render={props => <Home auth={auth} message={message} {...props} />}
+//        />
+//        <Route
+//          path="/callback"
+//          render={props => {
+//            handleAuthentication(props);
+//            return <Callback {...props} />;
+//          }}
+//        />
+//        <Switch>
+//          <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
+//          <PrivateRoute path="/organization/:id" auth={auth} component={OrganizationInfo} redirect="/" />
+//          <PrivateRoute path="/organization" auth={auth} component={Organization} redirect="/" />
+//        </Switch>
+//      </HashRouter>
+
 export default App;

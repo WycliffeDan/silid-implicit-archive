@@ -18,6 +18,11 @@ const jwksRsa = require('jwks-rsa');
 
 var app = express();
 
+/**
+ * SPA client route
+ */
+app.use('/', indexRouter);
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -27,7 +32,13 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+  app.use(express.static(path.join(__dirname, 'build')));
+}
+else {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
 
 /**
  * Access Token verification
@@ -52,7 +63,6 @@ app.use(checkJwt);
 /**
  * Routes
  */
-app.use('/', indexRouter);
 app.use('/agent', agentRouter);
 app.use('/organization', organizationRouter);
 app.use('/team', teamRouter);

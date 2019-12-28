@@ -57,6 +57,8 @@ The `silid-server`/mock server combo are containerized. In a separate shell, fro
 docker-compose -f docker-compose.e2e.yml up --build
 ```
 
+Sometimes the database doesn't start on time during the first build. If `stdout` suggests this is the case, restart the server.
+
 ### Execute e2e tests 
 
 End-to-end tests depend on `cypress`. They are executed from the `src/identity-react` project directory. Tests may be executed in your preferred browser, or _headlessly_, as may be appropriate in a staging environment.
@@ -77,3 +79,51 @@ Execute `cypress` in a container (first run will be slow):
 npm run test:headless
 ```
 
+## Deploy to Staging
+
+### Client
+
+In `./src/identity-react/`, configure `.env`:
+
+```
+REACT_APP_DOMAIN=silid.auth0.com
+REACT_APP_CLIENT_ID=tjrl8aOQEx9AtQhFffuWmvP6bcHM7nXB
+REACT_APP_CALLBACK_URL=https://example.com/callback
+```
+
+Install dependencies:
+
+```
+npm install
+```
+
+### Server
+
+In `./src/silid-server/`, configure `.env`:
+
+```
+AUTH0_DOMAIN=silid.auth0.com
+AUTH0_AUDIENCE=https://id.languagetechnology.org/
+```
+
+Install dependencies:
+
+```
+npm install
+```
+
+### Docker
+
+In `./src`
+
+```
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+### Database
+
+In `./src/silid-server/`:
+
+```
+docker-compose -f docker-compose.staging.yml exec app node config/seed.js
+```

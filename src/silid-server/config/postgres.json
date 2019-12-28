@@ -19,6 +19,13 @@
     "host": "localhost",
     "dialect": "postgres"
   },
+  "staging": {
+    "username": "user",
+    "password": "pass",
+    "database": "silid_staging",
+    "host": "postgres",
+    "dialect": "postgres"
+  },
   "production": {
     "username": "organizationuser",
     "password": "S0m3pa55w0rD",
