@@ -12,9 +12,10 @@ services:
     volumes:
       - ./silid-server:/app/
       - /app/node_modules
+      - /app/build
     environment:
-      - VIRTUAL_HOST=chocobuttons.com
-      - LETSENCRYPT_HOST=chocobuttons.com
+      - VIRTUAL_HOST=id.whatdandoes.info
+      - LETSENCRYPT_HOST=id.whatdandoes.info
       - LETSENCRYPT_EMAIL=daniel@capitolhill.ca
       - DATABASE_URL=postgres://user:pass@postgres:5432/db
       - NODE_ENV=staging
