@@ -7,6 +7,7 @@ const request = require('supertest');
 const stubJwks = require('../support/stubJwks');
 const pem2jwk = require('pem-jwk').pem2jwk
 const nock = require('nock');
+const mailer = require('../../mailer');
 
 /**
  * 2019-11-13
@@ -367,6 +368,10 @@ describe('organizationSpec', () => {
             });
           });
 
+          afterEach(() => {
+            mailer.transport.sentMail = [];
+          });
+
           describe('agent membership', () => {
             describe('updated via ID', () => {
               it('adds a member agent when agent provided isn\'t currently a member', done => {
@@ -393,6 +398,30 @@ describe('organizationSpec', () => {
                     }).catch(err => {
                       done.fail(err);
                     });
+                  });
+              });
+
+              it('sends an email to notify agent of new membership', function(done) {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    memberId: anotherAgent.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(mailer.transport.sentMail.length).toEqual(1);
+                    expect(mailer.transport.sentMail[0].data.to).toEqual(anotherAgent.email);
+                    expect(mailer.transport.sentMail[0].data.from).toEqual(process.env.NOREPLY_EMAIL);
+                    expect(mailer.transport.sentMail[0].data.subject).toEqual('Identity membership update');
+                    expect(mailer.transport.sentMail[0].data.text).toContain(`You are now a member of ${organization.name}`);
+                    done();
                   });
               });
 
@@ -427,6 +456,34 @@ describe('organizationSpec', () => {
                 });
               });
 
+              it('sends an email to notify agent of membership revocation', function(done) {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                organization.addMember(anotherAgent).then(result => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      memberId: anotherAgent.id
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${signedAccessToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(201)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(mailer.transport.sentMail.length).toEqual(1);
+                      expect(mailer.transport.sentMail[0].data.to).toEqual(anotherAgent.email);
+                      expect(mailer.transport.sentMail[0].data.from).toEqual(process.env.NOREPLY_EMAIL);
+                      expect(mailer.transport.sentMail[0].data.subject).toEqual('Identity membership update');
+                      expect(mailer.transport.sentMail[0].data.text).toContain(`You are no longer a member of ${organization.name}`);
+                      done();
+                    });
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+
               it('doesn\'t barf if member agent doesn\'t exist', done => {
                 request(app)
                   .patch('/organization')
@@ -446,6 +503,26 @@ describe('organizationSpec', () => {
                   });
               });
 
+              it('doesn\'t send an email if member agent doesn\'t exist', done => {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    memberId: 333
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(404)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(mailer.transport.sentMail.length).toEqual(0);
+                    done();
+                  });
+              });
+
               it('doesn\'t barf if organization doesn\'t exist', done => {
                 request(app)
                   .patch('/organization')
@@ -461,6 +538,26 @@ describe('organizationSpec', () => {
                     if (err) done.fail(err);
                     scope.done();
                     expect(res.body.message).toEqual('No such organization');
+                    done();
+                  });
+              });
+
+              it('doesn\'t send an email if organization doesn\'t exist', done => {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: 111,
+                    memberId: anotherAgent.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(404)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(mailer.transport.sentMail.length).toEqual(0);
                     done();
                   });
               });
@@ -519,6 +616,30 @@ describe('organizationSpec', () => {
                   });
               });
 
+              it('sends an email to notify agent of new membership', function(done) {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    email: anotherAgent.email
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(mailer.transport.sentMail.length).toEqual(1);
+                    expect(mailer.transport.sentMail[0].data.to).toEqual(anotherAgent.email);
+                    expect(mailer.transport.sentMail[0].data.from).toEqual(process.env.NOREPLY_EMAIL);
+                    expect(mailer.transport.sentMail[0].data.subject).toEqual('Identity membership update');
+                    expect(mailer.transport.sentMail[0].data.text).toContain(`You are now a member of ${organization.name}`);
+                    done();
+                  });
+              });
+
               it('removes a member agent when agent provided is currently a member', done => {
                 organization.addMember(anotherAgent).then(result => {
                   request(app)
@@ -544,6 +665,34 @@ describe('organizationSpec', () => {
                       }).catch(err => {
                         done.fail(err);
                       });
+                    });
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+
+              it('sends an email to notify agent of membership revocation', function(done) {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                organization.addMember(anotherAgent).then(result => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      email: anotherAgent.email
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${signedAccessToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(201)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(mailer.transport.sentMail.length).toEqual(1);
+                      expect(mailer.transport.sentMail[0].data.to).toEqual(anotherAgent.email);
+                      expect(mailer.transport.sentMail[0].data.from).toEqual(process.env.NOREPLY_EMAIL);
+                      expect(mailer.transport.sentMail[0].data.subject).toEqual('Identity membership update');
+                      expect(mailer.transport.sentMail[0].data.text).toContain(`You are no longer a member of ${organization.name}`);
+                      done();
                     });
                 }).catch(err => {
                   done.fail(err);
@@ -580,6 +729,29 @@ describe('organizationSpec', () => {
                     }).catch(err => {
                       done.fail(err);
                     });
+                  });
+              });
+
+              it('sends an email if member agent doesn\'t exist', done => {
+                expect(mailer.transport.sentMail.length).toEqual(0);
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    email: 'someunknownagent@example.com'
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    expect(mailer.transport.sentMail.length).toEqual(1);
+                    expect(mailer.transport.sentMail[0].data.to).toEqual('someunknownagent@example.com');
+                    expect(mailer.transport.sentMail[0].data.from).toEqual(process.env.NOREPLY_EMAIL);
+                    expect(mailer.transport.sentMail[0].data.subject).toEqual('Identity membership update');
+                    expect(mailer.transport.sentMail[0].data.text).toContain(`You are now a member of ${organization.name}`);
+                    done();
                   });
               });
 
