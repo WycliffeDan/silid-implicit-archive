@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwtAuth = require('../lib/jwtAuth');
 const models = require('../models');
+const mailer = require('../mailer');
 
 /* GET organization listing. */
 router.get('/', jwtAuth, function(req, res, next) {
@@ -92,10 +93,12 @@ const patchOrg = function(req, res, next) {
     }
 
     // Agent membership
+    let memberStatus = 'now a';
     if (req.body.memberId) {
       const index = members.indexOf(req.body.memberId);
       // Delete
       if (index > -1) {
+        memberStatus = 'no longer a';
         members.splice(index, 1);
       }
       // Add
@@ -119,7 +122,28 @@ const patchOrg = function(req, res, next) {
     }
 
     Promise.all([ organization.setMembers(members), organization.setTeams(teams) ]).then(results => {
-      res.status(201).json({ message: 'Update successful' });
+      if (req.body.memberId) {
+        models.Agent.findOne({ where: { id: req.body.memberId } }).then(agent => {
+          let mailOptions = {
+            to: agent.email,
+            from: process.env.NOREPLY_EMAIL,
+            subject: 'Identity membership update',
+            text: `You are ${memberStatus} member of ${organization.name}`
+          };
+          mailer.transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error('Mailer Error', error);
+              return res.status(501).json(error);
+            }
+            res.status(201).json({ message: 'Update successful' });
+          });
+        }).catch(err => {
+          res.status(status).json(err);
+        });
+      }
+      else {
+        res.status(201).json({ message: 'Update successful' });
+      }
     }).catch(err => {
       let status = 500;
       if (err instanceof models.Sequelize.ForeignKeyConstraintError) {
