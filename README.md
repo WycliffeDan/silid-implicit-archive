@@ -104,6 +104,8 @@ In `./src/silid-server/`, configure `.env`:
 ```
 AUTH0_DOMAIN=silid.auth0.com
 AUTH0_AUDIENCE=https://id.languagetechnology.org/
+NOREPLY_EMAIL=noreply@example.com
+NOREPLY_PASSWORD=secret
 ```
 
 Install dependencies:
@@ -113,6 +115,17 @@ npm install
 ```
 
 ### Docker
+
+Edit `docker-compose.staging.yml` to point to the correct domain:
+
+```
+# ...
+    environment:
+      - VIRTUAL_HOST=id.languagetechnology.org
+      - LETSENCRYPT_HOST=id.languagetechnology.org
+      - LETSENCRYPT_EMAIL=daniel@example.com
+# ...
+```
 
 In `./src`
 
