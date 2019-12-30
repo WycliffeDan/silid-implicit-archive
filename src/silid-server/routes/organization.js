@@ -79,7 +79,7 @@ router.put('/', jwtAuth, function(req, res, next) {
  * PATCH is used to modify associations (i.e., memberships and teams).
  * cf., PUT
  */
-router.patch('/', jwtAuth, function(req, res, next) {
+const patchOrg = function(req, res, next) {
   models.Organization.findOne({ where: { id: req.body.id },
                                 include: ['members', 'teams'] }).then(organization => {
     if (!organization) {
@@ -136,9 +136,33 @@ router.patch('/', jwtAuth, function(req, res, next) {
   }).catch(err => {
     res.status(500).json(err);
   });
+}
+
+router.patch('/', jwtAuth, function(req, res, next) {
+  if (req.body.email) {
+    models.Agent.findOne({ where: { email: req.body.email } }).then(agent => {
+      if (!agent) {
+        let newAgent = new models.Agent({ email: req.body.email });
+        newAgent.save().then(result => {
+          req.body.memberId = result.id;
+          patchOrg(req, res, next);
+
+        }).catch(err => {
+          res.json(err);
+        });
+      }
+      else {
+        req.body.memberId = agent.id;
+        patchOrg(req, res, next);
+      }
+    }).catch(err => {
+      res.status(500).json(err);
+    });
+  }
+  else {
+    patchOrg(req, res, next);
+  }
 });
-
-
 
 router.delete('/', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.body.id } }).then(organization => {

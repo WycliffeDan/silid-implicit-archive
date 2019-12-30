@@ -134,7 +134,7 @@ describe('organizationSpec', () => {
             });
         });
       });
-  
+
       describe('read', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
@@ -285,7 +285,7 @@ describe('organizationSpec', () => {
               expect(res.body.members[0].id).toEqual(agent.id);
               done();
             });
-          });
+        });
 
         it('omits agent tokens in populated membership', done => {
           request(app)
@@ -302,7 +302,7 @@ describe('organizationSpec', () => {
             });
           });
       });
- 
+
       describe('update', () => {
 
         describe('PUT', () => {
@@ -368,35 +368,8 @@ describe('organizationSpec', () => {
           });
 
           describe('agent membership', () => {
-            it('adds a member agent when agent provided isn\'t currently a member', done => {
-              request(app)
-                .patch('/organization')
-                .send({
-                  id: organization.id,
-                  memberId: anotherAgent.id
-                })
-                .set('Accept', 'application/json')
-                .set('Authorization', `Bearer ${signedAccessToken}`)
-                .expect('Content-Type', /json/)
-                .expect(201)
-                .end(function(err, res) {
-                  if (err) done.fail(err);
-                  scope.done();
-                  expect(res.body.message).toEqual('Update successful');
-
-                  models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
-                    expect(results.members.length).toEqual(2);
-                    expect(results.members[1].name).toEqual(anotherAgent.name);
-                    expect(results.members[1].email).toEqual(anotherAgent.email);
-                    done();
-                  }).catch(err => {
-                    done.fail(err);
-                  });
-                });
-            });
-
-            it('removes a member agent when agent provided is currently a member', done => {
-              organization.addMember(anotherAgent).then(result => {
+            describe('updated via ID', () => {
+              it('adds a member agent when agent provided isn\'t currently a member', done => {
                 request(app)
                   .patch('/organization')
                   .send({
@@ -412,80 +385,246 @@ describe('organizationSpec', () => {
                     scope.done();
                     expect(res.body.message).toEqual('Update successful');
 
-                    models.Organization.findOne({ where: { id: organization.id }, include: ['members']}).then(results => {
-                      expect(results.members.length).toEqual(1);
-                      expect(results.members[0].name).toEqual(agent.name);
-                      expect(results.members[0].email).toEqual(agent.email);
+                    models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
+                      expect(results.members.length).toEqual(2);
+                      expect(results.members[1].name).toEqual(anotherAgent.name);
+                      expect(results.members[1].email).toEqual(anotherAgent.email);
                       done();
                     }).catch(err => {
                       done.fail(err);
                     });
                   });
-              }).catch(err => {
-                done.fail(err);
               });
-            });
 
-            it('doesn\'t barf if member agent doesn\'t exist', done => {
-              request(app)
-                .patch('/organization')
-                .send({
-                  id: organization.id,
-                  memberId: 333
-                })
-                .set('Accept', 'application/json')
-                .set('Authorization', `Bearer ${signedAccessToken}`)
-                .expect('Content-Type', /json/)
-                .expect(404)
-                .end(function(err, res) {
-                  if (err) done.fail(err);
-                  scope.done();
-                  expect(res.body.message).toEqual('No such agent');
-                  done();
+              it('removes a member agent when agent provided is currently a member', done => {
+                organization.addMember(anotherAgent).then(result => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      memberId: anotherAgent.id
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${signedAccessToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(201)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(res.body.message).toEqual('Update successful');
+
+                      models.Organization.findOne({ where: { id: organization.id }, include: ['members']}).then(results => {
+                        expect(results.members.length).toEqual(1);
+                        expect(results.members[0].name).toEqual(agent.name);
+                        expect(results.members[0].email).toEqual(agent.email);
+                        done();
+                      }).catch(err => {
+                        done.fail(err);
+                      });
+                    });
+                }).catch(err => {
+                  done.fail(err);
                 });
-            });
+              });
 
-            it('doesn\'t barf if organization doesn\'t exist', done => {
-              request(app)
-                .patch('/organization')
-                .send({
-                  id: 111,
-                  memberId: anotherAgent.id
-                })
-                .set('Accept', 'application/json')
-                .set('Authorization', `Bearer ${signedAccessToken}`)
-                .expect('Content-Type', /json/)
-                .expect(404)
-                .end(function(err, res) {
-                  if (err) done.fail(err);
-                  scope.done();
-                  expect(res.body.message).toEqual('No such organization');
-                  done();
-                });
-            });
-
-            it('doesn\'t allow a non-member agent to add a member', done => {
-              let unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
-              anotherAgent.accessToken = `Bearer ${unauthorizedToken}`;
-              anotherAgent.save().then(() => {
+              it('doesn\'t barf if member agent doesn\'t exist', done => {
                 request(app)
                   .patch('/organization')
                   .send({
                     id: organization.id,
-                    memberId: anotherAgent.id
+                    memberId: 333
                   })
                   .set('Accept', 'application/json')
-                  .set('Authorization', `Bearer ${unauthorizedToken}`)
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
                   .expect('Content-Type', /json/)
-                  .expect(403)
+                  .expect(404)
                   .end(function(err, res) {
                     if (err) done.fail(err);
                     scope.done();
-                    expect(res.body.message).toEqual('You are not a member of this organization');
+                    expect(res.body.message).toEqual('No such agent');
                     done();
                   });
-              }).catch(err => {
-                done.fail(err);
+              });
+
+              it('doesn\'t barf if organization doesn\'t exist', done => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: 111,
+                    memberId: anotherAgent.id
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(404)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('No such organization');
+                    done();
+                  });
+              });
+
+              it('doesn\'t allow a non-member agent to add a member', done => {
+                let unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+                anotherAgent.accessToken = `Bearer ${unauthorizedToken}`;
+                anotherAgent.save().then(() => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      memberId: anotherAgent.id
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${unauthorizedToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(403)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(res.body.message).toEqual('You are not a member of this organization');
+                      done();
+                    });
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+            });
+
+            describe('updated via email', () => {
+              it('adds a member agent when agent provided isn\'t currently a member', done => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    email: anotherAgent.email
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('Update successful');
+
+                    models.Organization.findOne({ where: { id: organization.id }, include: ['members'] }).then(results => {
+                      expect(results.members.length).toEqual(2);
+                      expect(results.members[1].name).toEqual(anotherAgent.name);
+                      expect(results.members[1].email).toEqual(anotherAgent.email);
+                      done();
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
+              });
+
+              it('removes a member agent when agent provided is currently a member', done => {
+                organization.addMember(anotherAgent).then(result => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      email: anotherAgent.email
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${signedAccessToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(201)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(res.body.message).toEqual('Update successful');
+
+                      models.Organization.findOne({ where: { id: organization.id }, include: ['members']}).then(results => {
+                        expect(results.members.length).toEqual(1);
+                        expect(results.members[0].name).toEqual(agent.name);
+                        expect(results.members[0].email).toEqual(agent.email);
+                        done();
+                      }).catch(err => {
+                        done.fail(err);
+                      });
+                    });
+                }).catch(err => {
+                  done.fail(err);
+                });
+              });
+
+              it('adds record if member agent doesn\'t exist', done => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: organization.id,
+                    email: 'someunknownagent@example.com'
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    expect(res.body.message).toEqual('Update successful');
+
+                    models.Agent.findOne({ where: { email: 'someunknownagent@example.com' } }).then(newAgent => {
+                      expect(newAgent.name).toBe(null);
+                      expect(newAgent.email).toEqual('someunknownagent@example.com');
+
+                      models.Organization.findOne({ where: { id: organization.id }, include: ['members']}).then(results => {
+                        expect(results.members.length).toEqual(2);
+                        expect(results.members[1].name).toEqual(newAgent.name);
+                        expect(results.members[1].email).toEqual(newAgent.email);
+                        done();
+                      }).catch(err => {
+                        done.fail(err);
+                      });
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
+              });
+
+              it('doesn\'t barf if organization doesn\'t exist', done => {
+                request(app)
+                  .patch('/organization')
+                  .send({
+                    id: 111,
+                    email: anotherAgent.email
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${signedAccessToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(404)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('No such organization');
+                    done();
+                  });
+              });
+
+              it('doesn\'t allow a non-member agent to add a member', done => {
+                let unauthorizedToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+                anotherAgent.accessToken = `Bearer ${unauthorizedToken}`;
+                anotherAgent.save().then(() => {
+                  request(app)
+                    .patch('/organization')
+                    .send({
+                      id: organization.id,
+                      email: anotherAgent.email
+                    })
+                    .set('Accept', 'application/json')
+                    .set('Authorization', `Bearer ${unauthorizedToken}`)
+                    .expect('Content-Type', /json/)
+                    .expect(403)
+                    .end(function(err, res) {
+                      if (err) done.fail(err);
+                      scope.done();
+                      expect(res.body.message).toEqual('You are not a member of this organization');
+                      done();
+                    });
+                }).catch(err => {
+                  done.fail(err);
+                });
               });
             });
           });
