@@ -50,6 +50,14 @@ psql -h localhost -d postgres -U user -W
 
 ## Dev server
 
+Start maildev:
+
+```
+docker run -d --name maildev -p 1080:80 -p 25:25 -p 587:587 djfarrelly/maildev
+```
+
+Build Docker images:
+
 ```
 docker-compose up
 ```
