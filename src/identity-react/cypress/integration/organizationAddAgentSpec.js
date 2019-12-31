@@ -11,6 +11,17 @@ context('Organization add agent', function() {
 
   context('authenticated', () => {
 
+    let anotherAgent;
+    beforeEach(function() {
+      cy.login(this.anotherAgent);
+      cy.visit('/#/').then(() => {
+        let anotherToken = localStorage.getItem('accessToken');
+        cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${anotherToken}' LIMIT 1;`).then(([results, metadata]) => {
+          anotherAgent = results[0];
+        });
+      });
+    });
+
     let token, agent;
     beforeEach(function() {
       cy.login(this.agent);
@@ -24,6 +35,7 @@ context('Organization add agent', function() {
 
     afterEach(() => {
       cy.task('query', 'TRUNCATE TABLE "Organizations" CASCADE;');
+      cy.task('query', 'TRUNCATE TABLE "Agents" CASCADE;');
     });
 
     context('creator agent visit', () => {
@@ -70,7 +82,15 @@ context('Organization add agent', function() {
           describe('add-member-agent-button', () => {
             it('does not allow an empty field', function() {
               cy.get('input[name="email"][type="email"]').clear();
+              cy.get('input[name="email"][type="email"]').type('     ');
               cy.get('input[name="email"][type="email"]').should('have.value', '');
+              cy.get('button[type="submit"]').should('be.disabled');
+            });
+
+            it('does not allow an invalid email', function() {
+              cy.get('input[name="email"][type="email"]').clear();
+              cy.get('input[name="email"][type="email"]').type('this is not an email');
+              cy.get('input[name="email"][type="email"]').should('have.value', 'this is not an email');
               cy.get('button[type="submit"]').click();
               cy.get('input[name="email"][type="email"]:invalid').should('have.length', 1)
               cy.get('input[name="email"][type="email"]:invalid').then($input => {
@@ -80,17 +100,13 @@ context('Organization add agent', function() {
       
             describe('unknown agent', () => {
               it('updates the record in the database', function() {
-                cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
+                cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
                   expect(results.length).to.eq(1);
-                  expect(results[0].members.length).to.eq(1);
-                  expect(results[0].members[0]).to.eq(agent.id);
                   cy.get('input[name="email"][type="email"]').type('somenewguy@example.com');
                   cy.get('button[type="submit"]').click();
                   cy.wait(500);
-                  cy.task('query', `SELECT * FROM "Organizations"`).then(([results, metadata]) => {;
-                    expect(results.length).to.eq(1);
-                    expect(results[0].members.length).to.eq(2);
-                    expect(results[0].members[0]).to.eq(agent.id);
+                  cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
+                    expect(results.length).to.eq(2);
                   });
                 });
               });
@@ -115,54 +131,48 @@ context('Organization add agent', function() {
               });
   
               it('updates the record on the interface', function() {
-                cy.get('#organization-member-list').should('not.exist');
+                cy.get('#organization-member-list').should('exist');
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
+                cy.get('#organization-member-list .organization-member-list-item').first().contains(agent.email);
                 cy.get('input[name="email"][type="email"]').type('somenewguy@example.com');
                 cy.get('button[type="submit"]').click();
                 cy.wait(500);
-                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
-                cy.get('#organization-member-list .organization-member-list-item').first().contains('somenewguy@example.com');
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
+                cy.get('#organization-member-list .organization-member-list-item').last().contains('somenewguy@example.com');
               });
             });
 
             describe('known agent', () => {
-              
-              let member;
-              beforeEach(function() {
-                cy.request({ url: '/agent',  method: 'POST', body: this.memberAgent }).then(member => {
-                  member = member;
-                });
-              });
-
               it('updates the record in the database', function() {
-                cy.task('query', `SELECT * FROM "Organizations";`).then(([results, metadata]) => {
+                cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
                   expect(results.length).to.eq(1);
-                  expect(results[0].members.length).to.eq(1);
-                  expect(results[0].members[0]).to.eq(agent.id);
-                  cy.get('input[name="email"][type="email"]').type(member.email);
+                  expect(results[0].AgentId).to.eq(agent.id);
+                  cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
                   cy.get('button[type="submit"]').click();
                   cy.wait(500);
-                  cy.task('query', `SELECT * FROM "Organizations"`).then(([results, metadata]) => {;
-                    expect(results.length).to.eq(1);
-                    expect(results[0].members.length).to.eq(2);
-                    expect(results[0].members[1]).to.eq(member.id);
+                  cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
+                    expect(results.length).to.eq(2);
+                    expect(results[0].AgentId).to.eq(agent.id);
+                    expect(results[1].AgentId).to.eq(anotherAgent.id);
                   });
                 });
               });
 
               it('hides the add-member-agent-form', function() {
-                cy.get('input[name="email"][type="email"]').type(member.email);
+                cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
                 cy.get('button[type="submit"]').click();
                 cy.wait(500);
                 cy.get('form#add-member-agent-form').should('not.exist');
               });
   
               it('updates the record on the interface', function() {
-                cy.get('#organization-member-list').should('not.exist');
-                cy.get('input[name="email"][type="email"]').type(member.email);
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
+                cy.get('#organization-member-list .organization-member-list-item').first().contains(agent.email);
+                cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
                 cy.get('button[type="submit"]').click();
                 cy.wait(500);
-                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
-                cy.get('#organization-member-list .organization-member-list-item').first().contains(member.email);
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
+                cy.get('#organization-member-list .organization-member-list-item').last().contains(anotherAgent.email);
               });
             });
           });

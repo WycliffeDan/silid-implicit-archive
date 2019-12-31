@@ -8,21 +8,18 @@ import CardContent from '@material-ui/core/CardContent';
 import Fab from '@material-ui/core/Fab';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import GroupIcon from '@material-ui/icons/Group';
-//import List from '@material-ui/core/List';
-//import ListItem from '@material-ui/core/ListItem';
-//import ListItemIcon from '@material-ui/core/ListItemIcon';
-//import ListItemText from '@material-ui/core/ListItemText';
 import Button from '@material-ui/core/Button';
-//// Remove this junk later
-//import InboxIcon from '@material-ui/icons/MoveToInbox';
-//import MailIcon from '@material-ui/icons/Mail';
-
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
 import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
+
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
-
 import usePutOrganizationService from '../services/usePutOrganizationService';
-
+import usePutOrganizationMemberService from '../services/usePutOrganizationMemberService';
 import useDeleteOrganizationService from '../services/useDeleteOrganizationService';
 
 
@@ -62,6 +59,7 @@ const OrganizationInfo = (props: any) => {
 
   const service = useGetOrganizationInfoService(props.match.params.id);
   let { publishOrganization } = usePutOrganizationService();
+  let { putOrganizationMember } = usePutOrganizationMemberService();
   let { deleteOrganization } = useDeleteOrganizationService();
 
   useEffect(() => {
@@ -98,6 +96,24 @@ const OrganizationInfo = (props: any) => {
     }
   }
 
+  const handleMembershipChange = (evt:any) => {
+    evt.preventDefault();
+    const formData = new FormData(evt.target);
+
+    let data = {} as any;
+    for (const [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+
+    putOrganizationMember(data).then(results => {
+      setAgentFormVisible(false);
+      orgInfo.members.push(results);
+      setOrgInfo({ ...orgInfo } as Organization);
+    }).catch(err => {
+      console.log(err);
+    });
+  }
+
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
     evt.target.setCustomValidity(`${evt.target.name} required`);
   }
@@ -113,9 +129,9 @@ const OrganizationInfo = (props: any) => {
     setOrgInfo(f);
   }
 
-//  function ListItemLink(props:any) {
-//    return <ListItem className='organization-list-item' button component="a" {...props} />;
-//  }
+  function ListItemLink(props:any) {
+    return <ListItem className='organization-member-list-item' button component="a" {...props} />;
+  }
 
   if (toOrganization) {
     return <Redirect to={{ pathname: '/organization', state: 'Organization deleted' }} />
@@ -178,21 +194,72 @@ const OrganizationInfo = (props: any) => {
                     }
                   </React.Fragment>
                 : '' }
-                {!editFormVisible ?
+                {!editFormVisible && !agentFormVisible ?
                     <Typography variant="body2" color="textSecondary" component="p">
                       <React.Fragment>
-                        <Fab id="add-agent" color="primary" aria-label="add-agent" className={classes.margin}>
-                          <PersonAddIcon onClick={() => setAgentFormVisible(true)} />
-                        </Fab>
+                        {orgInfo.creator && (agentProfile.email === orgInfo.creator.email) ?
+                          <Fab id="add-agent" color="primary" aria-label="add-agent" className={classes.margin}>
+                            <PersonAddIcon onClick={() => setAgentFormVisible(true)} />
+                          </Fab>
+                        : '' }
                         <Fab id="add-team" color="primary" aria-label="add-team" className={classes.margin}>
                           <GroupIcon onClick={() => setTeamFormVisible(true)} />
                         </Fab>
                       </React.Fragment>
                     </Typography>
                 : ''}
+                {agentFormVisible ?
+                  <form id="add-member-agent-form" onSubmit={handleMembershipChange}>
+                    <input type="hidden" name="id" value={orgInfo.id} />
+                    <TextField
+                      id="email-input"
+                      label="New Member Email"
+                      type="email"
+                      className={classes.textField}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      margin="normal"
+                      name="email"
+                      required
+                      onChange={onChange}
+                      onInvalid={customMessage}
+                    />
+                    <Button id="cancel-add-agent"
+                      variant="contained" color="secondary"
+                      onClick={() => {
+                        setOrgInfo({ ...orgInfo, ...prevState });
+                        setAgentFormVisible(false);
+                      }}>
+                        Cancel
+                    </Button>
+                    <Button id="add-member-agent-button"
+                            type="submit" variant="contained" color="primary"
+                            disabled={!Object.keys(prevState).length}>
+                      Add
+                    </Button>
+                  </form>
+               : ''}
               </React.Fragment>
             : ''}
           </Typography>
+          {service.status === 'loading' && <div>Loading...</div>}
+          {service.status === 'loaded' && orgInfo.members && orgInfo.members.length ?
+            <List id="organization-member-list">
+              <Typography variant="h5" component="h3">
+              <React.Fragment>
+                Members
+              </React.Fragment>
+              </Typography>
+              { orgInfo.members.map(agent => (
+                <ListItem button className='organization-button' key='Organizations'>
+                  <ListItemIcon><InboxIcon /></ListItemIcon>
+                  <ListItemLink href={`#agent/${agent.id}`}>
+                    <ListItemText primary={agent.email} />
+                  </ListItemLink>
+                </ListItem>
+              ))}
+            </List> : ''}
           {service.status === 'error' && (
             <Typography id="error-message" variant="h5" component="h3">
               {service.error}
