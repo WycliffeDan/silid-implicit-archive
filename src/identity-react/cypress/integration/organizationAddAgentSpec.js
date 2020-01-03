@@ -90,7 +90,6 @@ context('Organization add agent', function() {
             it('does not allow an invalid email', function() {
               cy.get('input[name="email"][type="email"]').clear();
               cy.get('input[name="email"][type="email"]').type('this is not an email');
-              cy.get('input[name="email"][type="email"]').should('have.value', 'this is not an email');
               cy.get('button[type="submit"]').click();
               cy.get('input[name="email"][type="email"]:invalid').should('have.length', 1)
               cy.get('input[name="email"][type="email"]:invalid').then($input => {
