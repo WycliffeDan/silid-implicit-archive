@@ -52,9 +52,8 @@ context('Organization delete agent', function() {
 
       describe('delete-member button', () => {
         it('does not display a delete button next to the creator agent', () => {
-          cy.get('#organization-member-list .organization-member-list-item').last().contains(agent.email);
-          cy.get('#organization-member-list .organization-button').last().should('not.have.descendants', '.delete-member');
-          cy.get('#organization-member-list .organization-button').first().should('have.descendants', '.delete-member');
+          cy.contains(agent.email).siblings('.delete-member').should('not.exist');
+          cy.contains(memberAgent.email).siblings('.delete-member').should('exist');
         });
 
         it('displays a popup warning', function(done) {
