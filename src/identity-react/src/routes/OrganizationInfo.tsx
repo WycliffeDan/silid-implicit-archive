@@ -13,15 +13,18 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import DeleteForeverOutlinedIcon from '@material-ui/icons/DeleteForeverOutlined';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
 import Flash from '../components/Flash';
 
+
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 import usePutOrganizationService from '../services/usePutOrganizationService';
 import usePutOrganizationMemberService from '../services/usePutOrganizationMemberService';
 import useDeleteOrganizationService from '../services/useDeleteOrganizationService';
+import useDeleteMemberAgentService from '../services/useDeleteMemberAgentService';
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -63,6 +66,7 @@ const OrganizationInfo = (props: any) => {
   let { publishOrganization } = usePutOrganizationService();
   let { putOrganizationMember } = usePutOrganizationMemberService();
   let { deleteOrganization } = useDeleteOrganizationService();
+  let { deleteMemberAgent } = useDeleteMemberAgentService(props.match.params.id);
 
   useEffect(() => {
     if (service.status === 'loaded') {
@@ -120,6 +124,19 @@ const OrganizationInfo = (props: any) => {
     }).catch(err => {
       console.log(err);
     });
+  }
+
+  const handleMemberDelete = (memberId: any) => {
+    if (window.confirm('Remove member?')) {
+      deleteMemberAgent(memberId).then(results => {
+        const index = orgInfo.members.findIndex(member => member.id === memberId);
+        orgInfo.members.splice(index, 1);
+        setOrgInfo({ ...orgInfo } as Organization);
+        setFlashProps({ message: 'Member removed', variant: 'success' });
+      }).catch(err => {
+        console.log(err);
+      });
+    }
   }
 
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
@@ -266,6 +283,9 @@ const OrganizationInfo = (props: any) => {
                   <ListItemLink href={`#agent/${agent.id}`}>
                     <ListItemText primary={agent.email} />
                   </ListItemLink>
+                  { orgInfo.creator.email !== agent.email && (agentProfile.email === orgInfo.creator.email) ?
+                  <DeleteForeverOutlinedIcon className="delete-member" onClick={() => handleMemberDelete(agent.id)} />
+                  : ''}
                 </ListItem>
               ))}
             </List> : ''}
