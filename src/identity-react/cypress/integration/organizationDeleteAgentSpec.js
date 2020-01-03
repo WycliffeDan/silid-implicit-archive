@@ -11,6 +11,7 @@ context('Organization delete agent', function() {
 
   context('authenticated', () => {
 
+    let token, agent;
     let memberAgent;
     beforeEach(function() {
       cy.login(this.anotherAgent);
@@ -18,17 +19,14 @@ context('Organization delete agent', function() {
         let memberToken = localStorage.getItem('accessToken');
         cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${memberToken}' LIMIT 1;`).then(([results, metadata]) => {
           memberAgent = results[0];
-        });
-      });
-    });
 
-    let token, agent;
-    beforeEach(function() {
-      cy.login(this.agent);
-      cy.visit('/#/').then(() => {
-        token = localStorage.getItem('accessToken');
-        cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {
-          agent = results[0];
+          cy.login(this.agent);
+          cy.visit('/#/').then(() => {
+            token = localStorage.getItem('accessToken');
+            cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {
+              agent = results[0];
+            });
+          });
         });
       });
     });
@@ -53,14 +51,10 @@ context('Organization delete agent', function() {
       });
 
       describe('delete-member button', () => {
-        beforeEach(function() {
-          cy.get('button#add-agent').click();
-        });
-
-        it('does not allow the creator agent to delete himself', () => {
-          cy.get('#organization-member-list .organization-member-list-item').first().contains(agent.email);
-          cy.get('.delete-member').first().click();
-          cy.contains(`The organization creator cannot be removed`);
+        it('does not display a delete button next to the creator agent', () => {
+          cy.get('#organization-member-list .organization-member-list-item').last().contains(agent.email);
+          cy.get('#organization-member-list .organization-button').last().should('not.have.descendants', '.delete-member');
+          cy.get('#organization-member-list .organization-button').first().should('have.descendants', '.delete-member');
         });
 
         it('displays a popup warning', function(done) {
@@ -68,7 +62,7 @@ context('Organization delete agent', function() {
             expect(str).to.eq('Remove member?');
             done();
           });
-          cy.get('#organization-member-list .organization-member-list-item').last().contains(memberAgent.email);
+          cy.get('#organization-member-list .organization-member-list-item').first().contains(memberAgent.email);
           cy.get('.delete-member').last().click();
         });
 
@@ -77,7 +71,7 @@ context('Organization delete agent', function() {
             return true;
           });
           cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
-          cy.get('.delete-member').last().click();
+          cy.get('.delete-member').first().click();
           cy.wait(500);
           cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
         });
@@ -88,7 +82,7 @@ context('Organization delete agent', function() {
           });
           cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
             expect(results.length).to.eq(2);
-            cy.get('.delete-member').last().click();
+            cy.get('.delete-member').first().click();
             cy.wait(500);
             cy.task('query', `SELECT * FROM "agent_organization";`).then(([results, metadata]) => {
               expect(results.length).to.eq(1);
