@@ -138,6 +138,7 @@ context('Organization add agent', function() {
                 cy.wait(500);
                 cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
                 cy.get('#organization-member-list .organization-member-list-item').last().contains('somenewguy@example.com');
+                cy.get('#organization-member-list .organization-button .delete-member').last().should('exist');
               });
 
               it('links to the new agent\'s profile page', () => {
@@ -185,6 +186,7 @@ context('Organization add agent', function() {
                 cy.wait(500);
                 cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
                 cy.get('#organization-member-list .organization-member-list-item').last().contains(anotherAgent.email);
+                cy.get('#organization-member-list .organization-button .delete-member').last().should('exist');
               });
 
               it('links to the new agent\'s profile page', () => {

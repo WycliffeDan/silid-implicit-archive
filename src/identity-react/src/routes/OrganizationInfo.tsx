@@ -13,10 +13,12 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import DeleteForeverOutlinedIcon from '@material-ui/icons/DeleteForeverOutlined';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
 import Flash from '../components/Flash';
+
 
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 import usePutOrganizationService from '../services/usePutOrganizationService';
@@ -266,6 +268,7 @@ const OrganizationInfo = (props: any) => {
                   <ListItemLink href={`#agent/${agent.id}`}>
                     <ListItemText primary={agent.email} />
                   </ListItemLink>
+                  <DeleteForeverOutlinedIcon className="delete-member" />
                 </ListItem>
               ))}
             </List> : ''}
