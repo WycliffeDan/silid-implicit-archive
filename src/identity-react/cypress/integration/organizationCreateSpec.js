@@ -72,6 +72,7 @@ context('Organization creation', function() {
               cy.get('input[name="name"][type="text"]').should('be.empty');
             });
           });
+
           describe('add-organization-button', () => {
             it('does not allow an empty field', function() {
               cy.get('input[name="name"][type="text"]').clear();
@@ -110,7 +111,6 @@ context('Organization creation', function() {
               cy.get('#organization-list').find('.organization-list-item').its('length').should('eq', 1);
               cy.get('#organization-list .organization-list-item').first().contains('The Justice League');
             });
-
           });
         });
       });
