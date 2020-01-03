@@ -4,6 +4,7 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+import { Agent as AgentType } from '../types/Agent';
 
 import Button from '@material-ui/core/Button';
 import useGetAgentService from '../services/useGetAgentService';
@@ -55,12 +56,13 @@ export interface PrevState {
   [key:string]: any
 }
 
-const Agent = () => {
+const Agent = (props: any) => {
   const [formData, setFormData] = useState<FormData>({});
   const [prevState, setPrevState] = useState<PrevState>({});
+  const [agentProfile, setAgentProfile] = useState<AgentType>(JSON.parse(localStorage.getItem('profile') || '{}') as AgentType);
 
   const classes = useStyles();
-  const service = useGetAgentService();
+  const service = useGetAgentService(props.match.params.id);
 
   let { publishAgent } = usePutAgentService();
 
@@ -130,6 +132,7 @@ const Agent = () => {
                   margin="normal"
                   name="name"
                   required
+                  disabled={formData.email !== agentProfile.email}
                   value={formData.name}
                   onChange={onChange}
                   onInvalid={customMessage}
@@ -144,9 +147,11 @@ const Agent = () => {
                       Cancel
                   </Button> : ''
                 }
-                <Button type="submit" variant="contained" color="primary" disabled={!Object.keys(prevState).length}>
+                { formData.email === agentProfile.email &&
+                <Button type="submit" variant="contained" color="primary"
+                        disabled={!Object.keys(prevState).length}>
                   Save
-                </Button>
+                </Button> }
               </form> : ''}
             {service.status === 'error' && (
               <div>Error, the backend moved to the dark side.</div>

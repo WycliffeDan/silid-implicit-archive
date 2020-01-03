@@ -73,17 +73,15 @@ context('Agent show', function() {
     });
 
     describe('viewing your own profile', () => {
+
+      let agent;
       beforeEach(function() {
         cy.login(this.agent);
-
-        let agent;
-        beforeEach(function() {
-          cy.login(this.agent);
-          cy.visit('/#/').then(() => {
-            cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${memberToken}' LIMIT 1;`).then(([results, metadata]) => {
-              agent = results[0];
-              cy.visit(`/#/agent/${agent.id}`);
-            });
+        cy.visit('/#/').then(() => {
+          let token = localStorage.getItem('accessToken');
+          cy.task('query', `SELECT * FROM "Agents" WHERE "accessToken"='Bearer ${token}' LIMIT 1;`).then(([results, metadata]) => {
+            agent = results[0];
+            cy.visit(`/#/agent/${agent.id}`);
           });
         });
       });
@@ -92,7 +90,7 @@ context('Agent show', function() {
         cy.url().should('contain', `/#/agent/${agent.id}`);
       });
 
-      it('displays agent social profile info in form', function() {
+      it('displays agent social profile info in form', () => {
         cy.get('h3').contains('Profile');
         cy.get('input[name="name"][type="text"]').should('have.value', agent.name);
         cy.get('input[name="name"][type="text"]').should('not.be.disabled');
