@@ -140,6 +140,19 @@ context('Organization add agent', function() {
                 cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
                 cy.get('#organization-member-list .organization-member-list-item').last().contains('somenewguy@example.com');
               });
+
+              it('links to the new agent\'s profile page', () => {
+                cy.get('input[name="email"][type="email"]').type('somenewguy@example.com');
+                cy.get('button[type="submit"]').click();
+                cy.wait(500);
+                cy.task('query', `SELECT * FROM "Agents" WHERE email='somenewguy@example.com';`).then(([results, metadata]) => {
+                  cy.get('#organization-member-list .organization-member-list-item').last().should('have.attr', 'href').and('include', `#agent/${results[0].id}`)
+                  cy.get('#organization-member-list .organization-member-list-item').last().click();
+                  cy.url().should('contain', `/#/agent/${results[0].id}`);
+                  cy.get('input[name="name"][type="text"]').should('have.value', '');
+                  cy.get('input[name="email"][type="email"]').should('have.value', 'somenewguy@example.com');
+                });
+              });
             });
 
             describe('known agent', () => {
@@ -173,6 +186,40 @@ context('Organization add agent', function() {
                 cy.wait(500);
                 cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
                 cy.get('#organization-member-list .organization-member-list-item').last().contains(anotherAgent.email);
+              });
+
+              it('links to the new agent\'s profile page', () => {
+                cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
+                cy.get('button[type="submit"]').click();
+                cy.wait(500);
+                cy.get('#organization-member-list .organization-member-list-item').last().should('have.attr', 'href').and('include', `#agent/${anotherAgent.id}`)
+                cy.get('#organization-member-list .organization-member-list-item').last().click();
+                cy.url().should('contain', '/#/agent');
+                cy.url().should('contain', `/#/agent/${anotherAgent.id}`);
+                cy.get('input[name="name"][type="text"]').should('have.value', anotherAgent.name);
+                cy.get('input[name="email"][type="email"]').should('have.value', anotherAgent.email);
+              });
+            });
+
+            describe('erroneous additions', () => {
+
+              it('shows an error message when a duplicate agent is added', () => {
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
+                cy.get('#organization-member-list .organization-member-list-item').first().contains(agent.email);
+
+                cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
+                cy.get('button[type="submit"]').click();
+                cy.wait(500);
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
+                cy.get('#organization-member-list .organization-member-list-item').last().contains(anotherAgent.email);
+
+                // Add same agent
+                cy.get('button#add-agent').click();
+                cy.get('input[name="email"][type="email"]').type(anotherAgent.email);
+                cy.get('button[type="submit"]').click();
+                cy.wait(500);
+                cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
+                cy.contains(`${anotherAgent.email} is already a member of this organization`);
               });
             });
           });

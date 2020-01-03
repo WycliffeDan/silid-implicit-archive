@@ -16,6 +16,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
+import Flash from '../components/Flash';
 
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 import usePutOrganizationService from '../services/usePutOrganizationService';
@@ -53,6 +54,7 @@ const OrganizationInfo = (props: any) => {
   const [agentFormVisible, setAgentFormVisible] = useState(false);
   const [prevState, setPrevState] = useState<PrevState>({});
   const [toOrganization, setToOrganization] = useState(false);
+  const [flashProps, setFlashProps] = useState({} as any);
 
   const [orgInfo, setOrgInfo] = useState<Organization>({} as Organization);
   const [agentProfile, setAgentProfile] = useState<Agent>(JSON.parse(localStorage.getItem('profile') || '{}') as Agent);
@@ -105,10 +107,16 @@ const OrganizationInfo = (props: any) => {
       data[key] = value;
     }
 
-    putOrganizationMember(data).then(results => {
+    putOrganizationMember(data).then((results: any) => {
       setAgentFormVisible(false);
-      orgInfo.members.push(results);
-      setOrgInfo({ ...orgInfo } as Organization);
+      console.log(results);
+      if (results.message) {
+        setFlashProps({ message: results.message, variant: 'warning' });
+      }
+      else {
+        orgInfo.members.push(results);
+        setOrgInfo({ ...orgInfo } as Organization);
+      }
     }).catch(err => {
       console.log(err);
     });
@@ -247,12 +255,13 @@ const OrganizationInfo = (props: any) => {
           {service.status === 'loaded' && orgInfo.members && orgInfo.members.length ?
             <List id="organization-member-list">
               <Typography variant="h5" component="h3">
-              <React.Fragment>
-                Members
-              </React.Fragment>
+                <React.Fragment>
+                  Members
+                </React.Fragment>
               </Typography>
+              { flashProps.message ? <Flash message={flashProps.message} variant={flashProps.variant} /> : '' }
               { orgInfo.members.map(agent => (
-                <ListItem button className='organization-button' key='Organizations'>
+                <ListItem button className='organization-button' key={`agent-${agent.id}`}>
                   <ListItemIcon><InboxIcon /></ListItemIcon>
                   <ListItemLink href={`#agent/${agent.id}`}>
                     <ListItemText primary={agent.email} />
