@@ -221,14 +221,21 @@ describe('Agent', () => {
     });
 
     describe('teams', () => {
-      let team;
+      let newAgent, team;
       beforeEach(done => {
-        agent.save().then(result => {
-          fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
-            fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, db).then(() => {
-              db.Team.findAll().then(results => {
-                team = results[0];
-                done();
+        newAgent = new Agent({ name: 'Some Radical Dude', email: 'thedude@example.com' });
+        newAgent.save().then(result => {
+          fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, db).then(() => {
+            fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, db).then(() => {
+              fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, db).then(() => {
+                db.Team.findAll().then(results => {
+                  team = results[0];
+                  done();
+                }).catch(err => {
+                  done.fail(err);
+                });
+              }).catch(err => {
+                done.fail(err);
               });
             }).catch(err => {
               done.fail(err);
@@ -242,8 +249,8 @@ describe('Agent', () => {
       });
 
       it('has many', done => {
-        agent.addTeam(team.id).then(result => {
-          agent.getTeams().then(result => {
+        newAgent.addTeam(team.id).then(result => {
+          newAgent.getTeams().then(result => {
             expect(result.length).toEqual(1);
             expect(result[0].name).toEqual(team.name);
             done();
@@ -256,12 +263,12 @@ describe('Agent', () => {
       });
 
       it('removes team if deleted', done => {
-        agent.addTeam(team.id).then(result => {
-          agent.getTeams().then(result => {
+        newAgent.addTeam(team.id).then(result => {
+          newAgent.getTeams().then(result => {
             expect(result.length).toEqual(1);
             expect(result[0].name).toEqual(team.name);
             team.destroy().then(result => {
-              agent.getTeams().then(result => {
+              newAgent.getTeams().then(result => {
                 expect(result.length).toEqual(0);
                 done();
               }).catch(err => {
