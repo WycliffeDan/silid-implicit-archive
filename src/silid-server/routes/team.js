@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwtAuth = require('../lib/jwtAuth');
 const models = require('../models');
+const mailer = require('../mailer');
 
 /* GET team listing. */
 router.get('/', jwtAuth, function(req, res, next) {
@@ -146,5 +147,95 @@ router.delete('/', jwtAuth, function(req, res, next) {
     res.json(err);
   });
 });
+
+/**
+ * PATCH is used to modify associations (i.e., memberships and orgs).
+ * cf., PUT
+ */
+const patchTeam = function(req, res, next) {
+  models.Team.findOne({ where: { id: req.body.id },
+                                 include: ['members', 'organization', 'creator'] }).then(team => {
+    if (!team) {
+      return res.status(404).json( { message: 'No such team' });
+    }
+
+    let members = team.members.map(member => member.id);
+    if (!members.includes(req.agent.id)) {
+      return res.status(403).json( { message: 'You are not a member of this team' });
+    }
+
+    // Agent membership
+    let memberStatus = 'now a';
+    if (req.body.memberId) {
+      const index = members.indexOf(req.body.memberId);
+      // Delete
+      if (index > -1) {
+        memberStatus = 'no longer a';
+        members.splice(index, 1);
+      }
+      // Add
+      else {
+        members.push(req.body.memberId);
+      }
+    }
+
+    team.setMembers(members).then(results => {
+      models.Agent.findOne({ where: { id: req.body.memberId } }).then(agent => {
+        let mailOptions = {
+          to: agent.email,
+          from: process.env.NOREPLY_EMAIL,
+          subject: 'Identity membership update',
+          text: `You are ${memberStatus} member of ${team.name}`
+        };
+        mailer.transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Mailer Error', error);
+            return res.status(501).json(error);
+          }
+          res.status(201).json({ message: 'Update successful' });
+        });
+      }).catch(err => {
+        res.status(500).json(err);
+      });
+    }).catch(err => {
+      let status = 500;
+      if (err instanceof models.Sequelize.ForeignKeyConstraintError) {
+        status = 404;
+        if (err.parent.table === 'agent_team') {
+          err = { message: 'No such agent' }
+        }
+      }
+      res.status(status).json(err);
+    });
+  }).catch(err => {
+    res.status(500).json(err);
+  });
+}
+
+router.patch('/', jwtAuth, function(req, res, next) {
+  if (req.body.email) {
+    models.Agent.findOne({ where: { email: req.body.email } }).then(agent => {
+      if (!agent) {
+        let newAgent = new models.Agent({ email: req.body.email });
+        newAgent.save().then(result => {
+          req.body.memberId = result.id;
+          patchTeam(req, res, next);
+        }).catch(err => {
+          res.json(err);
+        });
+      }
+      else {
+        req.body.memberId = agent.id;
+        patchTeam(req, res, next);
+      }
+    }).catch(err => {
+      res.status(500).json(err);
+    });
+  }
+  else {
+    patchTeam(req, res, next);
+  }
+});
+
 
 module.exports = router;
