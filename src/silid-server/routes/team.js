@@ -5,17 +5,37 @@ const models = require('../models');
 
 /* GET team listing. */
 router.get('/', jwtAuth, function(req, res, next) {
-  res.send('respond with a resource');
+  req.agent.getTeams().then(teams => {
+    res.status(200).json(teams);
+  }).catch(err => {
+    res.status(500).json(err);
+  });
 });
 
 router.get('/:id', jwtAuth, function(req, res, next) {
-  models.Team.findOne({ where: { id: req.params.id } }).then(result => {
-    if (!result) {
-      result = { message: 'No such team' };
+  models.Team.findOne({ where: { id: req.params.id },
+                        include: [ 'creator',
+                                   { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
+                                   'organization'] }).then(team => {
+    if (!team) {
+      return res.status(404).json({ message: 'No such team' });
     }
-    res.json(result);
+    let teamMembers = team.members.map(agent => agent.email);
+    team.getOrganization().then(org => {
+      org.getMembers().then(orgMembers => {
+        orgMembers = orgMembers.map(agent => agent.email);
+        if (!teamMembers.includes(req.agent.email) && !orgMembers.includes(req.agent.email)) {
+          return res.status(403).json({ message: 'You are not a member of that team' });
+        }
+        res.status(200).json(team);
+      }).catch(err => {
+        res.status(500).json(err);
+      });
+    }).catch(err => {
+      res.status(500).json(err);
+    });
   }).catch(err => {
-    res.json(err);
+    res.status(500).json(err);
   });
 });
 
@@ -31,6 +51,7 @@ router.post('/', jwtAuth, function(req, res, next) {
         if (creator.email !== req.agent.email && !agents.includes(req.agent.email)) {
           return res.status(401).json( { message: 'Unauthorized: Invalid token' });
         }
+        req.body.creatorId = req.agent.id;
 
         let team = new models.Team(req.body);
         team.save().then(result => {
@@ -59,19 +80,19 @@ router.put('/', jwtAuth, function(req, res, next) {
       return res.json( { message: 'No such team' });
     }
     team.getOrganization().then(organization => {
-      
-      organization.getMembers({attributes: ['email']}).then(agents => {
-        agents = agents.map(agent => agent.email);
+      team.getCreator().then(teamCreator => {
         organization.getCreator().then(creator => {
 
-          if (creator.email !== req.agent.email && !agents.includes(req.agent.email)) {
-            return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+          //if (creator.email !== req.agent.email && !agents.includes(req.agent.email) && teamCreator.email !== req.agent.email) {
+          if (creator.email !== req.agent.email && teamCreator.email !== req.agent.email) {
+            return res.status(403).json( { message: 'Unauthorized: Invalid token' });
           }
           for (let key in req.body) {
             if (team[key]) {
               team[key] = req.body[key];
             }
           }
+
           team.save().then(result => {
             res.status(201).json(result);
           }).catch(err => {
@@ -94,21 +115,26 @@ router.put('/', jwtAuth, function(req, res, next) {
 router.delete('/', jwtAuth, function(req, res, next) {
   models.Team.findOne({ where: { id: req.body.id } }).then(team => {
     if (!team) {
-      return res.json( { message: 'No such team' });
+      return res.status(404).json( { message: 'No such team' });
     }
 
-    team.getOrganization().then(organization => {
+    team.getCreator().then(teamCreator => {
 
-      organization.getCreator().then(creator => {
+      team.getOrganization().then(organization => {
 
-        if (creator.email !== req.agent.email) {
-          return res.status(401).json( { message: 'Unauthorized: Invalid token' });
-        }
+        organization.getCreator().then(creator => {
 
-        team.destroy().then(results => {
-          res.json({ message: 'Team deleted' });
+          if (creator.email !== req.agent.email && teamCreator.email !== req.agent.email) {
+            return res.status(403).json( { message: 'Unauthorized: Invalid token' });
+          }
+
+          team.destroy().then(results => {
+            res.status(201).json({ message: 'Team deleted' });
+          }).catch(err => {
+            res.json(err);
+          });
         }).catch(err => {
-          res.json(err);
+          res.status(500).json(err);
         });
       }).catch(err => {
         res.status(500).json(err);

@@ -249,7 +249,7 @@ describe('teamSpec', () => {
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(404)
             .end(function(err, res) {
               if (err) done.fail(err);
               scope.done();
@@ -411,46 +411,11 @@ describe('teamSpec', () => {
             const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
             let teamMember = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
-            memberAgent.save().then(results => {
-              memberAgent.createTeam({ name: 'Omega Team',
-                                     organizationId: organization.id }).then(team => {
+            teamMember.save().then(results => {
+              teamMember.createTeam({ name: 'Omega Team',
+                                      organizationId: organization.id,
+                                      creatorId: teamMember.id }).then(team => {
 
-                request(app)
-                  .put('/team')
-                  .send({
-                    id: team.id,
-                    name: 'Tsuutina Mark Translation'
-                  })
-                  .set('Accept', 'application/json')
-                  .set('Authorization', `Bearer ${memberToken}`)
-                  .expect('Content-Type', /json/)
-                  .expect(201)
-                  .end(function(err, res) {
-                    if (err) done.fail(err);
-                    scope.done();
-                    expect(res.body.name).toEqual('Tsuutina Mark Translation');
-
-                    models.Team.findOne({ where: { id: team.id }}).then(results => {
-                      expect(results.name).toEqual('Tsuutina Mark Translation');
-                      done();
-                    }).catch(err => {
-                      done.fail(err);
-                    });
-                  });
-              }).catch(err => {
-                done.fail(err);
-              });
-            }).catch(err => {
-              done.fail(err);
-            });
-          });
-
-          it('does not allow a team member to update an existing record in the database', done => {
-            const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
-
-            let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
-            memberAgent.save().then(results => {
-              memberAgent.addTeam(team).then(results => {
                 request(app)
                   .put('/team')
                   .send({
@@ -1099,7 +1064,7 @@ describe('teamSpec', () => {
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
-              .expect(200)
+              .expect(201)
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
@@ -1116,13 +1081,14 @@ describe('teamSpec', () => {
           });
         });
 
-        it('allows team creator to remove an existing record from the database', done => {
+        it('allows team creator to remove team from the database', done => {
           const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
 
           let teamMember = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
-          memberAgent.save().then(results => {
-            memberAgent.createTeam({ name: 'Omega Team',
-                                     organizationId: organization.id }).then(team => {
+          teamMember.save().then(results => {
+            teamMember.createTeam({ name: 'Omega Team',
+                                    organizationId: organization.id,
+                                    creatorId: teamMember.id }).then(team => {
 
               team.getCreator().then(creator => {
                 expect(creator.email).toEqual(teamMember.email);
@@ -1136,13 +1102,14 @@ describe('teamSpec', () => {
                   .set('Accept', 'application/json')
                   .set('Authorization', `Bearer ${memberToken}`)
                   .expect('Content-Type', /json/)
-                  .expect(200)
+                  .expect(201)
                   .end(function(err, res) {
                     if (err) done.fail(err);
                     scope.done();
                     expect(res.body.message).toEqual('Team deleted');
-                    models.Team.findAll().then(results => {
-                      expect(results.length).toEqual(0);
+                    models.Team.findOne({where: {id: team.id}}).then(results => {
+                      console.log(results);
+                      expect(results).toBe(null);
                       done();
                     }).catch(err => {
                       done.fail(err);
@@ -1175,7 +1142,7 @@ describe('teamSpec', () => {
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
-                .expect(401)
+                .expect(403)
                 .end(function(err, res) {
                   if (err) return done.fail(err);
                   scope.done();
@@ -1210,7 +1177,7 @@ describe('teamSpec', () => {
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
-                .expect(401)
+                .expect(403)
                 .end(function(err, res) {
                   if (err) return done.fail(err);
                   scope.done();
@@ -1239,7 +1206,7 @@ describe('teamSpec', () => {
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(404)
             .end(function(err, res) {
               if (err) return done.fail(err);
               scope.done();
@@ -1316,7 +1283,7 @@ describe('teamSpec', () => {
 
       describe('update', () => {
         describe('PUT', () => {
-          it('returns 401', done => {
+          it('returns 403', done => {
             request(app)
               .put('/team')
               .send({
@@ -1326,7 +1293,7 @@ describe('teamSpec', () => {
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)
-              .expect(401)
+              .expect(403)
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
@@ -1345,7 +1312,7 @@ describe('teamSpec', () => {
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)
-              .expect(401)
+              .expect(403)
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
@@ -1356,6 +1323,42 @@ describe('teamSpec', () => {
                   done.fail(err);
                 });
               });
+          });
+
+          it('does not allow a team member to update an existing record in the database', done => {
+            const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
+
+            let memberAgent = new models.Agent({ email: 'member-agent@example.com', accessToken: `Bearer ${memberToken}` });
+            memberAgent.save().then(results => {
+              memberAgent.addTeam(team).then(results => {
+                request(app)
+                  .put('/team')
+                  .send({
+                    id: team.id,
+                    name: 'Tsuutina Mark Translation'
+                  })
+                  .set('Accept', 'application/json')
+                  .set('Authorization', `Bearer ${memberToken}`)
+                  .expect('Content-Type', /json/)
+                  .expect(403)
+                  .end(function(err, res) {
+                    if (err) done.fail(err);
+                    scope.done();
+                    expect(res.body.message).toEqual('Unauthorized: Invalid token');
+
+                    models.Team.findOne({ where: { id: team.id }}).then(results => {
+                      expect(results.name).toEqual(team.name);
+                      done();
+                    }).catch(err => {
+                      done.fail(err);
+                    });
+                  });
+              }).catch(err => {
+                done.fail(err);
+              });
+            }).catch(err => {
+              done.fail(err);
+            });
           });
         });
 
@@ -1422,7 +1425,7 @@ describe('teamSpec', () => {
       });
 
       describe('delete', () => {
-        it('returns 401', done => {
+        it('returns 403', done => {
           request(app)
             .delete('/team')
             .send({
@@ -1431,7 +1434,7 @@ describe('teamSpec', () => {
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
-            .expect(401)
+            .expect(403)
             .end(function(err, res) {
               if (err) done.fail(err);
               scope.done();
@@ -1452,7 +1455,7 @@ describe('teamSpec', () => {
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)
-              .expect(401)
+              .expect(403)
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
