@@ -237,5 +237,118 @@ router.patch('/', jwtAuth, function(req, res, next) {
   }
 });
 
+router.put('/:id/agent', jwtAuth, function(req, res, next) {
+  models.Team.findOne({ where: { id: req.params.id },
+                                 include: [ 'creator',
+                                            { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
+                                            'organization'] }).then(team => {
+
+    if (!team) {
+      return res.status(404).json( { message: 'No such team' });
+    }
+
+    if (!team.members.map(member => member.id).includes(req.agent.id)) {
+      return res.status(403).json({ message: 'You are not a member of this team' });
+    }
+
+    models.Agent.findOne({ where: { email: req.body.email }, attributes: { exclude: ['accessToken'] } }).then(agent => {
+
+      const mailOptions = {
+        from: process.env.NOREPLY_EMAIL,
+        subject: 'Identity membership update',
+        text: `You are now a member of ${team.name}`
+      };
+
+      if (!agent) {
+        let newAgent = new models.Agent({ email: req.body.email });
+        newAgent.save().then(result => {
+          team.addMember(newAgent.id).then(result => {
+
+            mailOptions.to = newAgent.email;
+            mailer.transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.error('Mailer Error', error);
+                return res.status(501).json(error);
+              }
+              res.status(201).json(newAgent);
+            });
+          }).catch(err => {
+            res.status(500).json(err);
+          })
+        }).catch(err => {
+          res.status(500).json(err);
+        });
+      }
+      else {
+        if (team.members.map(a => a.id).includes(agent.id)) {
+          return res.status(200).json({ message: `${agent.email} is already a member of this team` });
+        }
+
+        team.addMember(agent.id).then(result => {
+
+          mailOptions.to = agent.email;
+          mailer.transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error('Mailer Error', error);
+              return res.status(501).json(error);
+            }
+            res.status(201).json(agent);
+          });
+        }).catch(err => {
+          res.status(500).json(err);
+        });
+      }
+    }).catch(err => {
+      res.status(500).json(err);
+    });
+  }).catch(err => {
+    res.status(500).json(err);
+  });
+});
+
+
+router.delete('/:id/agent/:agentId', jwtAuth, function(req, res, next) {
+  models.Team.findOne({ where: { id: req.params.id },
+                                 include: [ 'creator',
+                                          { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
+                                           'organization'] }).then(team => {
+    if (!team) {
+      return res.status(404).json( { message: 'No such team' });
+    }
+
+    if (req.agent.email !== team.creator.email) {
+      return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+    }
+
+    models.Agent.findOne({ where: { id: req.params.agentId } }).then(agent => {
+      if (!agent || !team.members.map(member => member.id).includes(agent.id)) {
+        return res.status(404).json({ message: 'That agent is not a member' });
+      }
+
+      team.removeMember(req.params.agentId).then(results => {
+        let mailOptions = {
+          to: agent.email,
+          from: process.env.NOREPLY_EMAIL,
+          subject: 'Identity membership update',
+          text: `You are no longer a member of ${team.name}`
+        };
+        mailer.transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Mailer Error', error);
+            return res.status(501).json(error);
+          }
+          res.status(201).json({ message: 'Member removed' });
+        });
+      }).catch(err => {
+        res.status(500).json(err);
+      });
+    }).catch(err => {
+      res.status(500).json(err);
+    });
+  }).catch(err => {
+    res.status(500).json(err);
+  });
+});
+
 
 module.exports = router;
