@@ -230,7 +230,6 @@ describe('teamSpec', () => {
         it('retrieves an existing record from the database', done => {
           request(app)
             .get(`/team/${team.id}`)
-            .send({ name: 'My team' })
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
@@ -246,7 +245,6 @@ describe('teamSpec', () => {
         it('doesn\'t barf if record doesn\'t exist', done => {
           request(app)
             .get('/team/33')
-            .send({ name: 'My team' })
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
@@ -992,7 +990,6 @@ describe('teamSpec', () => {
             done.fail(err);
           });
         });
-
 
         it('does not allow organization member to remove an existing record from the database', done => {
           const memberToken = jwt.sign({ ..._access, sub: 'auth0|888888' }, prv, { algorithm: 'RS256', expiresIn: '1h', header: { kid: keystore.all()[0].kid } });
