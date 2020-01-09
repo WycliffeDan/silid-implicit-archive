@@ -35,7 +35,7 @@ describe('teamMembershipSpec', () => {
     mailer.transport.sentMail = [];
   });
 
-  let team, agent, organization;
+  let team, organization, agent;
   beforeEach(done => {
     models.sequelize.sync({force: true}).then(() => {
       fixtures.loadFile(`${__dirname}/../fixtures/agents.json`, models).then(() => {
@@ -44,14 +44,16 @@ describe('teamMembershipSpec', () => {
           fixtures.loadFile(`${__dirname}/../fixtures/organizations.json`, models).then(() => {
             models.Organization.findAll().then(results => {
               organization = results[0];
+              fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, models).then(() => {
+                models.Team.findAll().then(results => {
+                  team = results[0];
 
-              // This agent has recently returned for a visit
-              agent.accessToken = `Bearer ${signedAccessToken}`;
-              agent.save().then(() => {
-                fixtures.loadFile(`${__dirname}/../fixtures/teams.json`, models).then(() => {
-                  models.Team.findAll().then(results => {
-                    team = results[0];
+                  // This agent has recently returned for a visit
+                  agent.accessToken = `Bearer ${signedAccessToken}`;
+                  agent.save().then(() => {
                     done();
+                  }).catch(err => {
+                    done.fail(err);
                   });
                 }).catch(err => {
                   done.fail(err);
@@ -75,6 +77,7 @@ describe('teamMembershipSpec', () => {
       done.fail(err);
     });
   });
+
 
   describe('authenticated', () => {
 
@@ -116,7 +119,7 @@ describe('teamMembershipSpec', () => {
             models.Team.findAll({ include: [ 'creator', { model: models.Agent, as: 'members' } ] }).then(results => {
               expect(results.length).toEqual(1);
               expect(results[0].members.length).toEqual(1);
-  
+
               request(app)
                 .put(`/team/${team.id}/agent`)
                 .send({

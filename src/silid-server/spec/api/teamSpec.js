@@ -30,7 +30,6 @@ describe('teamSpec', () => {
     });
   });
 
-
   let team, organization, agent;
   beforeEach(done => {
     models.sequelize.sync({force: true}).then(() => {
@@ -973,7 +972,6 @@ describe('teamSpec', () => {
                     scope.done();
                     expect(res.body.message).toEqual('Team deleted');
                     models.Team.findOne({where: {id: team.id}}).then(results => {
-                      console.log(results);
                       expect(results).toBe(null);
                       done();
                     }).catch(err => {
