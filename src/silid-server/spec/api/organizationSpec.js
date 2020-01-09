@@ -230,8 +230,8 @@ describe('organizationSpec', () => {
             });
         });
 
-        it('populates the creator organization', done => {
-          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id }).then(team => {
+        it('populates the team list', done => {
+          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id, creatorId: agent.id }).then(team => {
             request(app)
               .get(`/organization/${organization.id}`)
               .set('Accept', 'application/json')
@@ -243,6 +243,7 @@ describe('organizationSpec', () => {
                 scope.done();
                 expect(res.body.teams).toBeDefined();
                 expect(res.body.teams.length).toEqual(1);
+                expect(res.body.teams[0].name).toEqual('Alpha Squad 1');
                 done();
               });
             }).catch(err => {
@@ -251,7 +252,7 @@ describe('organizationSpec', () => {
         });
 
         it('populates the organization team list', done => {
-          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id }).then(team => {
+          models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id, creatorId: agent.id }).then(team => {
             request(app)
               .get(`/organization/${organization.id}`)
               .set('Accept', 'application/json')
@@ -301,7 +302,7 @@ describe('organizationSpec', () => {
               expect(res.body.members[0].accessToken).toBeUndefined();
               done();
             });
-          });
+        });
       });
 
       describe('update', () => {
@@ -807,7 +808,7 @@ describe('organizationSpec', () => {
             beforeEach(done => {
               anotherAgent.createOrganization({ name: 'International Association of Vigilante Crime Fighters', creatorId: anotherAgent.id }).then(result => {
                 newOrg = result;
-                newOrg.createTeam({ name: 'The A-Team', organizationId: newOrg.id }).then(result => {
+                newOrg.createTeam({ name: 'The A-Team', organizationId: newOrg.id, creatorId: agent.id }).then(result => {
                   newTeam = result;
                   done();
                 }).catch(err => {
@@ -991,7 +992,7 @@ describe('organizationSpec', () => {
 
       describe('update', () => {
         describe('PUT', () => {
-          it('returns 401', done => {
+          it('returns 403', done => {
             request(app)
               .put('/organization')
               .send({

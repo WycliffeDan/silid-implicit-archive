@@ -18,14 +18,13 @@ import InboxIcon from '@material-ui/icons/MoveToInbox';
 import { Organization } from '../types/Organization';
 import { Agent } from '../types/Agent';
 import Flash from '../components/Flash';
-
+import TeamCreateForm from '../components/TeamCreateForm';
 
 import useGetOrganizationInfoService from '../services/useGetOrganizationInfoService';
 import usePutOrganizationService from '../services/usePutOrganizationService';
 import usePutOrganizationMemberService from '../services/usePutOrganizationMemberService';
 import useDeleteOrganizationService from '../services/useDeleteOrganizationService';
 import useDeleteMemberAgentService from '../services/useDeleteMemberAgentService';
-
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -155,7 +154,7 @@ const OrganizationInfo = (props: any) => {
   }
 
   function ListItemLink(props:any) {
-    return <ListItem className='organization-member-list-item' button component="a" {...props} />;
+    return <ListItem className='list-item' button component="a" {...props} />;
   }
 
   if (toOrganization) {
@@ -219,7 +218,7 @@ const OrganizationInfo = (props: any) => {
                     }
                   </React.Fragment>
                 : '' }
-                {!editFormVisible && !agentFormVisible ?
+                {!editFormVisible && !agentFormVisible && !teamFormVisible ?
                     <Typography variant="body2" color="textSecondary" component="p">
                       <React.Fragment>
                         {orgInfo.creator && (agentProfile.email === orgInfo.creator.email) ?
@@ -264,6 +263,28 @@ const OrganizationInfo = (props: any) => {
                       Add
                     </Button>
                   </form>
+                : ''}
+                {teamFormVisible ?
+                  <React.Fragment>
+                    <TeamCreateForm orgId={orgInfo.id}
+                      done={(results) => {
+                        setTeamFormVisible(false);
+                        if (results.errors) {
+                          setFlashProps({errors: results.errors, variant: 'error' });
+                        }
+                        else {
+                          orgInfo.teams.push(results);
+                          setOrgInfo({ ...orgInfo } as Organization);
+                        }
+                      }}/>
+                    <Button id="cancel-changes"
+                      variant="contained" color="secondary"
+                      onClick={() => {
+                        setTeamFormVisible(false);
+                      }}>
+                        Cancel
+                    </Button>
+                 </React.Fragment>
                : ''}
               </React.Fragment>
             : ''}
@@ -276,7 +297,6 @@ const OrganizationInfo = (props: any) => {
                   Members
                 </React.Fragment>
               </Typography>
-              { flashProps.message ? <Flash message={flashProps.message} variant={flashProps.variant} /> : '' }
               { orgInfo.members.map(agent => (
                 <ListItem button className='organization-button' key={`agent-${agent.id}`}>
                   <ListItemIcon><InboxIcon /></ListItemIcon>
@@ -289,6 +309,26 @@ const OrganizationInfo = (props: any) => {
                 </ListItem>
               ))}
             </List> : ''}
+          {service.status === 'loaded' && orgInfo.teams && orgInfo.teams.length ?
+            <List id="organization-team-list">
+              <Typography variant="h5" component="h3">
+                <React.Fragment>
+                  Teams
+                </React.Fragment>
+              </Typography>
+              { orgInfo.teams.map(team => (
+                <ListItem button className='team-button' key={`team-${team.id}`}>
+                  <ListItemIcon><InboxIcon /></ListItemIcon>
+                  <ListItemLink href={`#team/${team.id}`}>
+                    <ListItemText primary={team.name} />
+                  </ListItemLink>
+                  { (agentProfile.email === orgInfo.creator.email) ?
+                    <DeleteForeverOutlinedIcon className="delete-team" onClick={() => handleMemberDelete(333)} />
+                  : ''}
+                </ListItem>
+              ))}
+            </List> : ''}
+
           {service.status === 'error' && (
             <Typography id="error-message" variant="h5" component="h3">
               {service.error}
@@ -296,7 +336,8 @@ const OrganizationInfo = (props: any) => {
           )}
         </CardContent>
       </Card>
-
+      { flashProps.message ? <Flash message={flashProps.message} variant={flashProps.variant} /> : '' }
+      { flashProps.errors ? flashProps.errors.map(error => <Flash message={error.message} variant={flashProps.variant} />) : '' }
     </div>
   );
 };

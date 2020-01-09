@@ -291,32 +291,28 @@ router.delete('/:id/agent/:agentId', jwtAuth, function(req, res, next) {
       return res.status(404).json( { message: 'No such organization' });
     }
 
-    organization.getCreator().then(creator => {
-      if (req.agent.email !== creator.email) {
-        return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+    if (req.agent.email !== organization.creator.email) {
+      return res.status(401).json( { message: 'Unauthorized: Invalid token' });
+    }
+
+    models.Agent.findOne({ where: { id: req.params.agentId } }).then(agent => {
+      if (!agent || !organization.members.map(member => member.id).includes(agent.id)) {
+        return res.status(404).json({ message: 'That agent is not a member' });
       }
 
-      models.Agent.findOne({ where: { id: req.params.agentId } }).then(agent => {
-        if (!agent || !organization.members.map(member => member.id).includes(agent.id)) {
-          return res.status(404).json({ message: 'That agent is not a member' });
-        }
-
-        organization.removeMember(req.params.agentId).then(results => {
-          let mailOptions = {
-            to: agent.email,
-            from: process.env.NOREPLY_EMAIL,
-            subject: 'Identity membership update',
-            text: `You are no longer a member of ${organization.name}`
-          };
-          mailer.transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error('Mailer Error', error);
-              return res.status(501).json(error);
-            }
-            res.status(201).json({ message: 'Member removed' });
-          });
-        }).catch(err => {
-          res.status(500).json(err);
+      organization.removeMember(req.params.agentId).then(results => {
+        let mailOptions = {
+          to: agent.email,
+          from: process.env.NOREPLY_EMAIL,
+          subject: 'Identity membership update',
+          text: `You are no longer a member of ${organization.name}`
+        };
+        mailer.transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Mailer Error', error);
+            return res.status(501).json(error);
+          }
+          res.status(201).json({ message: 'Member removed' });
         });
       }).catch(err => {
         res.status(500).json(err);

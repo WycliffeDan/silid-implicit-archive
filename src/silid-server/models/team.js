@@ -22,12 +22,21 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     hooks: {
       afterCreate: function(team, options) {
+        team.addMember(team.creatorId);
         return team.addOrganization(team.organizationId);
       }
     }
   });
 
   Team.associate = function(models) {
+    Team.belongsTo(models.Agent, {
+      as: 'creator',
+      foreignKey: {
+        allowNull: false,
+      },
+      onDelete: 'CASCADE'
+    });
+
     Team.belongsTo(models.Organization, {
       as: 'organization',
       foreignKey: {
@@ -37,6 +46,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Team.belongsToMany(models.Agent, {
+      as: 'members',
       through: 'agent_team'
     });
 
