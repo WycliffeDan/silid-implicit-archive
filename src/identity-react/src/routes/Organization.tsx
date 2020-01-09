@@ -12,11 +12,11 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Button from '@material-ui/core/Button';
 import Flash from '../components/Flash';
+import OrgCreateForm from '../components/OrgCreateForm';
 // Remove this junk later
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 
 import useGetOrganizationService, { Organizations } from '../services/useGetOrganizationService';
-import usePostOrganizationService from '../services/usePostOrganizationService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -39,10 +39,10 @@ const useStyles = makeStyles((theme: Theme) =>
 const Organization = (props: any) => {
   const [formVisible, toggleFormVisible] = useState(false);
   const [orgList, setOrgList] = useState<Organizations>({ results: [] } as Organizations);
+  const [flashProps, setFlashProps] = useState({} as any);
 
   const classes = useStyles();
   const service = useGetOrganizationService();
-  let { publishOrganization } = usePostOrganizationService();
 
   useEffect(() => {
     if (service.status === 'loaded') {
@@ -50,27 +50,9 @@ const Organization = (props: any) => {
     }
   }, [service.status]);
 
-  const handleSubmit = (evt:any) => {
-    evt.preventDefault();
-
-    const formData = new FormData(evt.target);
-    let data = {} as any;
-    for (const [key, value] of formData.entries()) {
-      data[key] = value;
-    }
-
-    publishOrganization(data).then(results => {
-      toggleFormVisible(false);
-      setOrgList({ results: [results, ...orgList.results] } as Organizations);
-    }).catch(err => {
-      console.log(err);
-    });
-  }
-
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
     evt.target.setCustomValidity(`${evt.target.name} required`);
   }
-
 
   function ListItemLink(props:any) {
     return <ListItem className='organization-list-item' button component="a" {...props} />;
@@ -84,37 +66,31 @@ const Organization = (props: any) => {
             Organizations
           </Typography>
           { props.location.state ? <Flash message={props.location.state} variant="success" /> : '' }
+          { flashProps.errors ? flashProps.errors.map(error => <Flash message={error.message} variant={flashProps.variant} />) : '' }
           { formVisible ?
-            <form id="add-organization-form" onSubmit={handleSubmit}>
-              <TextField
-                id="name-input"
-                label="Name"
-                type="text"
-                className={classes.textField}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                margin="normal"
-                name="name"
-                required
-                placeholder="Enter new organization name"
-                onInvalid={customMessage}
-              />
-              <Button id="cancel-changes"
-                variant="contained" color="secondary"
-                onClick={() => {
-                  toggleFormVisible(false)
-                }}>
-                  Cancel
-              </Button>
-              <Button id="add-organization-button" type="submit" variant="contained" color="primary">
-                Add
-              </Button>
-            </form> :
-
-            <Fab id="add-organization" color="secondary" aria-label="add" className={classes.margin}>
-             <AddIcon onClick={() => toggleFormVisible(true)} />
-            </Fab>
+              <React.Fragment>
+                <OrgCreateForm
+                  done={(results) => {
+                    toggleFormVisible(false);
+                    if (results.errors) {
+                      setFlashProps({errors: results.errors, variant: 'error' });
+                    }
+                    else {
+                      setOrgList({ results: [results, ...orgList.results] } as Organizations);
+                    }
+                  }}/>
+                <Button id="cancel-changes"
+                  variant="contained" color="secondary"
+                  onClick={() => {
+                    toggleFormVisible(false)
+                  }}>
+                    Cancel
+                </Button>
+              </React.Fragment>
+            :
+              <Fab id="add-organization" color="secondary" aria-label="add" className={classes.margin}>
+                <AddIcon onClick={() => toggleFormVisible(true)} />
+              </Fab>
           }
 
           <Typography variant="body2" color="textSecondary" component="p">
