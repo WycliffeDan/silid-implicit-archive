@@ -61,7 +61,7 @@ context('Organization delete agent', function() {
             expect(str).to.eq('Remove member?');
             done();
           });
-          cy.get('#organization-member-list .organization-member-list-item').first().contains(memberAgent.email);
+          cy.get('#organization-member-list .list-item').first().contains(memberAgent.email);
           cy.get('.delete-member').last().click();
         });
 
@@ -69,10 +69,10 @@ context('Organization delete agent', function() {
           cy.on('window:confirm', (str) => {
             return true;
           });
-          cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 2);
+          cy.get('#organization-member-list').find('.list-item').its('length').should('eq', 2);
           cy.get('.delete-member').first().click();
           cy.wait(500);
-          cy.get('#organization-member-list').find('.organization-member-list-item').its('length').should('eq', 1);
+          cy.get('#organization-member-list').find('.list-item').its('length').should('eq', 1);
         });
 
         it('updates the database', () => {
