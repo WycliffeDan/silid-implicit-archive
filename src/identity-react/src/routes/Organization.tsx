@@ -55,7 +55,7 @@ const Organization = (props: any) => {
   }
 
   function ListItemLink(props:any) {
-    return <ListItem className='organization-list-item' button component="a" {...props} />;
+    return <ListItem className='list-item' button component="a" {...props} />;
   }
 
   return (
