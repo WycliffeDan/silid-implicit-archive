@@ -171,8 +171,6 @@ describe('Team', () => {
           done.fail(err);
         });
       });
-
-
     });
 
     describe('name', () => {
@@ -190,6 +188,18 @@ describe('Team', () => {
 
       it('blank not allowed', done => {
         _valid.name = '   ';
+        team = new Team(_valid);
+        team.save().then(obj => {
+          done.fail('This shouldn\'t haved saved');
+        }).catch(err => {
+          expect(err.errors.length).toEqual(1);
+          expect(err.errors[0].message).toEqual('Team requires a name');
+          done();
+        });
+      });
+
+      it('empty not allowed', done => {
+        _valid.name = '';
         team = new Team(_valid);
         team.save().then(obj => {
           done.fail('This shouldn\'t haved saved');
