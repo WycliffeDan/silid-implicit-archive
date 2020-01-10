@@ -15,7 +15,7 @@ router.get('/', jwtAuth, function(req, res, next) {
 
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Team.findOne({ where: { id: req.params.id },
-                        include: [ 'creator',
+                        include: [ { model: models.Agent, as: 'creator', attributes: { exclude: ['accessToken'] } },
                                    { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
                                    'organization'] }).then(team => {
     if (!team) {
