@@ -282,7 +282,7 @@ describe('teamSpec', () => {
 
             models.Team.create({ name: 'Alpha Squadron',
                                  creatorId: agent.id,
-                                 organizationId: organization.id }).then(org => {
+                                 organizationId: organization.id }).then(res => {
 
               request(app)
                 .get(`/team`)
@@ -316,6 +316,7 @@ describe('teamSpec', () => {
               scope.done();
               expect(res.body.creator).toBeDefined();
               expect(res.body.creator.email).toEqual(agent.email);
+              expect(res.body.creator.accessToken).toBeUndefined();
               done();
             });
         });
