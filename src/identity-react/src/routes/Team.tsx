@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Redirect } from 'react-router-dom';
+import TextField from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
@@ -11,6 +13,8 @@ import { Agent } from '../types/Agent';
 import Flash from '../components/Flash';
 
 import useGetTeamInfoService from '../services/useGetTeamInfoService';
+import usePutTeamService from '../services/usePutTeamService';
+import useDeleteTeamService from '../services/useDeleteTeamService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,7 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-export interface PrevState {
+export interface PrevFormState {
   [key:string]: any
 }
 
@@ -39,17 +43,86 @@ const TeamInfo = (props: any) => {
 
   const [editFormVisible, setEditFormVisible] = useState(false);
   const [agentFormVisible, setAgentFormVisible] = useState(false);
+  const [prevFormState, setPrevFormState] = useState<PrevFormState>({});
+  const [toOrganization, setToOrganization] = useState(false);
   const [flashProps, setFlashProps] = useState({} as any);
+
   const [teamInfo, setTeamInfo] = useState<Team>({} as Team);
   const [agentProfile, setAgentProfile] = useState<Agent>(JSON.parse(localStorage.getItem('profile') || '{}') as Agent);
 
   const service = useGetTeamInfoService(props.match.params.id);
+  let { publishTeam } = usePutTeamService();
+  let { deleteTeam } = useDeleteTeamService();
 
   useEffect(() => {
     if (service.status === 'loaded') {
       setTeamInfo(service.payload);
     }
   }, [service.status]);
+
+  /**
+   * Update this organization
+   */
+  const handleSubmit = (evt:any) => {
+    evt.preventDefault();
+
+    const formData = new FormData(evt.target);
+    let data = {} as Team;
+    for (const [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+
+    publishTeam(data).then(results => {
+      setEditFormVisible(false);
+      setTeamInfo({ results, ...teamInfo } as Team);
+    }).catch(err => {
+      console.log(err);
+    });
+  }
+
+  /**
+   * Remove this team
+   */
+  const handleDelete = (evt:any) => {
+    if (teamInfo.members.length > 1) {
+      return window.alert('Remove all team members before deleting the team');
+    }
+    if (window.confirm('Delete team?')) {
+      deleteTeam(teamInfo.id).then(results => {
+        setToOrganization(true);
+      });
+    }
+  }
+
+  /**
+   * Set tool-tip message on field validation
+   */
+  const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    evt.target.setCustomValidity(`${evt.target.name} required`);
+  }
+
+  /**
+   * Keep track of team form state
+   *
+   * This needs to be replaced, as it does in OrganizationInfo...
+   */
+  const onChange = (evt:React.ChangeEvent<HTMLInputElement>) => {
+    if (!prevFormState[evt.target.name]) {
+      const s = { ...prevFormState};
+      s[evt.target.name] = teamInfo[evt.target.name];
+      setPrevFormState(s);
+    }
+    const f = { ...teamInfo };
+    f[evt.target.name] = evt.target.value.trimLeft();
+    setTeamInfo(f);
+  }
+
+  /**
+   * Redirect to `/organization` when this org is deleted
+   */
+  if (toOrganization) {
+    return <Redirect to={{ pathname: `/organization/${teamInfo.organizationId}`, state: 'Team deleted' }} />
+  }
 
   return (
     <div className="team">
@@ -68,7 +141,44 @@ const TeamInfo = (props: any) => {
                       <Button id="edit-team" variant="contained" color="primary" onClick={() => setEditFormVisible(true)}>
                         Edit
                       </Button>
-                    : ''}
+                    :
+                      <React.Fragment>
+                        <form id="edit-team-form" onSubmit={handleSubmit}>
+                          <input type="hidden" name="id" value={teamInfo.id} />
+                          <TextField
+                            id="name-input"
+                            label="Name"
+                            type="text"
+                            className={classes.textField}
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            margin="normal"
+                            name="name"
+                            required
+                            value={teamInfo.name}
+                            onChange={onChange}
+                            onInvalid={customMessage}
+                          />
+                          <Button id="cancel-changes"
+                            variant="contained" color="secondary"
+                            onClick={() => {
+                              setTeamInfo({ ...teamInfo, ...prevFormState });
+                              setEditFormVisible(false);
+                            }}>
+                              Cancel
+                          </Button>
+                          <Button id="save-team-button"
+                                  type="submit" variant="contained" color="primary"
+                                  disabled={!Object.keys(prevFormState).length}>
+                            Save
+                          </Button>
+                        </form>
+                        <Button id="delete-team" variant="contained" color="secondary" onClick={handleDelete}>
+                          Delete
+                        </Button>
+                      </React.Fragment>
+                    }
                   </React.Fragment>
                 : ''}
                 {!editFormVisible && !agentFormVisible ?
