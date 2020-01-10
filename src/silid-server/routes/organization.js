@@ -15,9 +15,10 @@ router.get('/', jwtAuth, function(req, res, next) {
 
 router.get('/:id', jwtAuth, function(req, res, next) {
   models.Organization.findOne({ where: { id: req.params.id },
-                                include: [ 'creator',
+                                include: [ { model: models.Agent, as: 'creator', attributes: { exclude: ['accessToken'] } },
                                            { model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } },
-                                           'teams'] }).then(result => {
+                                           { model: models.Team, as: 'teams',
+                                             include: [{ model: models.Agent, as: 'members', attributes: { exclude: ['accessToken'] } }] } ] }).then(result => {
     if (!result) {
       return res.status(404).json({ message: 'No such organization' });
     }
@@ -170,9 +171,8 @@ router.patch('/', jwtAuth, function(req, res, next) {
         newAgent.save().then(result => {
           req.body.memberId = result.id;
           patchOrg(req, res, next);
-
         }).catch(err => {
-          res.json(err);
+          res.status(500).json(err);
         });
       }
       else {
@@ -202,13 +202,13 @@ router.delete('/', jwtAuth, function(req, res, next) {
       organization.destroy().then(results => {
         res.json( { message: 'Organization deleted' });
       }).catch(err => {
-        res.json(err);
+        res.status(500).json(err);
       });   
     }).catch(err => {
-      res.json(err);
+      res.status(500).json(err);
     });
   }).catch(err => {
-    res.json(err);
+    res.status(500).json(err);
   });
 });
 
