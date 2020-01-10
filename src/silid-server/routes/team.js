@@ -84,7 +84,6 @@ router.put('/', jwtAuth, function(req, res, next) {
       team.getCreator().then(teamCreator => {
         organization.getCreator().then(creator => {
 
-          //if (creator.email !== req.agent.email && !agents.includes(req.agent.email) && teamCreator.email !== req.agent.email) {
           if (creator.email !== req.agent.email && teamCreator.email !== req.agent.email) {
             return res.status(403).json( { message: 'Unauthorized: Invalid token' });
           }
@@ -113,8 +112,8 @@ router.put('/', jwtAuth, function(req, res, next) {
   });
 });
 
-router.delete('/', jwtAuth, function(req, res, next) {
-  models.Team.findOne({ where: { id: req.body.id } }).then(team => {
+router.delete('/:id', jwtAuth, function(req, res, next) {
+  models.Team.findOne({ where: { id: req.params.id } }).then(team => {
     if (!team) {
       return res.status(404).json( { message: 'No such team' });
     }
