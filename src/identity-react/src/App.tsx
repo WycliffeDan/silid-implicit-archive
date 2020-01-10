@@ -7,6 +7,7 @@ import Home from './routes/Home';
 import Agent from './routes/Agent';
 import Organization from './routes/Organization';
 import OrganizationInfo from './routes/OrganizationInfo';
+import Team from './routes/Team';
 import Auth from './auth/Auth';
 import Callback from './callback/Callback';
 import { parseQuery } from './utils/parseQuery';
@@ -47,6 +48,7 @@ function App() {
           <PrivateRoute path="/agent" auth={auth} component={Agent} redirect="/" />
           <PrivateRoute path="/organization/:id" auth={auth} component={OrganizationInfo} redirect="/" />
           <PrivateRoute path="/organization" auth={auth} component={Organization} redirect="/" />
+          <PrivateRoute path="/team/:id" auth={auth} component={Team} redirect="/" />
         </Switch>
       </HashRouter>
       <BrowserRouter>
