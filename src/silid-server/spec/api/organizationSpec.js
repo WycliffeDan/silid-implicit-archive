@@ -263,7 +263,6 @@ describe('organizationSpec', () => {
               .end(function(err, res) {
                 if (err) done.fail(err);
                 scope.done();
-console.log(res.body);
                 expect(res.body.teams).toBeDefined();
                 expect(res.body.teams.length).toEqual(1);
                 expect(res.body.teams[0].members.length).toEqual(1);
