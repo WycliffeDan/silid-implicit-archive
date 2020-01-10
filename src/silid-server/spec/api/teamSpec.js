@@ -282,7 +282,7 @@ describe('teamSpec', () => {
 
             models.Team.create({ name: 'Alpha Squadron',
                                  creatorId: agent.id,
-                                 organizationId: organization.id }).then(org => {
+                                 organizationId: organization.id }).then(res => {
 
               request(app)
                 .get(`/team`)
@@ -316,6 +316,7 @@ describe('teamSpec', () => {
               scope.done();
               expect(res.body.creator).toBeDefined();
               expect(res.body.creator.email).toEqual(agent.email);
+              expect(res.body.creator.accessToken).toBeUndefined();
               done();
             });
         });
@@ -921,10 +922,7 @@ describe('teamSpec', () => {
             expect(team.organizationId).toEqual(organization.id);
 
             request(app)
-              .delete('/team')
-              .send({
-                id: team.id,
-              })
+              .delete(`/team/${team.id}`)
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${signedAccessToken}`)
               .expect('Content-Type', /json/)
@@ -959,10 +957,7 @@ describe('teamSpec', () => {
                 expect(team.organizationId).toEqual(organization.id);
 
                 request(app)
-                  .delete('/team')
-                  .send({
-                    id: team.id,
-                  })
+                  .delete(`/team/${team.id}`)
                   .set('Accept', 'application/json')
                   .set('Authorization', `Bearer ${memberToken}`)
                   .expect('Content-Type', /json/)
@@ -997,10 +992,7 @@ describe('teamSpec', () => {
             memberAgent.addOrganization(organization).then(results => {
 
               request(app)
-                .delete('/team')
-                .send({
-                  id: team.id,
-                })
+                .delete(`/team/${team.id}`)
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
@@ -1032,10 +1024,7 @@ describe('teamSpec', () => {
             memberAgent.addTeam(team).then(results => {
 
               request(app)
-                .delete('/team')
-                .send({
-                  id: team.id,
-                })
+                .delete(`/team/${team.id}`)
                 .set('Accept', 'application/json')
                 .set('Authorization', `Bearer ${memberToken}`)
                 .expect('Content-Type', /json/)
@@ -1061,10 +1050,7 @@ describe('teamSpec', () => {
 
         it('doesn\'t barf if team doesn\'t exist', done => {
           request(app)
-            .delete('/team')
-            .send({
-              id: 111,
-            })
+            .delete(`/team/333`)
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${signedAccessToken}`)
             .expect('Content-Type', /json/)
@@ -1289,10 +1275,7 @@ describe('teamSpec', () => {
       describe('delete', () => {
         it('returns 403', done => {
           request(app)
-            .delete('/team')
-            .send({
-              id: team.id
-            })
+            .delete(`/team/${team.id}`)
             .set('Accept', 'application/json')
             .set('Authorization', `Bearer ${unauthorizedToken}`)
             .expect('Content-Type', /json/)
@@ -1310,10 +1293,7 @@ describe('teamSpec', () => {
             expect(results.length).toEqual(1);
 
             request(app)
-              .delete('/team')
-              .send({
-                id: team.id
-              })
+              .delete(`/team/${team.id}`)
               .set('Accept', 'application/json')
               .set('Authorization', `Bearer ${unauthorizedToken}`)
               .expect('Content-Type', /json/)

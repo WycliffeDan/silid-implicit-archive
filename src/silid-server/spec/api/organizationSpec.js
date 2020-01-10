@@ -226,6 +226,7 @@ describe('organizationSpec', () => {
               scope.done();
               expect(res.body.creator).toBeDefined();
               expect(res.body.creator.email).toEqual(agent.email);
+              expect(res.body.creator.accessToken).toBeUndefined();
               done();
             });
         });
@@ -251,7 +252,7 @@ describe('organizationSpec', () => {
             });
         });
 
-        it('populates the organization team list', done => {
+        it('populates the teams on the organization team list', done => {
           models.Team.create({ name: 'Alpha Squad 1', organizationId: organization.id, creatorId: agent.id }).then(team => {
             request(app)
               .get(`/organization/${organization.id}`)
@@ -264,7 +265,9 @@ describe('organizationSpec', () => {
                 scope.done();
                 expect(res.body.teams).toBeDefined();
                 expect(res.body.teams.length).toEqual(1);
-                expect(res.body.teams[0].name).toEqual('Alpha Squad 1');
+                expect(res.body.teams[0].members.length).toEqual(1);
+                expect(res.body.teams[0].members[0].email).toEqual(agent.email);
+                expect(res.body.teams[0].members[0].accessToken).toBeUndefined();
                 done();
               });
             }).catch(err => {

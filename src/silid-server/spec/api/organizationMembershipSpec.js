@@ -93,7 +93,7 @@ describe('organizationMembershipSpec', () => {
                   expect(res.body.name).toEqual(null);
                   expect(res.body.email).toEqual('somebrandnewguy@example.com');
                   expect(res.body.id).toBeDefined();
-                  // Watch out of this... shouldn't it be `undefined`?
+                  // Watch out for this... shouldn't it be `undefined`?
                   expect(res.body.accessToken).toBe(null);
   
                   done();

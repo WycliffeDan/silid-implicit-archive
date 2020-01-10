@@ -25,6 +25,7 @@ import usePutOrganizationService from '../services/usePutOrganizationService';
 import usePutOrganizationMemberService from '../services/usePutOrganizationMemberService';
 import useDeleteOrganizationService from '../services/useDeleteOrganizationService';
 import useDeleteMemberAgentService from '../services/useDeleteMemberAgentService';
+import useDeleteTeamService from '../services/useDeleteTeamService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -66,6 +67,7 @@ const OrganizationInfo = (props: any) => {
   let { putOrganizationMember } = usePutOrganizationMemberService();
   let { deleteOrganization } = useDeleteOrganizationService();
   let { deleteMemberAgent } = useDeleteMemberAgentService(props.match.params.id);
+  let { deleteTeam } = useDeleteTeamService();
 
   useEffect(() => {
     if (service.status === 'loaded') {
@@ -73,6 +75,9 @@ const OrganizationInfo = (props: any) => {
     }
   }, [service.status]);
 
+  /**
+   * Update this organization
+   */
   const handleSubmit = (evt:any) => {
     evt.preventDefault();
 
@@ -90,6 +95,9 @@ const OrganizationInfo = (props: any) => {
     });
   }
 
+  /**
+   * Remove this organization
+   */
   const handleDelete = (evt:any) => {
     if (orgInfo.members.length > 1 || orgInfo.teams.length) {
       return window.alert('Remove all members and teams before deleting organization');
@@ -101,6 +109,9 @@ const OrganizationInfo = (props: any) => {
     }
   }
 
+  /**
+   * Add a new member to this organization
+   */
   const handleMembershipChange = (evt:any) => {
     evt.preventDefault();
     const formData = new FormData(evt.target);
@@ -112,7 +123,6 @@ const OrganizationInfo = (props: any) => {
 
     putOrganizationMember(data).then((results: any) => {
       setAgentFormVisible(false);
-      console.log(results);
       if (results.message) {
         setFlashProps({ message: results.message, variant: 'warning' });
       }
@@ -125,6 +135,9 @@ const OrganizationInfo = (props: any) => {
     });
   }
 
+  /**
+   * Remove member from organization
+   */
   const handleMemberDelete = (memberId: any) => {
     if (window.confirm('Remove member?')) {
       deleteMemberAgent(memberId).then(results => {
@@ -137,6 +150,27 @@ const OrganizationInfo = (props: any) => {
       });
     }
   }
+
+  /**
+   * Remove team from organization
+   */
+  const handleTeamDelete = (team: any) => {
+    if (team.members.length > 1) {
+      return window.alert('Remove all team members before deleting the team');
+    }
+
+    if (window.confirm('Remove team?')) {
+      deleteTeam(team.id).then(results => {
+        const index = orgInfo.teams.findIndex(t => t.id === team.id);
+        orgInfo.teams.splice(index, 1);
+        setOrgInfo({ ...orgInfo } as Organization);
+        setFlashProps({ message: 'Team deleted', variant: 'success' });
+      }).catch(err => {
+        console.log(err);
+      });
+    }
+  }
+
 
   const customMessage = (evt:React.ChangeEvent<HTMLInputElement>) => {
     evt.target.setCustomValidity(`${evt.target.name} required`);
@@ -157,6 +191,9 @@ const OrganizationInfo = (props: any) => {
     return <ListItem className='list-item' button component="a" {...props} />;
   }
 
+  /**
+   * Redirect to `/organization` when this org is deleted
+   */
   if (toOrganization) {
     return <Redirect to={{ pathname: '/organization', state: 'Organization deleted' }} />
   }
@@ -323,7 +360,7 @@ const OrganizationInfo = (props: any) => {
                     <ListItemText primary={team.name} />
                   </ListItemLink>
                   { (agentProfile.email === orgInfo.creator.email) ?
-                    <DeleteForeverOutlinedIcon className="delete-team" onClick={() => handleMemberDelete(333)} />
+                    <DeleteForeverOutlinedIcon className="delete-team" onClick={() => handleTeamDelete(team)} />
                   : ''}
                 </ListItem>
               ))}
