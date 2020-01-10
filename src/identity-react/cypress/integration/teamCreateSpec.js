@@ -28,7 +28,6 @@ context('Team creation', function() {
   
     afterEach(() => {
       cy.task('query', 'TRUNCATE TABLE "Organizations" CASCADE;');
-//      cy.task('query', 'TRUNCATE TABLE "Teams" CASCADE;');
     });
   
     it('lands in the right spot', () => {
@@ -37,7 +36,6 @@ context('Team creation', function() {
   
     describe('interface', () => {
       it('displays Team interface elements', () => {
-//        cy.get('h3').contains('Teams');
         cy.get('button#add-team').should('exist');
         cy.get('input[name="name"][type="text"]').should('not.exist');
         cy.get('button[type="submit"]').should('not.exist');
