@@ -373,6 +373,7 @@ const OrganizationInfo = (props: any) => {
           )}
         </CardContent>
       </Card>
+      { props.location.state ? <Flash message={props.location.state} variant="success" /> : '' }
       { flashProps.message ? <Flash message={flashProps.message} variant={flashProps.variant} /> : '' }
       { flashProps.errors ? flashProps.errors.map(error => <Flash message={error.message} variant={flashProps.variant} />) : '' }
     </div>
