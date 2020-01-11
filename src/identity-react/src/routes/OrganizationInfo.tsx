@@ -155,7 +155,7 @@ const OrganizationInfo = (props: any) => {
    * Remove team from organization
    */
   const handleTeamDelete = (team: any) => {
-    if (team.members.length > 1) {
+    if (team.members && team.members.length > 1) {
       return window.alert('Remove all team members before deleting the team');
     }
 
